@@ -15,6 +15,8 @@
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { ACCEPT_CONFIDENCE } from "@/lib/photo-classify";
 import { roomFromCategory, roomSpace } from "@/lib/staging-rooms";
+import { normalizeSpace } from "@/lib/space-tools";
+import { defaultRoomForSpace } from "@/lib/space-datasets";
 
 let manual = false;
 let running = false;
@@ -27,6 +29,15 @@ export function markManualRoom() {
 
 function roomSelect(): HTMLSelectElement | null {
   return document.getElementById("fRoom") as HTMLSelectElement | null;
+}
+
+/** True when the current selection is only the space's soft default (Front
+    Exterior for exterior, etc.) — not a hand-picked or detected room. Photo
+    detection is allowed to replace a soft default, but never a real choice. */
+function isDefaultPick(): boolean {
+  const v = (roomSelect()?.value || "").trim();
+  if (!v) return false;
+  return v === defaultRoomForSpace(normalizeSpace(roomSpace(v)));
 }
 
 function sourceImage(): HTMLImageElement | null {
@@ -84,8 +95,10 @@ export async function detectRoomFromSource() {
   if (manual || running) return;
   const sel = roomSelect();
   if (!sel) return;
-  /* Anything already known — carried over or previously detected — wins. */
-  if ((sel.value || "").trim()) return;
+  /* Anything already known — carried over or previously detected — wins,
+     except a soft space default (e.g. Front Exterior) which detection may
+     replace with the room it actually sees in the photo. */
+  if ((sel.value || "").trim() && !isDefaultPick()) return;
   const img = sourceImage();
   const src = img?.currentSrc || img?.src || "";
   if (!src || src === lastSrc) return;
@@ -94,13 +107,13 @@ export async function detectRoomFromSource() {
   try {
     const dataUrl = await toDataUrl(src);
     if (!dataUrl) return;
-    if (manual || (roomSelect()?.value || "").trim()) return;
+    if (manual || ((roomSelect()?.value || "").trim() && !isDefaultPick())) return;
     const out = await classifyPhotoRooms({ data: { images: [{ id: "source", image: dataUrl }] } });
     const guess = out?.results?.[0];
     if (!guess || guess.confidence < ACCEPT_CONFIDENCE) return;
     const room = roomFromCategory(guess.label);
     if (!room) return;
-    if (manual || (roomSelect()?.value || "").trim()) return;
+    if (manual || ((roomSelect()?.value || "").trim() && !isDefaultPick())) return;
     applyRoom(room.label);
   } catch (_) {
     /* the user can always pick a room manually */

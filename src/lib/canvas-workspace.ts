@@ -11,6 +11,7 @@ import {
   areaFitsSpace,
   areaPreview,
   areasForSpace,
+  defaultRoomForSpace,
   type CanvasSpace,
 } from "@/lib/space-datasets";
 import { normalizeSpace, toolDescription, toolLabel } from "@/lib/space-tools";
@@ -204,11 +205,13 @@ async function openCanvasPhotoEditor(): Promise<void> {
 /* room cards                                                          */
 /* ------------------------------------------------------------------ */
 
-/** The four choices offered inline for each space. */
+/** The four choices offered inline for each space. Labels must match the
+    room catalog exactly (legacy aliases are not matched here), so the most
+    common area always leads — Front Exterior first for exterior photos. */
 const POPULAR: Record<CanvasSpace, string[]> = {
   interior: ["Living Room", "Kitchen", "Bedroom", "Bathroom"],
-  exterior: ["Front Of House", "Back Of House", "Side Of House", "Porch"],
-  garden: ["Front Yard", "Backyard", "Patio", "Pool Area"],
+  exterior: ["Front Exterior", "Rear Exterior", "Side Exterior", "Porch"],
+  garden: ["Front Garden", "Backyard", "Garden Patio", "Pool Area"],
 };
 
 /** Open once a choice exists: the section otherwise shows a summary row. */
@@ -248,7 +251,23 @@ export function paintRoomCards() {
   if (sel.value && !areaFitsSpace(sel.value, space)) {
     sel.value = "";
   }
-  const active = areaByLabel(sel.value)?.label || "";
+  /* When nothing is chosen for this space, pre-select the default area so the
+     panel always shows a sensible first option (Front Exterior for exterior
+     photos, etc.). This is a soft default: photo detection may still replace
+     it, and a manual pick is always final. */
+  if (sel && !(sel.value || "").trim()) {
+    const def = defaultRoomForSpace(space);
+    if (def) {
+      if (!Array.from(sel.options).some((o) => o.value === def || o.text === def)) {
+        const opt = document.createElement("option");
+        opt.value = def;
+        opt.textContent = def;
+        sel.appendChild(opt);
+      }
+      sel.value = def;
+    }
+  }
+  const active = areaByLabel(sel?.value || "")?.label || "";
   const label = field?.querySelector("label") as HTMLElement | null;
   const sectionName =
     space === "interior" ? "Room" : space === "exterior" ? "Exterior Area" : "Garden Area";
