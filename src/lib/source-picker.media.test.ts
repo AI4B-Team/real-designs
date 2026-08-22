@@ -111,10 +111,10 @@ describe("studio source tabs", () => {
     await tick();
     host.querySelector<HTMLButtonElement>('[data-sp="dcontinue"]')!.click();
     await tick();
-    const picked = onDesigns.mock.calls[0][0] as PickerDesign[];
+    const picked = onDesigns.mock.calls[0]![0] as PickerDesign[];
     expect(picked.map((p) => p.versionId)).toEqual(["v1"]);
-    expect(picked[0].assetId).toBe("a1");
-    expect(picked[0].roomId).toBe("r1");
+    expect(picked[0]!.assetId).toBe("a1");
+    expect(picked[0]!.roomId).toBe("r1");
   });
 
   it("keeps selection order when several media items are chosen", async () => {
@@ -125,7 +125,7 @@ describe("studio source tabs", () => {
     await tick();
     host.querySelector<HTMLButtonElement>('[data-sp="dcontinue"]')!.click();
     await tick();
-    const picked = onDesigns.mock.calls[0][0] as PickerDesign[];
+    const picked = onDesigns.mock.calls[0]![0] as PickerDesign[];
     expect(picked.map((p) => p.id)).toEqual(["photo-r1", "d1"]);
   });
 
