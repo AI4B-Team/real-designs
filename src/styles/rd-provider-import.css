@@ -1,0 +1,189 @@
+/* Provider import modal (Google Drive / Dropbox). One overlay, one close path. */
+
+.rdpi-back {
+  position: fixed;
+  inset: 0;
+  z-index: 2600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(17, 17, 17, 0.42);
+}
+
+.rdpi {
+  width: min(520px, 100%);
+  max-height: min(86vh, 720px);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  color: #111;
+  border: 1px solid #e6e6e6;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+
+.rdpi-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 14px 14px 18px;
+  border-bottom: 1px solid #eee;
+}
+
+.rdpi-h .rdpi-logo {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  align-items: center;
+  justify-content: center;
+}
+
+.rdpi-h .rdpi-logo svg {
+  width: 20px;
+  height: 20px;
+}
+
+.rdpi-h h3 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.rdpi-x {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e6e6e6;
+  border-radius: 999px;
+  background: #fff;
+  color: #111;
+  cursor: pointer;
+}
+
+.rdpi-x:hover {
+  background: #f5f5f5;
+}
+
+.rdpi-x svg {
+  width: 18px;
+  height: 18px;
+}
+
+.rdpi-b {
+  padding: 18px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 132px;
+}
+
+.rdpi-b p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #4a4a4a;
+}
+
+.rdpi-state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.rdpi-spin {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  border: 2px solid #ddd;
+  border-top-color: #cc0000;
+  border-radius: 50%;
+  animation: rdpi-spin 0.8s linear infinite;
+}
+
+@keyframes rdpi-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.rdpi-err {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #f3c9c9;
+  border-radius: 10px;
+  background: #fdf3f3;
+  color: #8c1d1d;
+  font-size: 13.5px;
+}
+
+.rdpi-b textarea {
+  width: 100%;
+  min-height: 92px;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13.5px;
+  color: #111;
+  background: #fff;
+}
+
+.rdpi-f {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 18px;
+  border-top: 1px solid #eee;
+  background: #fafafa;
+}
+
+.rdpi-f .rdpi-alt {
+  margin-right: auto;
+}
+
+.rdpi-btn {
+  flex: 0 0 auto;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #111;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.rdpi-btn:hover {
+  background: #f3f3f3;
+}
+
+.rdpi-btn.primary {
+  border-color: #cc0000;
+  background: #cc0000;
+  color: #fff;
+}
+
+.rdpi-btn.primary:hover {
+  background: #b30000;
+}
+
+.rdpi-btn[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
