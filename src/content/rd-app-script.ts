@@ -11079,7 +11079,7 @@ ${picks
     /* ---------- studio: visual style selection ---------- */
     let CANVAS_STYLE: any = null;
     function activeToolName() {
-      const r = document.querySelector("#fTool .toolrow.on") as any;
+      const r = document.querySelector(".toolrow.on[data-tool]") as any;
       return (r && r.getAttribute("data-tool")) || "Redesign";
     }
     function canvasStyleSelected() {
