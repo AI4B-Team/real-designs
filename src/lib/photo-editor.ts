@@ -2140,6 +2140,7 @@ export async function openPhotoEditor(opts: {
           parent_asset_key: p.versionId || p.parentVersionId || p.assetId || null,
         },
       });
+      await persistMarkup();
       s.dirty = false;
       rdToast(
         asCopy
@@ -2192,7 +2193,12 @@ export async function openPhotoEditor(opts: {
     try {
       /* The clean master leaves the editor untouched; the disclosure is baked
          only into the exported copy by the shared export system. */
-      const clean = await renderPhoto(s0, { quality: 0.96 });
+      const clean0 = await renderPhoto(s0, { quality: 0.96 });
+      /* Markup is flattened into the exported copy only; the editor keeps the
+         shapes and the clean master untouched. */
+      const doc = mk();
+      const marked = doc.layers.some((l) => l.visible);
+      const clean = marked ? await flattenMarkup(clean0, doc, { quality: 0.96 }) : clean0;
       const ok = await openDisclosureExport({
         items: [
           {
@@ -2203,6 +2209,7 @@ export async function openPhotoEditor(opts: {
               ...s0.aiOps,
               ...(hasAdjustments ? ["adjust"] : []),
               ...(s0.crop ? ["crop"] : []),
+              ...(marked ? ["markup"] : []),
             ],
             hasAdjustments,
             assetId: p.assetId || p.key || null,
@@ -2212,7 +2219,10 @@ export async function openPhotoEditor(opts: {
         purpose: "listing",
         scope: "current-photo",
         title: "Download Photo",
-        notes: review.map((r) => r.message),
+        notes: [
+          ...review.map((r) => r.message),
+          ...(marked && warningRequired(doc.layers) ? [MARKUP_WARNING] : []),
+        ],
       });
       if (ok && preview) rdToast("Preview Downloaded.");
     } catch (err: any) {
@@ -2504,6 +2514,81 @@ export async function openPhotoEditor(opts: {
       v.settings = clampPrivacySettings({ ...v.settings, type: type as PrivacySettings["type"] });
       return privacyChanged();
     }
+    const pick = el.getAttribute("data-mkpick");
+    if (pick) {
+      markupSelected = pick;
+      return markupChanged();
+    }
+    const mtype = el.getAttribute("data-mktype");
+    if (mtype) {
+      markupActiveType = mtype as MarkupTypeId;
+      markupMode = "draw";
+      markupCtl?.cancelDraft();
+      return markupChanged();
+    }
+    const mcolor = el.getAttribute("data-mkcolor");
+    if (mcolor && markupSelected) {
+      setMarkupDoc({ ...mk(), layers: updateStyle(mk().layers, markupSelected, { stroke: mcolor, fill: mcolor }) });
+      return markupChanged();
+    }
+    const mdash = el.getAttribute("data-mkdash");
+    if (mdash && markupSelected) {
+      setMarkupDoc({ ...mk(), layers: updateStyle(mk().layers, markupSelected, { dash: mdash as any }) });
+      return markupChanged();
+    }
+    const msugg = el.getAttribute("data-mksugg");
+    if (msugg && markupSelected) {
+      setMarkupDoc({ ...mk(), layers: updateLayer(mk().layers, markupSelected, { label: msugg }) });
+      return markupChanged();
+    }
+    const mlayer = el.getAttribute("data-mklayer");
+    if (mlayer) {
+      const [op, id] = mlayer.split(":") as [string, string];
+      const doc = mk();
+      const target = doc.layers.find((l) => l.id === id);
+      if (!target) return;
+      if (op === "visible") setMarkupDoc({ ...doc, layers: updateLayer(doc.layers, id, { visible: !target.visible }) });
+      else if (op === "lock") setMarkupDoc({ ...doc, layers: updateLayer(doc.layers, id, { locked: !target.locked }) });
+      else if (op === "up") setMarkupDoc({ ...doc, layers: bringForward(doc.layers, id) });
+      else if (op === "down") setMarkupDoc({ ...doc, layers: sendBackward(doc.layers, id) });
+      else if (op === "copy") setMarkupDoc({ ...doc, layers: duplicateLayer(doc.layers, id) });
+      else if (op === "del") {
+        setMarkupDoc({ ...doc, layers: removeLayer(doc.layers, id) });
+        if (markupSelected === id) markupSelected = null;
+      } else if (op === "labelbg")
+        setMarkupDoc({ ...doc, layers: updateStyle(doc.layers, id, { labelBackground: !target.style.labelBackground }) });
+      else if (op === "arrow")
+        setMarkupDoc({
+          ...doc,
+          layers: updateStyle(doc.layers, id, { arrowHead: target.style.arrowHead === "both" ? "end" : "both" }),
+        });
+      return markupChanged();
+    }
+    const mact = el.getAttribute("data-mk");
+    if (mact === "draw" || mact === "navigate") {
+      markupMode = mact;
+      markupCtl?.cancelDraft();
+      return markupChanged();
+    }
+    if (mact === "undo") {
+      markupCtl?.undo();
+      return markupChanged();
+    }
+    if (mact === "redo") {
+      markupCtl?.redo();
+      return markupChanged();
+    }
+    if (mact === "clear") {
+      markupCtl?.cancelDraft();
+      setMarkupDoc({ ...mk(), layers: [] });
+      markupSelected = null;
+      return markupChanged();
+    }
+    if (mact === "done" || mact === "cancel") {
+      markupCtl?.cancelDraft();
+      markupOpen = false;
+      return markupChanged();
+    }
     const act = el.getAttribute("data-priv");
     if (act === "scan") {
       v.open = true;
@@ -2550,6 +2635,27 @@ export async function openPhotoEditor(opts: {
       setCropZoom(n(t.value, 100) / 100);
       const out = t.parentElement?.querySelector(".rdpe-num");
       if (out && cropView) out.textContent = `${Math.round(cropView.scale * 100)}%`;
+      return;
+    }
+    if (t.hasAttribute("data-mkset")) {
+      const id = t.getAttribute("data-mkid") as string;
+      const key = t.getAttribute("data-mkset") as string;
+      const raw = n(t.value);
+      const value = key === "fillOpacity" ? raw / 100 : raw;
+      setMarkupDoc({ ...mk(), layers: updateStyle(mk().layers, id, { [key]: value } as any) });
+      const out = t.parentElement?.querySelector(".rdpe-num");
+      if (out) out.textContent = `${raw}${key === "fillOpacity" ? "%" : ""}`;
+      syncMarkupOverlay();
+      return;
+    }
+    if (t.hasAttribute("data-mklabel")) {
+      setMarkupDoc({ ...mk(), layers: updateLayer(mk().layers, t.getAttribute("data-mklabel") as string, { label: t.value }) });
+      syncMarkupOverlay();
+      return;
+    }
+    if (t.getAttribute("data-mk") === "disclosure") {
+      setMarkupDoc({ ...mk(), visibleDisclosure: t.checked });
+      syncMarkupOverlay();
       return;
     }
     if (t.hasAttribute("data-privset")) {
