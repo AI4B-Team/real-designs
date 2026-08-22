@@ -7,6 +7,7 @@
  * exists instead of inventing a second one.
  */
 import { startVideoFromCanvas, videoHandoffIssue } from "@/lib/video-handoff";
+import { IMAGE_ACTIONS, recordImageAction, type ImageActionId } from "@/lib/image-actions";
 
 export type ResultContext = {
   /** Display URL of the result on screen. May be a data: URL before saving. */
@@ -33,16 +34,42 @@ export type ResultAction =
   | "download"
   | "more";
 
-const BAR: { id: ResultAction; icon: string; label: string }[] = [
-  { id: "edit", icon: "pencil", label: "Edit" },
-  { id: "variation", icon: "git-branch", label: "Variation" },
-  { id: "video", icon: "clapperboard", label: "Create Video" },
-  { id: "upscale", icon: "sparkles", label: "Upscale" },
-  { id: "shop", icon: "shopping-bag", label: "Shop" },
-  { id: "estimate", icon: "calculator", label: "Estimate" },
-  { id: "download", icon: "download", label: "Download" },
-  { id: "more", icon: "ellipsis", label: "More" },
-];
+/* Icons, labels and tooltips come from the shared registry so the same glyph
+   never means two different things on two different screens. */
+const CANON: Partial<Record<ResultAction, ImageActionId>> = {
+  edit: "edit",
+  variation: "createVariation",
+  video: "sendToVideo",
+  shop: "shop",
+  download: "download",
+  more: "more",
+};
+
+function spec(id: ResultAction): { icon: string; label: string; tooltip: string } {
+  const canon = CANON[id];
+  if (canon) {
+    const a = IMAGE_ACTIONS[canon];
+    return { icon: a.icon, label: a.label, tooltip: a.tooltip };
+  }
+  const local: Record<string, { icon: string; label: string; tooltip: string }> = {
+    upscale: { icon: "sparkles", label: "Upscale", tooltip: "Upscale This Image" },
+    estimate: { icon: "calculator", label: "Estimate", tooltip: "Estimate This Design" },
+  };
+  return local[id] || { icon: "circle", label: id, tooltip: id };
+}
+
+const BAR: { id: ResultAction; icon: string; label: string }[] = (
+  [
+    "edit",
+    "variation",
+    "video",
+    "upscale",
+    "shop",
+    "estimate",
+    "download",
+    "more",
+  ] as ResultAction[]
+).map((id) => ({ id, icon: spec(id).icon, label: spec(id).label }));
 
 const esc = (s: unknown) =>
   String(s == null ? "" : s).replace(
@@ -90,7 +117,7 @@ export function resultBarHtml(ids: ResultAction[] = BAR.map((b) => b.id)) {
           '<button type="button" class="rda-b" data-rda="' +
           b.id +
           '" title="' +
-          esc(b.label) +
+          esc(spec(b.id).tooltip) +
           '" aria-label="' +
           esc(b.label) +
           '"><i data-lucide="' +
@@ -260,6 +287,7 @@ function editDesign(ctx: ResultContext) {
     return;
   }
   toast("Open This Design In Studio To Keep Editing.");
+  /* The user clicked Edit, so this navigation is intentional. */
   go("studio");
 }
 
