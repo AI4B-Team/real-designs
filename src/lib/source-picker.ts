@@ -2177,7 +2177,13 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       opts.onSample ? opts.onSample() : (state.tab = "upload");
       render();
     } else if (k === "mall") {
-      for (const d of visibleMedia()) if (!state.designSel.includes(d.id)) state.designSel.push(d.id);
+      const vis = visibleMedia();
+      if (allVisibleSelected()) {
+        const ids = new Set(vis.map((d) => d.id));
+        state.designSel = state.designSel.filter((id) => !ids.has(id));
+      } else {
+        for (const d of vis) if (!state.designSel.includes(d.id)) state.designSel.push(d.id);
+      }
       render();
     } else if (k === "mreset") {
       state.mediaType = "all";
