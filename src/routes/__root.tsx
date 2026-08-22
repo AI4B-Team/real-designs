@@ -134,6 +134,9 @@ function isChunkLoadError(error: unknown) {
   );
 }
 
+/** One soft retry per chunk signature, before any page reload. */
+const softRetried = new Set<string>();
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
@@ -143,13 +146,24 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     // failure. Anything else (including a repeat of the same chunk failure)
     // shows the message below with a manual Retry.
     if (isChunkLoadError(error) && typeof window !== "undefined") {
+      const message = error instanceof Error ? error.message : String(error);
+      // A rebuild in flight makes the import fail for a moment only: re-request
+      // the route first, and keep the reload as the fallback.
+      const signature = chunkSignature(message);
+      if (!softRetried.has(signature)) {
+        softRetried.add(signature);
+        const timer = window.setTimeout(() => {
+          router.invalidate();
+          reset();
+        }, 400);
+        return () => window.clearTimeout(timer);
+      }
       let store: Storage | null = null;
       try {
         store = window.sessionStorage;
       } catch {
         store = null;
       }
-      const message = error instanceof Error ? error.message : String(error);
       if (shouldRecoverFromChunkError(message, store, currentBuildId())) {
         // Keep the exact URL, including the in-app hash route.
         window.location.reload();
@@ -157,7 +171,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
       }
     }
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    return;
   }, [error]);
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
