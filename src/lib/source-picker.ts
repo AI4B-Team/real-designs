@@ -1069,16 +1069,18 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   }
 
   function designFooter() {
-    const n = state.designSel.length;
-    const label = state.adding
-      ? "Preparing video\u2026"
-      : "Continue with " + (n || 0) + " design" + (n === 1 ? "" : "s");
+    const picked = selectedDesigns();
+    const n = picked.length;
+    const designs = picked.filter(isDesign).length;
+    const noun = !designs ? "photo" : designs === n ? "design" : "item";
+    const plural = (k: number) => k + " " + noun + (k === 1 ? "" : "s");
+    const label = state.adding ? "Preparing\u2026" : "Continue with " + plural(n);
     return (
       '<div class="spd-foot">' +
       '<span class="spd-foot-l">' +
       (n
-        ? n + " design" + (n === 1 ? "" : "s") + " selected \u00b7 " + n + " scenes"
-        : "No designs selected") +
+        ? plural(n) + " selected \u00b7 " + n + " scene" + (n === 1 ? "" : "s")
+        : "Nothing selected yet") +
       "</span>" +
       '<span class="spd-foot-a">' +
       (n
@@ -1138,6 +1140,9 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       (l.two ? "<span>" + esc(l.two) + "</span>" : "") +
       (l.three ? '<span class="spd-addr">' + esc(l.three) + "</span>" : "") +
       (l.status ? '<span class="spd-status">' + esc(l.status) + "</span>" : "") +
+      '<span class="spd-kind">' +
+      (isDesign(d) ? "Generated design" : "Property photo") +
+      "</span>" +
       "</span></div>"
     );
   }
@@ -1672,11 +1677,47 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const t = e.target as HTMLInputElement;
     const f = fieldName(t);
     if (f === "addr") state.address = t.value;
+    if (f === "mq") {
+      state.mediaQuery = t.value;
+      const grid = body?.querySelector(".spd-grid, .spd-empty");
+      if (grid) renderMediaGrid();
+      return;
+    }
     if (describe.onInput(f, t.value) && (f === "prompt" || f === "browseq")) describe.sync(body);
   }
 
   function onChange(e: Event) {
-    describe.onChange(e.target as HTMLElement);
+    const t = e.target as HTMLSelectElement;
+    const f = fieldName(t);
+    if (f === "mprop" || f === "mroom") {
+      if (f === "mprop") state.mediaProperty = t.value;
+      else state.mediaRoom = t.value;
+      render();
+      return;
+    }
+    describe.onChange(t as unknown as HTMLElement);
+  }
+
+  /** Re-renders only the media results, so typing never loses input focus. */
+  function renderMediaGrid() {
+    if (!body) return;
+    const host2 = body.querySelector(".spd") as HTMLElement | null;
+    if (!host2) return;
+    const old = host2.querySelector(".spd-grid, .spd-empty:not([role=alert])") as HTMLElement | null;
+    if (!old) return;
+    const shown = visibleMedia();
+    const wrap = document.createElement("div");
+    wrap.innerHTML = shown.length
+      ? '<div class="spd-grid" role="group" aria-label="Your media">' +
+        shown.map(designCard).join("") +
+        "</div>"
+      : '<div class="spd-empty"><i data-lucide="search-x"></i><b>No media matches these filters</b>' +
+        '<span class="spd-empty-a"><button type="button" class="btn btn-ghost btn-sm" data-sp="mreset">Clear filters</button></span></div>';
+    old.replaceWith(wrap.firstElementChild!);
+    try {
+      opts.lucide?.createIcons();
+    } catch (_) {}
+    hydrateThumbs();
   }
 
 
@@ -1694,6 +1735,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       state.tab = next;
       state.note = "";
       opts.onTab?.(state.tab);
+      render();
+      return;
+    }
+    const mtype = t.closest("[data-sp-mtype]") as HTMLElement | null;
+    if (mtype) {
+      state.mediaType = mtype.dataset["spMtype"] as typeof state.mediaType;
       render();
       return;
     }
@@ -1780,6 +1827,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       render();
     } else if (k === "ddesign") {
       opts.onSample ? opts.onSample() : (state.tab = "upload");
+      render();
+    } else if (k === "mreset") {
+      state.mediaType = "all";
+      state.mediaProperty = "all";
+      state.mediaRoom = "all";
+      state.mediaQuery = "";
       render();
     } else if (k === "dclear") {
       state.designSel = [];
