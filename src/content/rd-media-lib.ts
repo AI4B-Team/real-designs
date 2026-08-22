@@ -1014,20 +1014,28 @@ function editImage(m) {
     openFullPhotoEditor({
       startKey: m.id,
       property: m.property || "Media",
+      editorMode: "media",
       photos: list.map((x) => ({
         key: x.id,
         name: x.title,
         room: x.room || "Photo",
         property: x.property || "Media",
         path: x.assetPath || x.path,
+        storagePath: x.assetPath || x.path,
         src: x.thumb || "",
+        assetId: x.id,
+        assetType: x.kind || x.type || "uploaded_image",
+        propertyId: x.propertyId || null,
+        roomId: x.roomId || null,
+        versionId: x.versionId || null,
+        editorMode: (x.kind || x.type) === "generated_image" ? "generated" : "media",
       })),
       onSaved: () => load(true),
     });
     return;
   }
-  toast("Open This Design In Studio To Keep Editing It.");
-  S.go("studio");
+  /* Editing never bounces the user out to Studio. */
+  toast("This Item Cannot Be Edited Yet.");
 }
 
 /* Every builder launch from Media goes through the one handoff contract, so

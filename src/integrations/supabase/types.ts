@@ -813,10 +813,12 @@ export type Database = {
           created_at: string
           crop: Json | null
           edited_path: string | null
+          editor_mode: string
           flip_h: boolean
           id: string
           is_copy: boolean
           label: string | null
+          parent_asset_key: string | null
           revision: number
           rotation: number
           source_path: string
@@ -830,10 +832,12 @@ export type Database = {
           created_at?: string
           crop?: Json | null
           edited_path?: string | null
+          editor_mode?: string
           flip_h?: boolean
           id?: string
           is_copy?: boolean
           label?: string | null
+          parent_asset_key?: string | null
           revision?: number
           rotation?: number
           source_path: string
@@ -847,10 +851,12 @@ export type Database = {
           created_at?: string
           crop?: Json | null
           edited_path?: string | null
+          editor_mode?: string
           flip_h?: boolean
           id?: string
           is_copy?: boolean
           label?: string | null
+          parent_asset_key?: string | null
           revision?: number
           rotation?: number
           source_path?: string

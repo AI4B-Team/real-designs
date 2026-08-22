@@ -16,6 +16,19 @@ import { confirmDialog } from "@/lib/builder-card-menu";
 import { roomPhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
 import { listPhotoEdits, savePhotoEdit, resetPhotoEdit } from "@/lib/photo-edits.functions";
 import { runPhotoEdit } from "@/lib/photo-edit.functions";
+import {
+  type EditorMode,
+  compareEnabled,
+  defaultGenerationSource,
+  defaultOpenSections,
+  detectPhotoTraits,
+  editedFromLabel,
+  enhancementByOp,
+  footerLayout,
+  generativeEdits,
+  photoEnhancements,
+  primarySaveLabel,
+} from "@/lib/photo-editor-context";
 
 /* ------------------------------------------------------------------ model */
 
@@ -27,6 +40,17 @@ export type EditorPhoto = {
   path?: string;
   property?: string;
   rotation?: number;
+  /* Shared entry contract — every "Edit Photo" surface passes the durable ids. */
+  assetId?: string;
+  assetType?: string;
+  storagePath?: string;
+  propertyId?: string;
+  roomId?: string;
+  versionId?: string;
+  parentVersionId?: string;
+  versionNumber?: number;
+  space?: string;
+  editorMode?: EditorMode;
 };
 
 type Adj = Record<string, number>;
@@ -41,7 +65,8 @@ type PhotoState = {
   crop: Crop;
   aiOps: string[];
   base: string | null; // current image (original or AI result)
-  original: string | null; // untouched source, for Hold To Compare
+  original: string | null; // untouched source in storage — never overwritten
+  entry: string | null; // the image as it looked when the editor opened
   dirty: boolean;
   saving: boolean;
   history: string[];
@@ -61,23 +86,6 @@ const ADJUSTMENTS = [
   { group: "color", key: "vibrance", label: "Vibrance", min: -100, max: 100 },
   { group: "detail", key: "sharpen", label: "Sharpen", min: 0, max: 100 },
   { group: "detail", key: "denoise", label: "Noise Reduction", min: 0, max: 100 },
-] as const;
-
-const AI_OPS = [
-  { op: "auto_enhance", label: "Auto Enhance", icon: "wand-sparkles" },
-  { op: "window_balance", label: "Window Balance", icon: "panel-top" },
-  { op: "sky", label: "Sky Replacement", icon: "cloud-sun" },
-  { op: "lawn", label: "Lawn Enhancement", icon: "trees" },
-  { op: "dusk", label: "Day To Dusk", icon: "moon" },
-  { op: "object_removal", label: "Object Removal", icon: "eraser" },
-  { op: "declutter", label: "Declutter", icon: "sparkles" },
-  { op: "privacy_blur", label: "Privacy Blur", icon: "shield" },
-  { op: "reflection", label: "Remove Camera Reflection", icon: "camera-off" },
-  { op: "tv_off", label: "Turn Off TV", icon: "tv-minimal" },
-  { op: "fireplace", label: "Add Fire To Fireplace", icon: "flame" },
-  { op: "perspective", label: "Perspective Correction", icon: "ruler" },
-  { op: "white_balance", label: "White-Balance Correction", icon: "thermometer" },
-  { op: "lens", label: "Lens Correction", icon: "aperture" },
 ] as const;
 
 const RATIOS: { id: string; label: string; v: number | null }[] = [
@@ -110,6 +118,7 @@ function blankState(): PhotoState {
     aiOps: [],
     base: null,
     original: null,
+    entry: null,
     dirty: false,
     saving: false,
     history: [],
@@ -218,7 +227,14 @@ export async function openPhotoEditor(opts: {
   photos: EditorPhoto[];
   startKey?: string;
   property?: string;
-  onSaved?: (r: { key: string; path: string; dataUrl: string; copy: boolean }) => void;
+  editorMode?: EditorMode;
+  onSaved?: (r: {
+    key: string;
+    path: string;
+    dataUrl: string;
+    copy: boolean;
+    useEdited?: boolean;
+  }) => void;
 }): Promise<void> {
   const photos = (opts.photos || []).filter((p) => p && p.key);
   if (!photos.length) return void rdToast("There Are No Photos To Edit.", "error");
@@ -311,16 +327,24 @@ export async function openPhotoEditor(opts: {
 
   /* --------------------------------------------------------------- source */
 
+  /** Which context this photograph is being edited in. */
+  function modeFor(p: EditorPhoto): EditorMode {
+    return (p.editorMode || opts.editorMode || (p.assetType === "generated_image" ? "generated" : "source")) as EditorMode;
+  }
+
   async function ensureSource(p: EditorPhoto) {
     const s = st(p.key);
     if (s.original) return;
-    const src = p.src || (p.path ? await roomPhotoUrl(p.path, 3600) : null);
+    const src =
+      p.src || ((p.path || p.storagePath) ? await roomPhotoUrl((p.path || p.storagePath) as string, 3600) : null);
     if (!src) {
       rdToast("That Photo Could Not Be Opened.", "error");
       return;
     }
     s.original = src;
     if (!s.base) s.base = src;
+    /* Hold To Compare is always "editor original vs current edit". */
+    if (!s.entry) s.entry = s.base;
     paint();
   }
 
@@ -330,7 +354,7 @@ export async function openPhotoEditor(opts: {
     const p = cur();
     const s = st();
     const stage = $("#rdpeImg") as HTMLImageElement;
-    const src = comparing ? s.original : s.base || s.original;
+    const src = comparing ? s.entry || s.original : s.base || s.original;
     if (stage && src && stage.getAttribute("src") !== src) stage.setAttribute("src", src);
     if (stage) {
       const preview = aiPreview && !comparing ? aiPreview.image : null;
@@ -354,7 +378,19 @@ export async function openPhotoEditor(opts: {
     $("#rdpeSave").toggleAttribute("disabled", !s.dirty || s.saving);
     $("#rdpeSaveCopy").toggleAttribute("disabled", !hasEdits(s) || s.saving);
     $("#rdpeReset").toggleAttribute("disabled", !hasEdits(s));
-    $("#rdpeSave").textContent = s.saving ? "Saving…" : "Save Changes";
+    $("#rdpeSave").textContent = s.saving ? "Saving…" : primarySaveLabel({ mode: modeFor(p) });
+    const hold = $("#rdpeHold") as HTMLButtonElement;
+    if (hold) {
+      const on = compareEnabled(hasEdits(s) || !!aiPreview);
+      hold.toggleAttribute("disabled", !on);
+      hold.title = on ? "Hold To Compare With The Editor Original" : "Make An Adjustment To Compare";
+    }
+    const prov = $("#rdpeProv");
+    if (prov) {
+      const line = modeFor(p) === "generated" ? editedFromLabel(p.versionNumber ?? null) : null;
+      prov.textContent = line || "";
+      prov.classList.toggle("on", !!line);
+    }
     host.classList.toggle("rdpe-crop", cropMode);
     host.classList.toggle("rdpe-compare", comparing);
 
@@ -377,8 +413,11 @@ export async function openPhotoEditor(opts: {
   function sliderRow(a: (typeof ADJUSTMENTS)[number], v: number) {
     return `<label class="rdpe-slider">
       <span>${a.label}</span>
-      <input type="range" min="${a.min}" max="${a.max}" step="1" value="${v}" data-adj="${a.key}">
+      <input type="range" min="${a.min}" max="${a.max}" step="1" value="${v}" data-adj="${a.key}"
+        aria-label="${a.label}" title="Double-Click To Reset">
       <b class="rdpe-num">${v > 0 && a.min < 0 ? "+" : ""}${v}</b>
+      <button type="button" class="rdpe-rst" data-reset-adj="${a.key}" aria-label="Reset ${a.label}"
+        ${v === 0 ? "hidden" : ""}><i data-lucide="rotate-ccw"></i></button>
     </label>`;
   }
 
@@ -389,9 +428,24 @@ export async function openPhotoEditor(opts: {
         .map((a) => sliderRow(a, n(s.adj[a.key], 0)))
         .join("");
 
+    const traits = detectPhotoTraits(cur());
+    const ops = photoEnhancements(traits);
+    const gens = generativeEdits();
+    const opBtn = (o: { op: string; label: string; icon: string; credits: number }) =>
+      `<button type="button" class="rdpe-aiop ${s.aiOps.includes(o.op) ? "on" : ""} ${
+        aiBusy === o.op ? "busy" : ""
+      }" data-ai="${o.op}" ${aiBusy ? "disabled" : ""}>
+        <i data-lucide="${o.icon}"></i><span>${o.label}</span>
+        ${
+          aiBusy === o.op
+            ? '<em class="rdpe-run">Working…</em>'
+            : `<em class="rdpe-cost">${o.credits} Credit${o.credits === 1 ? "" : "s"}</em>`
+        }
+      </button>`;
+
     $("#rdpePanelBody").innerHTML = `
       <button type="button" class="rdpe-auto" data-act="auto"><i data-lucide="wand-sparkles"></i>
-        <span><b>Auto Enhance</b><em>One-Click Exposure, Contrast And Color</em></span></button>
+        <span><b>Quick Enhance</b><em>One-Click Exposure, Contrast And Color — No Credits</em></span></button>
 
       ${section("light", "Light", "sun", g("light"))}
       ${section("color", "Color", "palette", g("color"))}
@@ -413,33 +467,32 @@ export async function openPhotoEditor(opts: {
           <button type="button" class="rdpe-ib ${cropMode ? "on" : ""}" data-act="cropmode" title="Adjust Crop"><i data-lucide="crop"></i></button>
         </div>
         <label class="rdpe-slider"><span>Straighten</span>
-          <input type="range" min="-15" max="15" step="0.5" value="${s.straighten}" data-straighten>
+          <input type="range" min="-15" max="15" step="0.5" value="${s.straighten}" data-straighten aria-label="Straighten">
           <b class="rdpe-num">${s.straighten}°</b></label>`,
       )}
       ${section(
-        "ai",
-        "AI Enhancements",
+        "enhance",
+        "Photo Enhancements",
         "sparkles",
-        `<p class="rdpe-note">These Improve The Real Photograph. They Never Restage Or Redesign The Space.</p>
-         <div class="rdpe-ai">${AI_OPS.map(
-           (o) =>
-             `<button type="button" class="rdpe-aiop ${s.aiOps.includes(o.op) ? "on" : ""} ${
-               aiBusy === o.op ? "busy" : ""
-             }" data-ai="${o.op}" ${aiBusy ? "disabled" : ""}>
-               <i data-lucide="${o.icon}"></i><span>${o.label}</span>
-               ${aiBusy === o.op ? '<em class="rdpe-run">Working…</em>' : '<em class="rdpe-cost">1 Credit</em>'}
-             </button>`,
-         ).join("")}</div>
-         ${
-           aiPreview
-             ? `<div class="rdpe-aipreview"><b>${esc(aiPreview.label)} Preview</b>
-                 <div class="rdpe-aibtns">
-                   <button type="button" class="btn btn-primary btn-sm" data-act="aiapply">Apply</button>
-                   <button type="button" class="btn btn-ghost btn-sm" data-act="aicancel">Discard</button>
-                 </div></div>`
-             : ""
-         }`,
-      )}`;
+        `<p class="rdpe-note">These Correct The Photograph. They Never Restage Or Redesign The Space.</p>
+         <div class="rdpe-ai">${ops.map(opBtn).join("")}</div>`,
+      )}
+      ${section(
+        "generative",
+        "Generative Edits",
+        "wand",
+        `<p class="rdpe-note">These Change What Is In The Scene. You Mark The Target And Confirm The Credit Cost First.</p>
+         <div class="rdpe-ai">${gens.map(opBtn).join("")}</div>`,
+      )}
+      ${
+        aiPreview
+          ? `<div class="rdpe-aipreview"><b>${esc(aiPreview.label)} Preview</b>
+              <div class="rdpe-aibtns">
+                <button type="button" class="btn btn-primary btn-sm" data-act="aiapply">Apply</button>
+                <button type="button" class="btn btn-ghost btn-sm" data-act="aicancel">Discard</button>
+              </div></div>`
+          : ""
+      }`;
   }
 
   function section(id: string, label: string, icon: string, body: string) {
@@ -449,7 +502,7 @@ export async function openPhotoEditor(opts: {
       <div class="rdpe-secb">${body}</div>
     </details>`;
   }
-  const OPEN = new Set<string>(["light"]);
+  const OPEN = new Set<string>(defaultOpenSections());
 
   /* ---------------------------------------------------------------- crop */
 
@@ -539,8 +592,18 @@ export async function openPhotoEditor(opts: {
 
   async function runAi(op: string) {
     if (aiBusy) return;
-    const meta = AI_OPS.find((o) => o.op === op);
+    const meta = enhancementByOp(op);
     if (!meta) return;
+    /* Nothing that spends a credit or rewrites the scene runs from one click. */
+    const ok = await confirmDialog({
+      title: meta.requiresTarget ? `Confirm ${meta.label}` : `Run ${meta.label}?`,
+      body: meta.requiresTarget
+        ? `${meta.label} Works On The Area Currently In View. Confirm The Target Before It Runs. Your Current Image Is Kept If Anything Fails.`
+        : `${meta.label} Runs On The Server And Returns A Preview You Can Apply Or Discard.`,
+      notes: [`Cost: ${meta.credits} Credit${meta.credits === 1 ? "" : "s"}.`],
+      confirmLabel: `Use ${meta.credits} Credit${meta.credits === 1 ? "" : "s"}`,
+    });
+    if (!ok) return;
     aiBusy = op;
     paint();
     try {
@@ -602,11 +665,29 @@ export async function openPhotoEditor(opts: {
           edited_path: path,
           label: p.room || p.name || null,
           as_copy: asCopy,
+          editor_mode: modeFor(p),
+          parent_asset_key: p.versionId || p.parentVersionId || p.assetId || null,
         },
       });
       s.dirty = false;
-      rdToast(asCopy ? "Saved As A Copy." : "Photo Saved.");
-      opts.onSaved?.({ key: p.key, path, dataUrl, copy: asCopy });
+      rdToast(
+        asCopy
+          ? "Saved As A Copy."
+          : modeFor(p) === "generated"
+            ? "Saved As A New Version."
+            : "Photo Saved.",
+      );
+      /* A prepared source photo asks which image generation should consume. */
+      let useEdited = defaultGenerationSource(modeFor(p)) === "edited";
+      if (!asCopy && modeFor(p) === "source") {
+        useEdited = !!(await confirmDialog({
+          title: "Use This Edit For Generation?",
+          body: "The Original Upload Is Kept Either Way.",
+          confirmLabel: "Use Edited Photo",
+          cancelLabel: "Keep Original As Source",
+        }));
+      }
+      opts.onSaved?.({ key: p.key, path, dataUrl, copy: asCopy, useEdited });
     } catch (err: any) {
       rdToast(err?.message || "That Photo Could Not Be Saved.", "error");
     } finally {
@@ -615,9 +696,18 @@ export async function openPhotoEditor(opts: {
     }
   }
 
-  async function download() {
+  async function download(preview = false) {
+    const s0 = st();
+    if (!preview && s0.dirty) {
+      const ok = await confirmDialog({
+        title: "Download Preview?",
+        body: "This Photo Has Unsaved Edits. Downloading The Preview Does Not Save Them To Your Library.",
+        confirmLabel: "Download Preview",
+      });
+      if (!ok) return;
+    }
     try {
-      const url = await renderPhoto(st());
+      const url = preview || s0.dirty ? await renderPhoto(s0) : s0.base || s0.original || (await renderPhoto(s0));
       const a = document.createElement("a");
       a.href = url;
       a.download = `${(cur().room || cur().name || "photo").replace(/\s+/g, "-").toLowerCase()}.jpg`;
@@ -638,7 +728,7 @@ export async function openPhotoEditor(opts: {
     const p = cur();
     const s = st();
     const original = s.original;
-    states.set(p.key, { ...blankState(), original, base: original });
+    states.set(p.key, { ...blankState(), original, base: s.entry || original, entry: s.entry || original });
     try {
       await resetPhotoEdit({ data: { asset_key: p.key } });
     } catch {
@@ -652,6 +742,7 @@ export async function openPhotoEditor(opts: {
 
   async function go(i: number) {
     if (i < 0 || i >= photos.length || i === index) return;
+    if ((await guardUnsaved("Moving To Another Photo")) === "stay") return;
     aiPreview = null;
     cropMode = false;
     index = i;
@@ -660,17 +751,22 @@ export async function openPhotoEditor(opts: {
     paintCropBox();
   }
 
-  async function close() {
-    const unsaved = [...states.values()].some((s) => s.dirty);
-    if (unsaved) {
-      const ok = await confirmDialog({
-        title: "Leave Without Saving?",
-        body: "Some Photos Have Unsaved Changes. Closing The Editor Discards Them.",
-        confirmLabel: "Discard Changes",
-        danger: true,
-      });
-      if (!ok) return;
+  /** In-app three-way guard. Never the browser's confirm dialog. */
+  async function guardUnsaved(reason: string): Promise<"stay" | "go"> {
+    const unsaved = [...states.values()].some((x) => x.dirty);
+    if (!unsaved) return "go";
+    const choice = await unsavedDialog(reason);
+    if (choice === "continue") return "stay";
+    if (choice === "save") {
+      await save(false);
+      return st().dirty ? "stay" : "go";
     }
+    for (const [, x] of states) x.dirty = false;
+    return "go";
+  }
+
+  async function close() {
+    if ((await guardUnsaved("Closing The Editor")) === "stay") return;
     closePhotoEditor();
   }
 
@@ -682,6 +778,12 @@ export async function openPhotoEditor(opts: {
     if (go1) return void go(Number(go1.getAttribute("data-go")));
     const ratio = t.closest("[data-ratio]");
     if (ratio) return setRatio(ratio.getAttribute("data-ratio") as string);
+    const rst = t.closest("[data-reset-adj]");
+    if (rst) {
+      push();
+      st().adj[rst.getAttribute("data-reset-adj") as string] = 0;
+      return paint();
+    }
     const ai = t.closest("[data-ai]");
     if (ai) return void runAi(ai.getAttribute("data-ai") as string);
     const act = t.closest("[data-act]")?.getAttribute("data-act");
@@ -692,10 +794,15 @@ export async function openPhotoEditor(opts: {
     if (act === "next") return void go(index + 1);
     if (act === "undo") return undo();
     if (act === "redo") return redo();
-    if (act === "download") return void download();
+    if (act === "download") return void download(false);
+    if (act === "downloadpreview") return void download(true);
     if (act === "save") return void save(false);
     if (act === "savecopy") return void save(true);
     if (act === "reset") return void resetPhoto();
+    if (act === "panel") {
+      host.classList.toggle("rdpe-panel-off");
+      return void paintCropBox();
+    }
     if (act === "aiapply") return applyAi();
     if (act === "aicancel") {
       aiPreview = null;
@@ -769,6 +876,7 @@ export async function openPhotoEditor(opts: {
   // Hold To Compare: pointer hold on the button or on the photo, plus the \ key.
   const holdOn = () => {
     if (comparing) return;
+    if (!compareEnabled(hasEdits(st()) || !!aiPreview)) return;
     comparing = true;
     paint();
   };
@@ -781,6 +889,8 @@ export async function openPhotoEditor(opts: {
     el.addEventListener("pointerdown", holdOn);
     el.addEventListener("pointerup", holdOff);
     el.addEventListener("pointerleave", holdOff);
+    el.addEventListener("pointercancel", holdOff);
+    el.addEventListener("blur", holdOff);
   });
   $("#rdpeCropBox").addEventListener("pointerdown", (e) => dragCrop(e as PointerEvent));
 
@@ -802,10 +912,35 @@ export async function openPhotoEditor(opts: {
   window.addEventListener("keyup", onKeyUp);
   const onResize = () => paintCropBox();
   window.addEventListener("resize", onResize);
+
+  /* Double-click a slider to return it to neutral. */
+  host.addEventListener("dblclick", (e) => {
+    const t = e.target as HTMLInputElement;
+    if (t?.tagName !== "INPUT") return;
+    push();
+    if (t.hasAttribute("data-adj")) st().adj[t.getAttribute("data-adj") as string] = 0;
+    if (t.hasAttribute("data-straighten")) st().straighten = 0;
+    paint();
+  });
+
+  /* The footer wraps on the panel's own width, so the primary action is never
+     pushed past the edge of the viewport. */
+  const panelEl = $("#rdpePanel");
+  const applyFooter = (w: number) => {
+    host.classList.toggle("rdpe-footer-stack", footerLayout(w) === "stack");
+  };
+  applyFooter(panelEl?.getBoundingClientRect().width || 360);
+  const ro =
+    typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver((entries) => applyFooter(entries[0]?.contentRect.width || 360))
+      : null;
+  if (ro && panelEl) ro.observe(panelEl);
+
   (host as any).__teardown = () => {
     window.removeEventListener("keydown", onKey);
     window.removeEventListener("keyup", onKeyUp);
     window.removeEventListener("resize", onResize);
+    ro?.disconnect();
   };
 
   /* -------------------------------------------------------------- start */
@@ -859,6 +994,7 @@ function shellHtml(): string {
       <button type="button" class="rdpe-ib" id="rdpeUndo" data-act="undo" title="Undo"><i data-lucide="undo-2"></i></button>
       <button type="button" class="rdpe-ib" id="rdpeRedo" data-act="redo" title="Redo"><i data-lucide="redo-2"></i></button>
       <button type="button" class="btn btn-ghost btn-sm" data-act="download"><i data-lucide="download"></i>Download</button>
+      <button type="button" class="rdpe-ib rdpe-paneltoggle" data-act="panel" aria-label="Show Or Hide Settings"><i data-lucide="sliders-horizontal"></i></button>
     </div>
   </header>
 
@@ -874,20 +1010,58 @@ function shellHtml(): string {
         <span class="rdpe-badge">Original</span>
       </div>
       <div class="rdpe-underbar">
-        <button type="button" class="rdpe-hold" data-hold><i data-lucide="eye"></i>Hold To Compare</button>
+        <button type="button" class="rdpe-hold" id="rdpeHold" data-hold><i data-lucide="eye"></i>Hold To Compare</button>
+        <span class="rdpe-prov" id="rdpeProv"></span>
       </div>
       <div class="rdpe-strip" id="rdpeStrip"></div>
     </section>
 
-    <aside class="rdpe-panel">
+    <button type="button" class="rdpe-grip" data-act="panel" aria-label="Collapse Settings Panel"><i data-lucide="chevron-right"></i></button>
+
+    <aside class="rdpe-panel" id="rdpePanel">
       <div class="rdpe-panelb" id="rdpePanelBody"></div>
-      <footer class="rdpe-panelf">
-        <button type="button" class="btn btn-ghost btn-sm" id="rdpeReset" data-act="reset">Reset Photo</button>
-        <div class="rdpe-fr">
+      <footer class="rdpe-panelf" id="rdpeFooter">
+        <div class="rdpe-fr1">
+          <button type="button" class="rdpe-reset" id="rdpeReset" data-act="reset" title="Reset Photo">
+            <i data-lucide="rotate-ccw"></i><span>Reset</span></button>
           <button type="button" class="btn btn-ghost btn-sm" id="rdpeSaveCopy" data-act="savecopy">Save As Copy</button>
-          <button type="button" class="btn btn-primary btn-sm" id="rdpeSave" data-act="save">Save Changes</button>
         </div>
+        <button type="button" class="btn btn-primary btn-sm" id="rdpeSave" data-act="save">Save Changes</button>
       </footer>
     </aside>
   </div>`;
+}
+
+/**
+ * The unsaved-work guard. Three deliberate outcomes, rendered in the product's
+ * own dialog language — never the browser's confirm().
+ */
+function unsavedDialog(reason: string): Promise<"continue" | "discard" | "save"> {
+  return new Promise((resolve) => {
+    const wrap = document.createElement("div");
+    wrap.className = "bx-cdlg rdpe-unsaved";
+    wrap.innerHTML = `<div class="bx-cdlg-in" role="dialog" aria-modal="true" aria-label="Unsaved Changes">
+      <h3>Unsaved Changes</h3>
+      <p>${esc(reason)} Discards Edits That Have Not Been Saved Yet.</p>
+      <div class="rdpe-udlg">
+        <button type="button" class="btn btn-ghost btn-sm" data-u="continue">Continue Editing</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-u="discard">Discard Changes</button>
+        <button type="button" class="btn btn-primary btn-sm" data-u="save">Save</button>
+      </div>
+    </div>`;
+    document.body.appendChild(wrap);
+    const done = (v: "continue" | "discard" | "save") => {
+      wrap.remove();
+      resolve(v);
+    };
+    wrap.addEventListener("click", (e) => {
+      const b = (e.target as HTMLElement).closest("[data-u]");
+      if (b) return done(b.getAttribute("data-u") as any);
+      if (e.target === wrap) done("continue");
+    });
+    wrap.addEventListener("keydown", (e) => {
+      if ((e as KeyboardEvent).key === "Escape") done("continue");
+    });
+    (wrap.querySelector('[data-u="continue"]') as HTMLElement)?.focus();
+  });
 }

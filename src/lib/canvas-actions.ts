@@ -283,6 +283,7 @@ async function retouchPhoto(ctx: ResultContext) {
   if (!src) return toast("Save This Design Before Retouching It.");
   const { openPhotoEditor } = await import("@/lib/photo-editor");
   await openPhotoEditor({
+    editorMode: "generated",
     photos: [
       {
         key: ctx.id || ctx.path || ctx.src,
@@ -290,7 +291,15 @@ async function retouchPhoto(ctx: ResultContext) {
         room: ctx.room || "Design",
         property: ctx.propertyAddress || "",
         path: ctx.path || "",
+        storagePath: ctx.path || "",
         src: ctx.src,
+        assetId: ctx.id || ctx.path || ctx.src,
+        assetType: "generated_image",
+        propertyId: (ctx as any).propertyId || undefined,
+        roomId: (ctx as any).roomId || undefined,
+        versionId: (ctx as any).versionId || undefined,
+        versionNumber: (ctx as any).versionNumber,
+        editorMode: "generated",
       },
     ],
     startKey: ctx.id || ctx.path || ctx.src,
