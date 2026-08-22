@@ -1,3 +1,4 @@
+import "@/styles/rd-modal.css";
 /* Property Address editor.
    A polished, framework-free application modal used everywhere an address is
    added, changed or cleared. It replaces the native window.prompt: it offers
@@ -83,7 +84,7 @@ export function openAddressModal(opts: AddressModalOptions) {
 
   const previouslyFocused = document.activeElement as HTMLElement | null;
   const host = document.createElement("div");
-  host.className = "rd-app addrm";
+  host.className = "rd-modal addrm";
   host.innerHTML = `<div class="addrm-bg" data-x></div>
     <div class="addrm-w" role="dialog" aria-modal="true" aria-labelledby="addrmTitle">
       <header class="addrm-h">
