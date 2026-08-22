@@ -9453,7 +9453,7 @@ ${picks
     const LIVE_TOOLS = {
       "2D To 3D Plan": run3dPlan,
       "Walkthrough Video": runWalkthrough,
-      "Virtual Stage": () => runRoomToolFlow("stage", "Virtual Stage", false),
+      "Virtual Stage": () => runStageFlow(),
       Declutter: () => runRoomToolFlow("declutter", "Declutter", false),
       "Material Swap": () => runRoomToolFlow("materials", "Material Swap", true),
       "Sketch To Render": () => runRoomToolFlow("sketch", "Sketch To Render", false),
@@ -9562,7 +9562,22 @@ ${picks
       const missing = (!!need && !canvasStyleSelected()) || !support.ok;
       /* The cost chip always states the real price of this run. */
       const cost = document.getElementById("genCost");
-      if (cost) cost.textContent = costLabel(toolCost(tool));
+      /* Staging prices every requested result, so its chip is not the flat
+         one credit tool price. */
+      if (cost) {
+        let price = toolCost(tool);
+        if (tool === "Virtual Stage") {
+          try {
+            price = variationCost(buildRuns(readStageSettings().extras));
+          } catch (_) {}
+        }
+        cost.textContent = costLabel(price);
+      }
+      /* The staging controls belong to the Stage tool alone. */
+      try {
+        ensureStagePanel();
+        setStagePanelVisible(tool === "Virtual Stage");
+      } catch (_) {}
       /* The confirm button always states what this exact click will do. */
       const CONFIRM_LABEL = {
         Redesign: "Generate Design",
