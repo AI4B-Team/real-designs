@@ -4995,6 +4995,10 @@ export function initApp(): () => void {
     window.addEventListener("rd:saved", paintVersions);
     document.getElementById("fRoom")?.addEventListener("change", () => {
       paintVersions();
+      /* Bed sizes, seat counts and category lists all follow the room type. */
+      try {
+        refreshStageRoom();
+      } catch (_) {}
     });
 
     /* ---------- designs: real saved versions plus sample gallery ---------- */
