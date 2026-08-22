@@ -1986,3 +1986,63 @@
   font: 600 13px "DM Sans", system-ui, sans-serif;
   color: #a11;
 }
+
+/* ---- Property Photos filmstrip inside the Canvas workspace ---------------
+   Sits between the image viewport and the permanent bottom action bar. */
+.rds-strip.rds-film {
+  display: block;
+  margin: 12px 0 0;
+  padding: 6px 10px 8px;
+}
+.rds-film-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+}
+.rd-app .rds-film-t {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  background: transparent;
+  padding: 4px 2px;
+  cursor: pointer;
+  color: var(--ink, #16161a);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.rds-film-t svg {
+  width: 16px;
+  height: 16px;
+  color: var(--mute-2, #6b6b74);
+}
+.rds-film-n {
+  font-family: "DM Mono", monospace;
+  font-size: 0.66rem;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #f2f2f5;
+  color: var(--mute-2, #6b6b74);
+}
+.rds-film-cur {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--mute-2, #6b6b74);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rds-film-a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.rds-film-b {
+  display: flex;
+  padding-top: 6px;
+}
+.rds-strip.rds-film.collapsed .rds-film-b {
+  display: none;
+}
