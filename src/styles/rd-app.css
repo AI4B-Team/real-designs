@@ -10449,7 +10449,7 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  padding: 0 12px 6px;
+  padding: 4px 16px 8px;
   background: #fff;
   font-size: 0.72rem;
   font-weight: 700;
@@ -10462,9 +10462,15 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.spd-hcheck {
+  position: static;
+  cursor: pointer;
+}
 .spd-row {
   position: relative;
-  padding: 8px 12px;
+  min-height: 92px;
+  max-height: 112px;
+  padding: 12px 16px;
   border: 2px solid var(--line);
   border-radius: 12px;
   background: #fff;
