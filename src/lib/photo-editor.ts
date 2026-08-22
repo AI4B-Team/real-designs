@@ -12,6 +12,7 @@
  */
 
 import { createIcons, icons } from "lucide";
+import { openDisclosureExport } from "@/lib/disclosure-export";
 import { rdToast } from "@/lib/rd-toast";
 import { applyCanvasBadge, resolveCanvasBadge, showCompareControl } from "@/lib/canvas-badge";
 import { confirmDialog } from "@/lib/builder-card-menu";
