@@ -2971,10 +2971,21 @@ function mountStrip() {
   if (view && board) view.insertBefore(head, board);
 
   strip = document.createElement("div");
-  strip.className = "rds-strip";
-  if (view && board && board.nextSibling) view.insertBefore(strip, board.nextSibling);
+  strip.className = "rds-strip rds-film";
+  /* The filmstrip lives INSIDE the Canvas workspace: directly under the image
+     viewport and directly above the permanent bottom action bar (Version
+     History / Save Room), which it never replaces. */
+  const cardBody = document.querySelector(
+    "#v-studio .canvas-card > .card-b",
+  ) as HTMLElement | null;
+  const bottomBar = document.getElementById("rdwVers");
+  if (cardBody && bottomBar && bottomBar.parentElement === cardBody) {
+    cardBody.insertBefore(strip, bottomBar);
+  } else if (cardBody) cardBody.appendChild(strip);
+  else if (view && board && board.nextSibling) view.insertBefore(strip, board.nextSibling);
   else if (view) view.appendChild(strip);
   else document.body.appendChild(strip);
+
 
   /* Autosave already persists every edit, so the menu only navigates. */
   const backToPhotos = () => {
