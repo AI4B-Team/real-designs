@@ -204,11 +204,13 @@ async function openCanvasPhotoEditor(): Promise<void> {
 /* room cards                                                          */
 /* ------------------------------------------------------------------ */
 
-/** The four choices offered inline for each space. */
+/** The four choices offered inline for each space. Labels must match the
+    room catalog exactly (legacy aliases are not matched here), so the most
+    common area always leads — Front Exterior first for exterior photos. */
 const POPULAR: Record<CanvasSpace, string[]> = {
   interior: ["Living Room", "Kitchen", "Bedroom", "Bathroom"],
-  exterior: ["Front Of House", "Back Of House", "Side Of House", "Porch"],
-  garden: ["Front Yard", "Backyard", "Patio", "Pool Area"],
+  exterior: ["Front Exterior", "Rear Exterior", "Side Exterior", "Porch"],
+  garden: ["Front Garden", "Backyard", "Garden Patio", "Pool Area"],
 };
 
 /** Open once a choice exists: the section otherwise shows a summary row. */
