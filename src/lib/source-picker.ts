@@ -550,27 +550,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     render();
   }
 
-  async function readListingUrl() {
-    const v = state.url.trim();
-    if (v.length < 8) return;
-    state.busy = true;
-    state.note = "";
-    render();
-    try {
-      const { startListingImport } = await import("@/lib/listing-import.functions");
-      const r: any = await startListingImport({ data: { url: v } });
-      const addr = r?.import?.address || r?.import?.raw_address || "";
-      if (addr) opts.onProperty?.(addr);
-      state.note =
-        (r?.message || (addr ? "Listing Read: " + addr + "." : "Listing Read.")) +
-        " Listing Links Are Read As Text Only. No Photos Are Imported From A Public Listing Page.";
-    } catch (_) {
-      state.note =
-        "That Link Could Not Be Read. Listing Links Are Read As Text Only, So Upload The Photos Below.";
-    }
-    state.busy = false;
-    render();
-  }
+
+
 
   /* ---------- markup ---------- */
 
