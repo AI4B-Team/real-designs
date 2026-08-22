@@ -10491,8 +10491,9 @@
 .spd-rth {
   position: relative;
   display: block;
-  width: 72px;
-  height: 54px;
+  width: 112px;
+  height: 72px;
+  border: 1px solid var(--line);
   flex: 0 0 auto;
   border-radius: 8px;
   overflow: hidden;
