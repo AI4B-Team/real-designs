@@ -6,11 +6,13 @@
 }
 
 .rd-app .sp-describe .sp-composer textarea {
-  min-height: 96px;
-  max-height: 220px;
+  min-height: 144px;
+  max-height: 320px;
   overflow-y: auto;
   resize: none;
+  line-height: 1.55;
 }
+
 
 /* reference thumbnails live inside the editor */
 .rd-app .sp-describe .sp-refs {
