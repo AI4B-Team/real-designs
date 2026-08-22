@@ -15,8 +15,8 @@ body.rdpe-open {
   z-index: 4000;
   display: flex;
   flex-direction: column;
-  background: #0d0e10;
-  color: #f4f4f5;
+  background: #ffffff;
+  color: #111214;
   font-family: inherit;
 }
 
@@ -27,7 +27,7 @@ body.rdpe-open {
   height: 56px;
   padding: 0 14px;
   border-bottom: 1px solid #232427;
-  background: #131417;
+  background: #ffffff;
   flex: 0 0 auto;
 }
 
@@ -36,20 +36,20 @@ body.rdpe-open {
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #a5a6ab;
+  color: #5f6067;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
 }
 .rdpe-crumb span:last-of-type {
-  color: #fff;
+  color: #111214;
   font-weight: 600;
 }
 .rdpe-crumb i,
 .rdpe-crumb svg {
   width: 14px;
   height: 14px;
-  color: #56585e;
+  color: #9a9ba1;
   stroke: currentColor;
 }
 
@@ -68,8 +68,8 @@ body.rdpe-open {
   justify-content: center;
   border-radius: 9px;
   border: 1px solid #2a2b30;
-  background: #17181c;
-  color: #e8e8ea;
+  background: #f6f6f7;
+  color: #111214;
   cursor: pointer;
 }
 .rdpe .rdpe-ib i,
@@ -80,12 +80,12 @@ body.rdpe-open {
   stroke: currentColor;
 }
 .rdpe .rdpe-ib:hover {
-  background: #202126;
+  background: #ececee;
 }
 .rdpe .rdpe-ib.on {
   border-color: #cc0000;
-  background: #2a1113;
-  color: #fff;
+  background: #fdecec;
+  color: #111214;
 }
 .rdpe .rdpe-ib[disabled] {
   opacity: 0.35;
@@ -111,12 +111,12 @@ body.rdpe-open {
   stroke: currentColor;
 }
 .rdpe .btn-ghost {
-  background: #17181c;
-  border-color: #2c2d32;
-  color: #e6e6e8;
+  background: #f6f6f7;
+  border-color: #e6e6e8;
+  color: #111214;
 }
 .rdpe .btn-ghost:hover {
-  background: #202126;
+  background: #ececee;
 }
 .rdpe .btn-primary {
   background: #cc0000;
@@ -161,8 +161,8 @@ body.rdpe-open {
   border: 1px solid #232427;
   border-right: 0;
   border-radius: 8px 0 0 8px;
-  background: #17181c;
-  color: #a5a6ab;
+  background: #f6f6f7;
+  color: #5f6067;
   cursor: pointer;
 }
 .rdpe.rdpe-panel-off .rdpe-grip {
@@ -173,7 +173,7 @@ body.rdpe-open {
 }
 .rdpe-prov {
   font-size: 12px;
-  color: #a5a6ab;
+  color: #5f6067;
   display: none;
 }
 .rdpe-prov.on {
@@ -202,7 +202,7 @@ body.rdpe-open {
   justify-content: center;
   padding: 22px 60px;
   background:
-    radial-gradient(circle at 50% 40%, #17181c 0%, #0d0e10 70%);
+    radial-gradient(circle at 50% 40%, #ffffff 0%, #f4f4f5 70%);
 }
 .rdpe-stage img {
   max-width: 100%;
@@ -222,9 +222,9 @@ body.rdpe-open {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 1px solid #2c2d32;
-  background: rgb(19 20 23 / 88%);
-  color: #fff;
+  border: 1px solid #e6e6e8;
+  background: rgb(255 255 255 / 92%);
+  color: #111214;
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -242,7 +242,7 @@ body.rdpe-open {
   right: 12px;
 }
 .rdpe-nav:hover {
-  background: #22232a;
+  background: #eaeaec;
 }
 
 .rdpe-badge {
@@ -308,9 +308,9 @@ body.rdpe-open {
   gap: 8px;
   padding: 7px 16px;
   border-radius: 999px;
-  border: 1px solid #2c2d32;
-  background: #17181c;
-  color: #d8d8db;
+  border: 1px solid #e6e6e8;
+  background: #f6f6f7;
+  color: #1c1d22;
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
@@ -323,7 +323,7 @@ body.rdpe-open {
 }
 .rdpe-hold:active {
   border-color: #cc0000;
-  color: #fff;
+  color: #111214;
 }
 
 .rdpe-strip {
@@ -333,7 +333,7 @@ body.rdpe-open {
   padding: 10px 14px 14px;
   overflow-x: auto;
   border-top: 1px solid #1f2024;
-  background: #101115;
+  background: #fafafa;
   scrollbar-width: thin;
 }
 .rdpe-thumb {
@@ -345,7 +345,7 @@ body.rdpe-open {
   border-radius: 8px;
   overflow: hidden;
   border: 2px solid transparent;
-  background: #191a1f;
+  background: #f2f2f3;
   cursor: pointer;
 }
 .rdpe-thumb img {
@@ -384,7 +384,7 @@ body.rdpe-open {
 
 .rdpe-panel {
   border-left: 1px solid #232427;
-  background: #131417;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -409,9 +409,9 @@ body.rdpe-open {
   width: 100%;
   padding: 11px 13px;
   border-radius: 12px;
-  border: 1px solid #2c2d32;
-  background: #17181c;
-  color: #fff;
+  border: 1px solid #e6e6e8;
+  background: #f6f6f7;
+  color: #111214;
   text-align: left;
   cursor: pointer;
 }
@@ -422,7 +422,7 @@ body.rdpe-open {
 .rdpe-auto svg {
   width: 18px;
   height: 18px;
-  color: #ff4d4d;
+  color: #cc0000;
   stroke: currentColor;
 }
 .rdpe-auto b {
@@ -433,13 +433,13 @@ body.rdpe-open {
   display: block;
   font-style: normal;
   font-size: 11.5px;
-  color: #9b9ca1;
+  color: #5f6067;
 }
 
 .rdpe-sec {
   border: 1px solid #232427;
   border-radius: 12px;
-  background: #17181c;
+  background: #f6f6f7;
   overflow: hidden;
 }
 .rdpe-sec > summary {
@@ -459,7 +459,7 @@ body.rdpe-open {
 .rdpe-sec > summary svg {
   width: 16px;
   height: 16px;
-  color: #b9babf;
+  color: #4a4b52;
   stroke: currentColor;
 }
 .rdpe-sec .rdpe-caret {
@@ -483,7 +483,7 @@ body.rdpe-open {
   min-width: 0;
   gap: 2px 8px;
   font-size: 12px;
-  color: #c9cacd;
+  color: #33343a;
 }
 .rdpe-slider span {
   grid-column: 1;
@@ -493,7 +493,7 @@ body.rdpe-open {
   grid-row: 1;
   justify-self: end;
   font-variant-numeric: tabular-nums;
-  color: #fff;
+  color: #111214;
   font-weight: 600;
 }
 .rdpe-slider .rdpe-rst {
@@ -515,17 +515,17 @@ body.rdpe-open {
 .rdpe-chip {
   padding: 6px 11px;
   border-radius: 999px;
-  border: 1px solid #2c2d32;
-  background: #1c1d22;
-  color: #d5d6d9;
+  border: 1px solid #e6e6e8;
+  background: #f4f4f5;
+  color: #1c1d22;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
 .rdpe-chip.on {
   border-color: #cc0000;
-  background: #2a1113;
-  color: #fff;
+  background: #fdecec;
+  color: #111214;
 }
 .rdpe-rotrow {
   display: flex;
@@ -535,7 +535,7 @@ body.rdpe-open {
 .rdpe-note {
   margin: 0;
   font-size: 11.5px;
-  color: #92939a;
+  color: #6b6c73;
   line-height: 1.5;
 }
 
@@ -551,9 +551,9 @@ body.rdpe-open {
   align-items: flex-start;
   padding: 9px 10px;
   border-radius: 10px;
-  border: 1px solid #2c2d32;
-  background: #1c1d22;
-  color: #e3e3e6;
+  border: 1px solid #e6e6e8;
+  background: #f4f4f5;
+  color: #111214;
   font-size: 11.5px;
   font-weight: 600;
   text-align: left;
@@ -563,7 +563,7 @@ body.rdpe-open {
 .rdpe-aiop svg {
   width: 15px;
   height: 15px;
-  color: #ff4d4d;
+  color: #cc0000;
   stroke: currentColor;
 }
 .rdpe-aiop:hover {
@@ -577,7 +577,7 @@ body.rdpe-open {
   font-style: normal;
   font-size: 10.5px;
   font-weight: 500;
-  color: #8e8f96;
+  color: #6b6c73;
 }
 .rdpe-aiop[disabled] {
   opacity: 0.5;
@@ -592,7 +592,7 @@ body.rdpe-open {
   padding: 10px;
   border-radius: 10px;
   border: 1px solid #cc0000;
-  background: #221012;
+  background: #fdecec;
   font-size: 12.5px;
 }
 .rdpe-aibtns {
@@ -611,7 +611,7 @@ body.rdpe-open {
   gap: 8px;
   padding: 11px 12px calc(11px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid #232427;
-  background: #101115;
+  background: #fafafa;
 }
 .rdpe-fr1 {
   display: flex;
@@ -630,13 +630,13 @@ body.rdpe-open {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #a5a6ab;
+  color: #5f6067;
   font-size: 12.5px;
   cursor: pointer;
 }
 .rdpe-reset:hover:not([disabled]) {
-  color: #fff;
-  background: #1c1d22;
+  color: #111214;
+  background: #f4f4f5;
 }
 .rdpe-reset[disabled] {
   opacity: 0.4;
@@ -663,13 +663,13 @@ body.rdpe-open {
 .rdpe-rst {
   border: 0;
   background: transparent;
-  color: #7c7d84;
+  color: #83848b;
   cursor: pointer;
   padding: 2px;
   line-height: 0;
 }
 .rdpe-rst:hover {
-  color: #fff;
+  color: #111214;
 }
 .rdpe-rst i {
   width: 13px;
