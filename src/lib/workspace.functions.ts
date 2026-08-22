@@ -297,7 +297,7 @@ export const getPropertyTree = createServerFn({ method: "GET" })
          media:property_media_assets ( id, storage_path, original_filename, room_group, hidden, sort_order, created_at ),
          projects ( id, name, finish_grade, budget_target, created_at,
            rooms ( id, name, room_type, created_at,
-             versions ( id, version_no, status, before_path, after_path, created_at,
+             versions ( id, version_no, status, style, before_path, after_path, created_at,
                scopes ( total_low, total_high, budget_fit ) ) ) )`,
         )
         .order("created_at", { ascending: false }),
@@ -361,6 +361,7 @@ export const getPropertyTree = createServerFn({ method: "GET" })
                 versions: versions.length,
                 version_no: latest?.version_no ?? null,
                 status: latest?.status ?? null,
+                style: (latest?.style ?? null) as string | null,
                 before_path: latest?.before_path ?? null,
                 after_path: latest?.after_path ?? null,
                 total_low: scope ? Number(scope.total_low) : null,

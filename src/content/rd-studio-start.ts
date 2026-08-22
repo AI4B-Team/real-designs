@@ -37,7 +37,9 @@ import {
   canvasModeFor,
   type ConceptBatch,
 } from "@/lib/concept-batch";
+import { startVideoBuilder } from "@/lib/video-handoff";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
+
 import { measureImage, classify, FLAG_LABEL } from "@/lib/media-analysis";
 import { getMyCredits } from "@/lib/credits.functions";
 
@@ -1134,9 +1136,19 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   function recentHtml() {
     const list = (ctx.getRecent ? ctx.getRecent() : []).slice(0, 4);
     if (!list.length) return "";
+    /* While the user is actively picking video source designs, this strip
+       must not compete with the selection above it. */
+    const quiet = state.sourceTab === "design";
+    if (quiet)
+      return (
+        '<details class="stw-recent is-quiet">' +
+        '<summary class="stw-sec-h"><h3>Continue Where You Left Off</h3>' +
+        "<span>Your Most Recent Work</span></summary></details>"
+      );
     return (
       '<section class="stw-recent">' +
       '<div class="stw-sec-h"><h3>Continue Where You Left Off</h3><span>Your Most Recent Work</span></div>' +
+
       '<div class="stw-recent-g">' +
       list
         .map(
@@ -1600,25 +1612,34 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         ? {
             loadDesigns: () => ctx.getFinishedDesigns!(),
             onDesigns: (designs: PickerDesign[]) => {
-              /* Finished designs become the video's scenes, in pick order. */
-              try {
-                (window as any).rdListingVideo?.({
-                  from: "studio",
-                  sourceType: "design",
-                  propertyLabel: designs[0]?.address || "",
-                  paths: designs.map((d) => d.path),
-                  designs: designs.map((d) => ({
-                    id: d.id,
-                    path: d.path,
-                    beforePath: d.beforePath || null,
-                    room: d.room || "",
+              /* Finished designs become the video's scenes, in pick order,
+                 through the canonical handoff — never thumbnail URLs. */
+              const res = startVideoBuilder(
+                {
+                  origin: "designs",
+                  propertyId: designs[0]?.propertyId || null,
+                  projectId: designs[0]?.projectId || null,
+                  propertyAddress: designs[0]?.address || null,
+                  assets: designs.map((d, i) => ({
+                    assetId: d.id,
                     versionId: d.versionId || null,
+                    storagePath: d.path,
+                    fileName: (d.room || "design") + ".jpg",
+                    roomId: d.id,
+                    roomName: d.room || null,
+                    propertyId: d.propertyId || null,
+                    projectId: d.projectId || null,
+                    sortOrder: i,
+                    sourceType: "generated-version",
                   })),
-                });
-              } catch (_) {
-                ctx.go("studio");
+                },
+                { from: "studio", sourceType: "design" },
+              );
+              if (!res.ok) {
+                ctx.showAlert?.(res.reason || "Couldn't Send These Designs To Video Builder.");
               }
             },
+
           }
         : {}),
     });

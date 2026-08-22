@@ -2863,6 +2863,10 @@ export function initApp(): () => void {
                     propertyId: p.id || null,
                     createdAt: r.created_at || null,
                     versionId: r.version_id || null,
+                    style: r.style || null,
+                    versionNo: r.version_no || null,
+                    status: r.status || null,
+                    projectId: pr.id || null,
                   });
                 }),
               ),
