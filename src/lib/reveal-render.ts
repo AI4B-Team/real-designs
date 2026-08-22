@@ -1104,6 +1104,10 @@ export async function renderReveal(
   const sceneEnd = durations.length
     ? starts[durations.length - 1]! + durations[durations.length - 1]!
     : 0;
+  const disclosureWindows = videoDisclosurePlan({
+    duration: sceneEnd / 1000,
+    placement: opts.disclosurePlacement || "persistent",
+  });
   const transitionClips = await Promise.all(
     transitionsIn.map((tr) =>
       tr?.clipUrl ? loadClip(tr.clipUrl).catch(() => null) : Promise.resolve(null),
