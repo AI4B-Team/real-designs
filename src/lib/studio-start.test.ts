@@ -102,8 +102,10 @@ describe("studio start source picker", () => {
   it("references stay optional and validation only asks for a description", () => {
     const { host } = mount("design");
     (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
-    /* Nothing shouts on first paint. */
-    expect(host.querySelector(".sp-describe-foot .sp-meta")!.textContent).toBe("");
+    /* The footer always states the one thing still missing. */
+    expect(host.querySelector(".sp-describe-foot .sp-meta")!.textContent).toContain(
+      "Add a description",
+    );
     const ta = host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement;
     ta.value = " ";
     ta.dispatchEvent(new Event("input", { bubbles: true }));
