@@ -32,8 +32,16 @@ import {
   type Point,
 } from "@/lib/markup";
 import { drawMarkup } from "@/lib/markup-render";
+import { refreshMeasurements } from "@/lib/markup";
+import { calibrateScale, type MeasureUnit } from "@/lib/markup-measure";
+import { reproject, type ParcelOverlay } from "@/lib/parcel";
 
-export type MarkupMode = "navigate" | "draw";
+/**
+ * Drawing, calibrating and aligning a parcel are three separate deliberate
+ * modes. Nothing is ever drawn, measured or nudged while the user is simply
+ * looking at the photograph.
+ */
+export type MarkupMode = "navigate" | "draw" | "calibrate" | "parcel";
 
 export type MarkupEditorApi = {
   doc: () => MarkupDoc;
@@ -46,6 +54,12 @@ export type MarkupEditorApi = {
   onChange: () => void;
   /** Text for a new Label layer. Returns null when the user cancels. */
   askLabel?: (suggestion: string) => Promise<string | null>;
+  /** Real length for a drawn reference line. Returns null when cancelled. */
+  askScale?: (pixels: number) => Promise<{ length: number; unit: MeasureUnit } | null>;
+  /** Source pixel size, so one calibration holds at every preview size. */
+  imageSize?: () => { width: number; height: number };
+  /** Report a refused calibration or alignment in the panel. */
+  notify?: (message: string) => void;
 };
 
 export type MarkupEditor = {
@@ -60,6 +74,10 @@ export type MarkupEditor = {
   /** Commit the drafted polygon, as Enter and double-click do. */
   closeDraft(): void;
   removeLastPoint(): void;
+  /** Discard a half-drawn calibration line. */
+  cancelCalibration(): void;
+  /** Nudge, rotate, scale or fade the parcel overlay by keyboard or buttons. */
+  adjustParcel(delta: Partial<{ tx: number; ty: number; rotation: number; scale: number; opacity: number }>): void;
 };
 
 type Drag =
@@ -77,6 +95,8 @@ export function attachMarkupEditor(host: HTMLElement, api: MarkupEditorApi): Mar
   let draftType: MarkupTypeId | null = null;
   let pointer: Point | null = null;
   let drag: Drag = null;
+  let calib: Point[] = [];
+  let parcelDrag: { last: Point } | null = null;
   /* Undo history for markup only: the photo's own history is untouched. */
   const past: MarkupDoc[] = [];
   const future: MarkupDoc[] = [];
@@ -126,6 +146,7 @@ export function attachMarkupEditor(host: HTMLElement, api: MarkupEditorApi): Mar
       draft: draft.length
         ? { type: draftType || "custom_area", points: draft, pointer, color: markupType(draftType || "custom_area").color }
         : null,
+      calibration: calib.length ? { points: calib, pointer } : null,
     });
   }
 
@@ -185,7 +206,91 @@ export function attachMarkupEditor(host: HTMLElement, api: MarkupEditorApi): Mar
     api.select(layer.id);
   }
 
+  function sourceSize() {
+    const s = api.imageSize?.();
+    if (s && s.width > 0 && s.height > 0) return s;
+    const r = host.getBoundingClientRect();
+    return { width: Math.max(1, Math.round(r.width)), height: Math.max(1, Math.round(r.height)) };
+  }
+
+  /* ----------------------------------------------------------- calibration */
+
+  async function calibrationPoint(p: Point) {
+    if (!calib.length) {
+      calib = [p];
+      return repaint();
+    }
+    const a = calib[0] as Point;
+    calib = [];
+    repaint();
+    const size = sourceSize();
+    const answer = await api.askScale?.(
+      Math.hypot((p.x - a.x) * size.width, (p.y - a.y) * size.height),
+    );
+    if (!answer) return;
+    const result = calibrateScale({
+      a,
+      b: p,
+      realLength: answer.length,
+      unit: answer.unit,
+      imageWidth: size.width,
+      imageHeight: size.height,
+      source: "manual",
+      perspective: api.doc().scale?.perspective ?? "unknown",
+    });
+    if (!result.ok) {
+      api.notify?.(result.error);
+      return;
+    }
+    /* A new scale re-states every measurement already on the photograph. */
+    commit(refreshMeasurements({ ...api.doc(), scale: result.calibration }));
+  }
+
+  function cancelCalibration() {
+    if (!calib.length) return;
+    calib = [];
+    repaint();
+  }
+
+  /* -------------------------------------------------------------- parcel */
+
+  function setParcel(overlay: ParcelOverlay, record = true) {
+    const doc = { ...api.doc(), parcel: overlay };
+    if (record) commit(doc);
+    else live(doc);
+  }
+
+  function adjustParcel(delta: Partial<{ tx: number; ty: number; rotation: number; scale: number; opacity: number }>) {
+    const parcel = api.doc().parcel;
+    if (!parcel) return;
+    const a = parcel.alignment;
+    setParcel(
+      reproject(parcel, {
+        ...a,
+        tx: a.tx + (delta.tx ?? 0),
+        ty: a.ty + (delta.ty ?? 0),
+        rotation: a.rotation + (delta.rotation ?? 0),
+        scale: Math.max(0.1, a.scale * (delta.scale ?? 1)),
+        opacity: delta.opacity ?? a.opacity,
+      }),
+    );
+  }
+
   function onPointerDown(ev: PointerEvent) {
+    if (api.mode() === "calibrate") {
+      ev.preventDefault();
+      void calibrationPoint(at(ev));
+      return;
+    }
+    if (api.mode() === "parcel") {
+      if (!api.doc().parcel) return;
+      ev.preventDefault();
+      parcelDrag = { last: at(ev) };
+      past.push(snapshot());
+      future.length = 0;
+      host.setPointerCapture?.(ev.pointerId);
+      return;
+    }
     if (api.mode() !== "draw") return;
     /* Touch and pen behave exactly like the mouse: the browser must not pan
        or long-press-select the photograph while a shape is being drawn. */
@@ -246,6 +351,23 @@ export function attachMarkupEditor(host: HTMLElement, api: MarkupEditorApi): Mar
   }
 
   function onPointerMove(ev: PointerEvent) {
+    if (api.mode() === "calibrate") {
+      if (!calib.length) return;
+      pointer = at(ev);
+      return repaint();
+    }
+    if (parcelDrag) {
+      const q = at(ev);
+      const parcel = api.doc().parcel;
+      if (!parcel) return;
+      const a = parcel.alignment;
+      setParcel(
+        reproject(parcel, { ...a, tx: a.tx + (q.x - parcelDrag.last.x), ty: a.ty + (q.y - parcelDrag.last.y) }),
+        false,
+      );
+      parcelDrag = { last: q };
+      return;
+    }
     if (api.mode() !== "draw") return;
     const p = at(ev);
     if (drag) {
@@ -277,6 +399,12 @@ export function attachMarkupEditor(host: HTMLElement, api: MarkupEditorApi): Mar
   }
 
   function onPointerUp(ev: PointerEvent) {
+    if (parcelDrag) {
+      parcelDrag = null;
+      host.releasePointerCapture?.(ev.pointerId);
+      api.onChange();
+      return repaint();
+    }
     if (!drag) return;
     drag = null;
     host.releasePointerCapture?.(ev.pointerId);
@@ -295,6 +423,28 @@ export function attachMarkupEditor(host: HTMLElement, api: MarkupEditorApi): Mar
   function onKey(ev: KeyboardEvent) {
     const target = ev.target as HTMLElement | null;
     if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+    if (api.mode() === "calibrate") {
+      if (ev.key === "Escape") {
+        ev.preventDefault();
+        cancelCalibration();
+      }
+      return;
+    }
+    if (api.mode() === "parcel") {
+      const step = ev.shiftKey ? 0.01 : 0.002;
+      const moves: Record<string, () => void> = {
+        ArrowLeft: () => adjustParcel({ tx: -step }),
+        ArrowRight: () => adjustParcel({ tx: step }),
+        ArrowUp: () => adjustParcel({ ty: -step }),
+        ArrowDown: () => adjustParcel({ ty: step }),
+      };
+      const move = moves[ev.key];
+      if (move) {
+        ev.preventDefault();
+        move();
+      }
+      return;
+    }
     if (api.mode() !== "draw") return;
     if (ev.key === "Escape" && draft.length) {
       ev.preventDefault();
@@ -346,6 +496,8 @@ export function attachMarkupEditor(host: HTMLElement, api: MarkupEditorApi): Mar
   return {
     repaint,
     cancelDraft,
+    cancelCalibration,
+    adjustParcel,
     closeDraft,
     removeLastPoint,
     hasDraft: () => draft.length > 0,
