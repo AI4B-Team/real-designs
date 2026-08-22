@@ -744,28 +744,44 @@ body.rdpe-open {
   display: none;
 }
 
+/* The image rectangle must be identical in every tool: same padding, same
+   surface, same radius as the Redesign canvas card. Nothing may steal height
+   from the stage, so the compare bar floats over it as an overlay. */
 .rd-app .studio.rdw .rdpe-embed .rdpe-main {
   grid-column: 2;
   grid-row: 1;
+  position: relative;
   min-width: 0;
   min-height: 0;
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
-  background: #14151a;
+  padding: 10px;
+  background: #1a1a1d;
 }
 .rd-app .studio.rdw .rdpe-embed .rdpe-stage {
-  padding: 14px;
-  background: #14151a;
+  padding: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #141416;
 }
 .rd-app .studio.rdw .rdpe-embed .rdpe-stage img {
   max-width: 100%;
   max-height: 100%;
   box-shadow: none;
-  border-radius: 8px;
+  border-radius: 0;
 }
 .rd-app .studio.rdw .rdpe-embed .rdpe-underbar {
-  background: #14151a;
-  border-top: 1px solid rgb(255 255 255 / 8%);
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 4;
+  background: transparent;
+  border-top: 0;
+  pointer-events: none;
+}
+.rd-app .studio.rdw .rdpe-embed .rdpe-underbar > * {
+  pointer-events: auto;
 }
 .rd-app .studio.rdw .rdpe-embed .rdpe-hold {
   background: rgb(255 255 255 / 8%);
