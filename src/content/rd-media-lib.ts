@@ -469,7 +469,7 @@ function card(m) {
       ${badges ? `<div class="ml-badges">${badges}</div>` : ""}
       <div class="ml-ov">
         ${S.selMode ? `<button class="ml-ob${sel ? " on" : ""}" data-pick="${m.id}" aria-label="Select"><i data-lucide="${sel ? "check" : "square"}"></i></button>` : ""}
-        <button class="ml-ob${isFav(m.id) ? " fav" : ""}" data-fav="${m.id}" aria-label="Favorite"><i data-lucide="heart"></i></button>
+        <button class="ml-ob${isFav(m.id) ? " fav" : ""}" data-fav="${m.id}" aria-pressed="${isFav(m.id)}" aria-label="${isFav(m.id) ? "Remove From Favorites" : "Add To Favorites"}" title="${isFav(m.id) ? "Remove From Favorites" : "Add To Favorites"}"><i data-lucide="heart"></i></button>
       </div>
       ${hoverBar(m, g, proc)}
     </div>

@@ -305,8 +305,10 @@
   width: 15px;
   height: 15px;
 }
-.ml-ob.fav svg {
+.ml-ob.fav svg,
+.ml-ob.fav i {
   fill: var(--red, #c00);
+  stroke: var(--red, #c00);
   color: var(--red, #c00);
 }
 .ml-ob.on {
