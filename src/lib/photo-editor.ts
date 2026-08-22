@@ -541,27 +541,94 @@ export async function openPhotoEditor(opts: {
     }
   }
 
-  function sliderRow(a: (typeof ADJUSTMENTS)[number], v: number) {
-    return `<label class="rdpe-slider">
-      <span>${a.label}</span>
-      <input type="range" min="${a.min}" max="${a.max}" step="1" value="${v}" data-adj="${a.key}"
-        aria-label="${a.label}" title="Double-Click To Reset">
-      <b class="rdpe-num">${v > 0 && a.min < 0 ? "+" : ""}${v}</b>
-      <button type="button" class="rdpe-rst" data-reset-adj="${a.key}" aria-label="Reset ${a.label}"
-        ${v === 0 ? "hidden" : ""}><i data-lucide="rotate-ccw"></i></button>
-    </label>`;
+  function sliderRow(o: {
+    key: string;
+    label: string;
+    v: number;
+    min: number;
+    max: number;
+    step?: number;
+    suffix?: string;
+    attr: string;
+  }) {
+    const sign = o.v > 0 && o.min < 0 ? "+" : "";
+    return `<div class="rdpe-slider">
+      <span>${o.label}</span>
+      <b class="rdpe-num">${sign}${o.v}${o.suffix || ""}</b>
+      <button type="button" class="rdpe-rst" ${o.attr}="${o.key}" aria-label="Reset ${o.label}"
+        ${o.v === 0 ? "disabled" : ""}><i data-lucide="rotate-ccw"></i></button>
+      <input type="range" min="${o.min}" max="${o.max}" step="${o.step ?? 1}" value="${o.v}"
+        data-${o.attr === "data-reset-adj" ? "adj" : "geo"}="${o.key}"
+        aria-label="${o.label}" title="Double-Click To Reset">
+    </div>`;
+  }
+
+  function adjRows(group: string) {
+    const s = st();
+    return ADJUSTMENTS.filter((a) => a.group === group)
+      .map((a) =>
+        sliderRow({
+          key: a.key,
+          label: a.label,
+          v: n(s.adj[a.key], 0),
+          min: a.min,
+          max: a.max,
+          attr: "data-reset-adj",
+        }),
+      )
+      .join("");
+  }
+
+  function autoCard() {
+    const s = st();
+    const applied = !!s.auto;
+    const chips = STRENGTHS.map(
+      (x) =>
+        `<button type="button" class="rdpe-chip ${autoStrength === x.id ? "on" : ""}" data-auto-strength="${x.id}"
+          ${autoBusy ? "disabled" : ""}>${x.label}</button>`,
+    ).join("");
+    const status = autoBusy
+      ? "Analyzing The Photograph…"
+      : applied
+        ? `Applied — ${STRENGTHS.find((x) => x.id === s.auto?.strength)?.label} Strength`
+        : autoPreview
+          ? "Previewing. Apply To Keep It."
+          : "";
+    return `<div class="rdpe-autocard">
+      <div class="rdpe-autohead"><i data-lucide="wand-sparkles"></i>
+        <span><b>Auto Enhance</b><em>Automatically balance lighting, color, and detail.</em></span></div>
+      <div class="rdpe-ratios" role="group" aria-label="Auto Enhance Strength">${chips}</div>
+      ${status ? `<p class="rdpe-note rdpe-autostate">${status}</p>` : ""}
+      <div class="rdpe-autobtns">
+        <button type="button" class="btn btn-ghost btn-sm" data-act="autopreview" ${autoBusy ? "disabled" : ""}>
+          <i data-lucide="eye"></i>Preview</button>
+        <button type="button" class="btn btn-primary btn-sm" data-act="autoapply" ${autoBusy ? "disabled" : ""}>
+          <i data-lucide="check"></i>Apply</button>
+        ${
+          applied
+            ? `<button type="button" class="btn btn-ghost btn-sm" data-act="autoundo"><i data-lucide="undo-2"></i>Undo Auto Enhance</button>`
+            : ""
+        }
+      </div>
+      <p class="rdpe-note">Bounded, Scene Aware And Free. Windows, White Cabinetry And Reflective Surfaces Are Protected, And Applying It Twice Gives The Same Result.</p>
+    </div>`;
+  }
+
+  function histogramBlock() {
+    const warn = clippingWarning(stats);
+    return `<details class="rdpe-hist" data-sec="hist"${OPEN.has("hist") ? " open" : ""}>
+      <summary><i data-lucide="bar-chart-3"></i>Histogram<i data-lucide="chevron-down" class="rdpe-caret"></i></summary>
+      <div class="rdpe-histb">
+        <canvas id="rdpeHistCanvas" width="256" height="64" aria-label="Live Histogram Of The Current Preview"></canvas>
+        ${warn ? `<p class="rdpe-clip"><i data-lucide="triangle-alert"></i>${warn}</p>` : ""}
+      </div>
+    </details>`;
   }
 
   function paintPanel() {
     const s = st();
-    const g = (grp: string) =>
-      ADJUSTMENTS.filter((a) => a.group === grp)
-        .map((a) => sliderRow(a, n(s.adj[a.key], 0)))
-        .join("");
-
     const traits = detectPhotoTraits(cur());
     const ops = photoEnhancements(traits);
-    const gens = generativeEdits();
     const opBtn = (o: { op: string; label: string; icon: string; credits: number }) =>
       `<button type="button" class="rdpe-aiop ${s.aiOps.includes(o.op) ? "on" : ""} ${
         aiBusy === o.op ? "busy" : ""
@@ -575,46 +642,93 @@ export async function openPhotoEditor(opts: {
       </button>`;
 
     $("#rdpePanelBody").innerHTML = `
-      <button type="button" class="rdpe-auto" data-act="auto"><i data-lucide="wand-sparkles"></i>
-        <span><b>Quick Enhance</b><em>One-Click Exposure, Contrast And Color — No Credits</em></span></button>
+      ${section("auto", "Auto Enhance", "wand-sparkles", autoCard())}
 
-      ${section("light", "Light", "sun", g("light"))}
-      ${section("color", "Color", "palette", g("color"))}
-      ${section("detail", "Detail", "focus", g("detail"))}
+      ${section(
+        "light",
+        "Light & Color",
+        "sun",
+        `${histogramBlock()}
+         <p class="rdpe-sub">Light</p>${adjRows("light")}
+         <p class="rdpe-sub">Color</p>${adjRows("color")}`,
+      )}
+
+      ${section("detail", "Detail", "focus", adjRows("detail"))}
+
       ${section(
         "crop",
-        "Crop & Rotate",
+        "Crop & Geometry",
         "crop",
-        `<div class="rdpe-ratios">${RATIOS.map(
+        `<p class="rdpe-sub">Crop Ratio<span class="rdpe-subv">${esc(
+          RATIOS.find((r) => r.id === (s.crop?.ratio || "original"))?.label || "Original",
+        )}</span></p>
+        <div class="rdpe-ratios">${RATIOS.map(
           (r) =>
             `<button type="button" class="rdpe-chip ${
               (s.crop?.ratio || "original") === r.id ? "on" : ""
             }" data-ratio="${r.id}">${r.label}</button>`,
         ).join("")}</div>
+        ${
+          cropMode
+            ? `<div class="rdpe-autobtns">
+                <button type="button" class="btn btn-primary btn-sm" data-act="cropapply">Apply Crop</button>
+                <button type="button" class="btn btn-ghost btn-sm" data-act="cropcancel">Cancel</button>
+               </div>`
+            : ""
+        }
+        <p class="rdpe-sub">Rotate And Flip</p>
         <div class="rdpe-rotrow">
-          <button type="button" class="rdpe-ib" data-act="rotl" title="Rotate Left"><i data-lucide="rotate-ccw"></i></button>
-          <button type="button" class="rdpe-ib" data-act="rotr" title="Rotate Right"><i data-lucide="rotate-cw"></i></button>
-          <button type="button" class="rdpe-ib ${s.flipH ? "on" : ""}" data-act="flip" title="Flip Horizontal"><i data-lucide="flip-horizontal"></i></button>
-          <button type="button" class="rdpe-ib ${cropMode ? "on" : ""}" data-act="cropmode" title="Adjust Crop"><i data-lucide="crop"></i></button>
+          <button type="button" class="rdpe-ib" data-act="rotl" title="Rotate Left" aria-label="Rotate Left"><i data-lucide="rotate-ccw"></i></button>
+          <button type="button" class="rdpe-ib" data-act="rotr" title="Rotate Right" aria-label="Rotate Right"><i data-lucide="rotate-cw"></i></button>
+          <button type="button" class="rdpe-ib ${s.flipH ? "on" : ""}" data-act="flip" title="Flip Horizontal" aria-label="Flip Horizontal"><i data-lucide="flip-horizontal"></i></button>
+          <button type="button" class="rdpe-ib ${s.flipV ? "on" : ""}" data-act="flipv" title="Flip Vertical" aria-label="Flip Vertical"><i data-lucide="flip-vertical"></i></button>
+          <button type="button" class="rdpe-ib ${cropMode ? "on" : ""}" data-act="cropmode" title="Adjust Crop" aria-label="Adjust Crop"><i data-lucide="crop"></i></button>
         </div>
-        <label class="rdpe-slider"><span>Straighten</span>
-          <input type="range" min="-15" max="15" step="0.5" value="${s.straighten}" data-straighten aria-label="Straighten">
-          <b class="rdpe-num">${s.straighten}°</b></label>`,
+        <p class="rdpe-sub">Perspective</p>
+        ${GEOMETRY.map((gm) =>
+          sliderRow({
+            key: gm.key,
+            label: gm.label,
+            v: n((s as any)[gm.key], 0),
+            min: gm.min,
+            max: gm.max,
+            step: gm.step,
+            suffix: "°",
+            attr: "data-reset-geo",
+          }),
+        ).join("")}
+        <button type="button" class="rdpe-reset rdpe-resetgeo" data-act="resetgeo" ${
+          hasGeometry(s) ? "" : "disabled"
+        }><i data-lucide="rotate-ccw"></i><span>Reset Geometry</span></button>`,
       )}
+
       ${section(
-        "enhance",
-        "Photo Enhancements",
+        "ai",
+        "AI Enhancements",
         "sparkles",
-        `<p class="rdpe-note">These Correct The Photograph. They Never Restage Or Redesign The Space.</p>
-         <div class="rdpe-ai">${ops.map(opBtn).join("")}</div>`,
+        `<p class="rdpe-note">Real Estate Corrections That Run On The Server. Nothing Runs Automatically, And Every Result Is Saved As A New Version.</p>
+         <div class="rdpe-ai">${ops.map(opBtn).join("")}</div>
+         <button type="button" class="rdpe-cont" data-continue="object">
+           <i data-lucide="mouse-pointer-square-dashed"></i>
+           <span><b>Continue In Object Edit</b><em>Select, remove, replace, or modify a specific object.</em></span>
+           <i data-lucide="arrow-right"></i></button>`,
       )}
+
       ${section(
-        "generative",
-        "Generative Edits",
-        "wand",
-        `<p class="rdpe-note">These Change What Is In The Scene. You Mark The Target And Confirm The Credit Cost First.</p>
-         <div class="rdpe-ai">${gens.map(opBtn).join("")}</div>`,
+        "continue",
+        "Continue With",
+        "arrow-right-circle",
+        `<p class="rdpe-note">Keeps This Photo And Version. Nothing Generates And No Credit Is Spent Until You Review The Settings.</p>
+         ${continueWithTools()
+           .map(
+             (t) => `<button type="button" class="rdpe-cont" data-continue="${esc(t.tool)}">
+             <i data-lucide="${t.icon}"></i>
+             <span><b>${esc(t.label)}</b><em>${esc(t.blurb)}</em></span>
+             <i data-lucide="arrow-right"></i></button>`,
+           )
+           .join("")}`,
       )}
+
       ${
         aiPreview
           ? `<div class="rdpe-aipreview"><b>${esc(aiPreview.label)} Preview</b>
@@ -624,6 +738,7 @@ export async function openPhotoEditor(opts: {
               </div></div>`
           : ""
       }`;
+    drawHistogram();
   }
 
   function section(id: string, label: string, icon: string, body: string) {
