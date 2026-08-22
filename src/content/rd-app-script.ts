@@ -67,6 +67,31 @@ import {
   showStageQuality,
 } from "@/lib/stage-controls";
 import { analyzeStageRoom, renderStaging, checkStagedResult } from "@/lib/stage.functions";
+import {
+  buildDeclutterBrief,
+  declutterCredits,
+  declutterMeta,
+  restoreFromMeta,
+} from "@/lib/declutter-brief";
+import {
+  mountDeclutterPanel,
+  setDeclutterPanelVisible,
+  readDeclutterSettings,
+  readDeclutterResults,
+  setDeclutterDetections,
+  setDeclutterDetecting,
+  resetDeclutter,
+  declutterDetections,
+  hasDeclutterDetections,
+  loadDeclutterState,
+  buildMaskOverlay,
+  openDeclutterReview,
+  showDeclutterQuality,
+  openRestorePicker,
+  openDeclutterBatch,
+  onDeclutterBatch,
+} from "@/lib/declutter-controls";
+import { detectClutter, renderDeclutter, checkDeclutteredResult } from "@/lib/declutter.functions";
 import { peekResume, markResumeConsumed } from "@/lib/resume";
 import { isFavorite } from "@/lib/favorites";
 import {
@@ -4446,6 +4471,296 @@ export function initApp(): () => void {
       }
     }
 
+    /* ---------- Declutter: targeted, non-destructive cleanup ---------- */
+
+    /** The Declutter panel only exists once the Canvas body exists. */
+    function ensureDeclutterPanel() {
+      try {
+        mountDeclutterPanel({
+          onChange: () => paintGenGate(),
+          onDetect: () => detectForDeclutter(true),
+        });
+        onDeclutterBatch(() => runDeclutterBatch());
+      } catch (_) {}
+    }
+
+    /** Free detection pass: nothing here can ever charge a credit. */
+    async function detectForDeclutter(force) {
+      const srcImg = document.querySelector("#cBefore img");
+      if (!srcImg || !srcImg.src) return null;
+      if (!force && hasDeclutterDetections()) return declutterDetections();
+      ensureDeclutterPanel();
+      setDeclutterDetecting(true);
+      try {
+        const image = await toDataUrl(srcImg.src, 1100);
+        const r = await detectClutter({ data: { image } });
+        setDeclutterDetections(r.detections, r.room);
+        return r.detections;
+      } catch (e) {
+        setDeclutterDetecting(
+          false,
+          (e && e.message) || "The photo could not be read. Brush the areas you want cleaned instead.",
+        );
+        return null;
+      }
+    }
+
+    /* A new source photo invalidates the old detections and mask. */
+    window.addEventListener("rd:photo", () => {
+      try {
+        if (activeToolName() !== "Declutter") resetDeclutter();
+      } catch (_) {}
+    });
+
+    async function runDeclutterFlow() {
+      if (busy || GEN_GUARD.busy) return;
+      const srcImg = document.querySelector("#cBefore img");
+      if (STUDIO_SRC === SRC_EMPTY || !srcImg || !srcImg.src) {
+        needSourceModal();
+        return;
+      }
+      ensureDeclutterPanel();
+      /* Detection is free, so it always runs before the user is asked to pay. */
+      if (!hasDeclutterDetections()) await detectForDeclutter(false);
+
+      const s = readDeclutterSettings();
+      const brief = buildDeclutterBrief({
+        ...s,
+        roomType: currentRoomType() || null,
+        notes: ((document.getElementById("agentNote") || {}).value || "").trim() || null,
+        hasSource: true,
+      });
+      if (!brief.valid) {
+        try {
+          rdToast(brief.missing.join(" \u00b7 "));
+        } catch (_) {}
+        return;
+      }
+      if (!ensureCredits(brief.credits, "Declutter")) return;
+
+      const source = await toDataUrl(srcImg.src, 1600);
+      const overlay = await buildMaskOverlay(source, s.detections, s.mask);
+      const answer = await openDeclutterReview(brief, {
+        costLabel: costLabel(brief.credits),
+        sourceLabel: studioSourceLabel(),
+        overlay,
+        balanceNote:
+          CREDITS && CREDITS.plan !== "free" && typeof CREDITS.balance === "number"
+            ? "Balance after this run: " + Math.max(0, CREDITS.balance - brief.credits) + " credits."
+            : null,
+      });
+      if (answer !== "confirm") return;
+      if (busy || !GEN_GUARD.begin()) return;
+      await runDecluttering(brief, source, overlay, s);
+    }
+
+    /** The exact source version this cleanup was generated from. */
+    function studioSourceLabel() {
+      try {
+        const p = studioSourcePath();
+        if (p) return "Saved source photo · " + String(p).split("/").pop();
+      } catch (_) {}
+      return "The photo currently on the canvas";
+    }
+
+    async function runDecluttering(brief, source, overlay, settings) {
+      busy = true;
+      setCanvasPhase("generating");
+      const btn = document.getElementById("genBtn");
+      if (btn) btn.disabled = true;
+      const ov = document.getElementById("cGen");
+      if (ov) ov.classList.add("on");
+      genPhase(8, "Locking your mask");
+      const finish = () => {
+        setTimeout(() => {
+          if (ov) ov.classList.remove("on");
+          busy = false;
+          if (btn) btn.disabled = false;
+          GEN_GUARD.end();
+        }, 240);
+      };
+      try {
+        genPhase(
+          32,
+          brief.runs.length > 1 ? "Cleaning " + brief.runs.length + " versions" : "Removing the selected items",
+        );
+        const r = await renderDeclutter({
+          data: {
+            image: source,
+            overlay,
+            confirm: settings.emptyConfirm || null,
+            payload: brief.payload,
+            runs: brief.runs,
+          },
+        });
+        const made = r.results.filter((x) => x.image);
+        const failed = r.results.filter((x) => !x.image);
+        if (!made.length) throw new Error(failed[0]?.error || "Declutter did not produce an image.");
+
+        genPhase(74, "Saving your " + (made.length > 1 ? "results" : "result"));
+        let firstPath = null;
+        for (const res of made) {
+          const label = r.classification + " \u00b7 " + res.label;
+          /* Every accepted result carries its mask, its detections and its
+             source so Stage, Redesign, Edit, Materials, Angles and Video can
+             all reopen exactly this work. */
+          window.__rdVersionExtras = declutterMeta({
+            payload: brief.payload,
+            detections: settings.detections,
+            sourceVersion: studioSourcePath() || null,
+            run: res.label,
+            model: r.model,
+          });
+          let path = null;
+          try {
+            path = await persistRender(res.image, label);
+          } catch (_) {
+            /* The image is paid for and on screen even if the upload failed. */
+          }
+          if (!firstPath) {
+            firstPath = path;
+            lastRender = res.image;
+            lastRenderPath = path;
+            cAfter.innerHTML = photo(res.image, "Decluttered room, AI render");
+          }
+          addRenderVariant(res.image, label, path);
+        }
+        window.__rdDeclutterMeta = {
+          classification: r.classification,
+          disclosure: r.disclosure,
+          mode: r.mode,
+        };
+
+        setCanvasPhase("");
+        markStudioResult();
+        await finalizeGeneratedDesign(lastRenderPath);
+        window.__rdVersionExtras = null;
+        paintStudioSummary({
+          name: r.classification,
+          scope: brief.runs.map((x) => x.label).join(", "),
+        });
+        window.dispatchEvent(new Event("rd:credits-changed"));
+        genPhase(100, "Done");
+        finish();
+        cRng.value = 100;
+        setC(100);
+        setTimeout(() => {
+          let v = 100;
+          const b2 = setInterval(() => {
+            v -= 2.6;
+            cRng.value = v;
+            setC(v);
+            if (v <= 44) clearInterval(b2);
+          }, 20);
+        }, 600);
+
+        if (failed.length)
+          showAlert(
+            failed.length +
+              " of " +
+              r.results.length +
+              " cleanups did not finish, and those credits were refunded. " +
+              (failed[0]?.error || ""),
+          );
+
+        /* Free inspection of what actually changed. */
+        try {
+          const q = await checkDeclutteredResult({
+            data: { before: source, after: made[0].image },
+          });
+          showDeclutterQuality(q.report, {
+            onRegenerate: () => runDeclutterFlow(),
+            onRestore: () => openRestorePicker(() => runDeclutterFlow()),
+          });
+        } catch (_) {
+          /* the checks are advisory, never a reason to lose the result */
+        }
+      } catch (e) {
+        window.__rdVersionExtras = null;
+        setCanvasPhase("");
+        finish();
+        if (!creditGate(e))
+          showAlert("Could not declutter this photo. " + ((e && e.message) || "Try again in a moment."));
+      }
+    }
+
+    /**
+     * Property-wide cleanup. Detection is free for every photo and each photo
+     * is approved on its own before anything is generated or charged.
+     */
+    async function runDeclutterBatch() {
+      const photos = [];
+      const seen = new Set();
+      const add = (id, label, url) => {
+        if (!url || seen.has(url)) return;
+        seen.add(url);
+        photos.push({ id, label, url });
+      };
+      const srcImg = document.querySelector("#cBefore img");
+      if (srcImg && srcImg.src) add("current", "This Photo", srcImg.src);
+      try {
+        for (const v of SESSION_VERSIONS || []) if (v && v.src) add(v.path || v.src, v.label || "Version", v.src);
+      } catch (_) {}
+      if (!photos.length) {
+        showAlert("There are no other photos in this room yet. Add photos to this room first.");
+        return;
+      }
+      openDeclutterBatch({
+        photos,
+        costPerPhoto: declutterCredits(1),
+        detect: async (p) => {
+          const image = await toDataUrl(p.url, 1100);
+          const r = await detectClutter({ data: { image } });
+          const { applyModeSelection } = await import("@/lib/declutter-brief");
+          return applyModeSelection(r.detections, "auto");
+        },
+        run: async (p, detections) => {
+          const image = await toDataUrl(p.url, 1600);
+          const brief = buildDeclutterBrief({
+            mode: "auto",
+            roomType: currentRoomType() || null,
+            detections,
+            mask: { strokes: [], redo: [] },
+            notes: null,
+            results: 1,
+            hasSource: true,
+            emptyConfirm: null,
+            roomRead: null,
+          });
+          if (!brief.valid) throw new Error(brief.missing.join(" \u00b7 "));
+          const overlay = await buildMaskOverlay(image, detections, { strokes: [], redo: [] });
+          const r = await renderDeclutter({
+            data: { image, overlay, confirm: null, payload: brief.payload, runs: brief.runs },
+          });
+          const made = r.results.find((x) => x.image);
+          if (!made) throw new Error(r.results[0]?.error || "That photo did not finish.");
+          window.__rdVersionExtras = declutterMeta({
+            payload: brief.payload,
+            detections,
+            sourceVersion: p.id,
+            run: made.label,
+            model: r.model,
+          });
+          const path = await persistRender(made.image, r.classification + " \u00b7 " + p.label);
+          addRenderVariant(made.image, r.classification + " \u00b7 " + p.label, path);
+          await finalizeGeneratedDesign(path);
+          window.__rdVersionExtras = null;
+          window.dispatchEvent(new Event("rd:credits-changed"));
+        },
+      });
+    }
+
+    /** Reopens a saved cleanup with its stored mask and detections intact. */
+    window.rdRestoreDeclutter = (meta) => {
+      const st = restoreFromMeta(meta);
+      if (!st) return false;
+      ensureDeclutterPanel();
+      loadDeclutterState(st);
+      return true;
+    };
+
+
+
 
 
     function showToolError(msg) {
@@ -4699,6 +5014,9 @@ export function initApp(): () => void {
               tool: activeToolName(),
               notes: (document.getElementById("agentNote") || {}).value || null,
               room_type: currentRoomType(),
+              /* Tool-specific provenance, e.g. the Declutter mask, its
+                 detections and the exact source version it came from. */
+              ...(window.__rdVersionExtras || {}),
             },
           },
         });
@@ -9458,7 +9776,7 @@ ${picks
       "2D To 3D Plan": run3dPlan,
       "Walkthrough Video": runWalkthrough,
       "Virtual Stage": () => runStageFlow(),
-      Declutter: () => runRoomToolFlow("declutter", "Declutter", false),
+      Declutter: () => runDeclutterFlow(),
       "Material Swap": () => runRoomToolFlow("materials", "Material Swap", true),
       "Sketch To Render": () => runRoomToolFlow("sketch", "Sketch To Render", false),
       "Multi Angle": () => runRoomToolFlow("angle", "Multi Angle", true),
@@ -9575,12 +9893,22 @@ ${picks
             price = variationCost(buildRuns(readStageSettings().extras));
           } catch (_) {}
         }
+        if (tool === "Declutter") {
+          try {
+            price = declutterCredits(readDeclutterResults());
+          } catch (_) {}
+        }
         cost.textContent = costLabel(price);
       }
       /* The staging controls belong to the Stage tool alone. */
       try {
         ensureStagePanel();
         setStagePanelVisible(tool === "Virtual Stage");
+      } catch (_) {}
+      /* The cleanup controls belong to the Declutter tool alone. */
+      try {
+        ensureDeclutterPanel();
+        setDeclutterPanelVisible(tool === "Declutter");
       } catch (_) {}
       /* The confirm button always states what this exact click will do. */
       const CONFIRM_LABEL = {
