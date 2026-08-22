@@ -2716,7 +2716,10 @@ function endingControlHtml(w, s) {
 /** The permanent action card that closes every card grid. */
 function addCardHtml(id) {
   return addSourceCardHtml({ id });
-} transition connects Scene A to Scene B, so its trigger sits in the gutter
+}
+
+/**
+ * A transition connects Scene A to Scene B, so its trigger sits in the gutter
  * on the seam between the two cards — never as a badge over a photo. One 24px
  * circular connector, quiet for Auto, marked with a small red dot once the
  * user picks something. The last card of a visual row keeps its connector
