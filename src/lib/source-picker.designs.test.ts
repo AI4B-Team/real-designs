@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 /**
  * The video "Select designs" picker: selection, ordering and the handoff
  * payload are the parts that silently break the Video Builder, so they get
