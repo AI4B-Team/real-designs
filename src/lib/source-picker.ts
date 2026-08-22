@@ -342,6 +342,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     designPreview: null as string | null,
     /** Id currently dragged in the selected-order row. */
     designDrag: null as string | null,
+    /** Id of the list row whose overflow menu is open. */
+    mediaMenu: null as string | null,
     /** Media filters: type, property, room and free text. */
     mediaType: "all" as "all" | "photos" | "designs" | "favorites",
     mediaProperty: "all",
