@@ -11522,7 +11522,7 @@ ${picks
     const toolRows = Array.from(document.querySelectorAll(".toolrow:not(.rdw-phototool)"));
     const toolInfo = document.getElementById("toolInfo");
     const LIVE_TOOLS = {
-      "2D To 3D Plan": run3dPlan,
+      "2D To 3D Plan": () => runFloorplanFlow(),
       Animate: runAnimateFlow,
       "Virtual Stage": () => runStageFlow(),
       Declutter: () => runDeclutterFlow(),
