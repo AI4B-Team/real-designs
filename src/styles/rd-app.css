@@ -324,10 +324,9 @@
 }
 
 .rd-app .nav-i.on {
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--ink);
+  color: #fff;
   font-weight: 700;
-  box-shadow: inset 3px 0 0 var(--red);
 }
 
 .rd-app .nav-i svg {
@@ -9176,8 +9175,8 @@
 }
 /* selection changes paint only — never geometry */
 .rd-app .app.sidemin .side .nav-i.on {
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--ink);
+  color: #fff;
   box-shadow: 0 0 0 2px var(--red);
 }
 .rd-app .app.sidemin .side .nav-i:focus-visible {
