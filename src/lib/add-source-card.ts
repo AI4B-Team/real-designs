@@ -140,8 +140,12 @@ export function mountAddSourceCard(
     note.hidden = !msg;
     note.textContent = msg;
   };
+  /* Set while we hand focus back to the face after an explicit close, so the
+     returning focus event cannot immediately re-expand the card. */
+  let refocusing = false;
   const close = () => {
     locked = false;
+    refocusing = true;
     setNote("");
     collapse(card);
   };
@@ -179,7 +183,13 @@ export function mountAddSourceCard(
     collapse(card);
   });
   /* Keyboard focus expands immediately too. */
-  card.addEventListener("focusin", () => open(false));
+  card.addEventListener("focusin", () => {
+    if (refocusing) {
+      refocusing = false;
+      return;
+    }
+    open(false);
+  });
   card.addEventListener("focusout", (e) => {
     if (locked) return;
     const next = (e as FocusEvent).relatedTarget as Node | null;
