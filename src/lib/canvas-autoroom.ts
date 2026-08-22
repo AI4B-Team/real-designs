@@ -107,7 +107,7 @@ export async function detectRoomFromSource() {
   try {
     const dataUrl = await toDataUrl(src);
     if (!dataUrl) return;
-    if (manual || (roomSelect()?.value || "").trim()) return;
+    if (manual || ((roomSelect()?.value || "").trim() && !isDefaultPick())) return;
     const out = await classifyPhotoRooms({ data: { images: [{ id: "source", image: dataUrl }] } });
     const guess = out?.results?.[0];
     if (!guess || guess.confidence < ACCEPT_CONFIDENCE) return;
