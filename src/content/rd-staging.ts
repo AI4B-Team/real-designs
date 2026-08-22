@@ -48,15 +48,14 @@ import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { thumbDataUrl, ACCEPT_CONFIDENCE, REVIEW_CONFIDENCE } from "@/lib/photo-classify";
 import {
   ROOM_OPTIONS,
-  groupRooms,
   roomFromCategory,
   roomIcon,
   roomSpace,
-  searchRooms,
 } from "@/lib/staging-rooms";
 import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
 import { openBulkDesign, runBulkDesign } from "@/lib/staging-bulk";
 import { openAddressModal } from "@/lib/address-modal";
+import { openRoomAreaPicker } from "@/lib/room-area-picker";
 import {
   builderRailHtml,
   roomSelectHtml,
@@ -2089,11 +2088,6 @@ function applyRoomToSelected(anchor) {
     anchor,
     (label) => {
       /* Several photos change at once, so the user confirms the scope first. */
-      if (
-        sel.length > 1 &&
-        !window.confirm(`Apply “${label}” to ${sel.length} selected photos?`)
-      )
-        return;
       sel.forEach((i) => {
         i.room = label;
         i.roomSource = "manual";
@@ -2669,82 +2663,44 @@ function closePopover() {
   }
 }
 
+/**
+ * Room selection anywhere in Photo Design opens the one shared Room / Area
+ * picker. This wrapper only keeps the old call signature and the card's
+ * active highlight; there is no second room list here any more.
+ */
 function openRoomPopover(anchor, onPick, key, scopeHint) {
   closePopover();
   if (anchor && anchor.setAttribute) anchor.setAttribute("aria-expanded", "true");
-  popover = document.createElement("div");
-  popover.className = "rds-pop";
-  popover.innerHTML =
-    (scopeHint ? `<div class="rds-pop-scope">${esc(scopeHint)}</div>` : "") +
-    `<div class="rds-pop-s"><i data-lucide="search"></i><input id="rdsSearch" placeholder="Search Rooms" aria-label="Search rooms"></div><div class="rds-pop-l" id="rdsList"></div>`;
-
-  document.body.appendChild(popover);
-  const r = anchor.getBoundingClientRect();
-  const top = Math.min(r.bottom + 6, window.innerHeight - 340);
-  popover.style.top = Math.max(12, top) + "px";
-  popover.style.left = Math.max(12, Math.min(r.left, window.innerWidth - 300)) + "px";
-
-  const list = popover.querySelector("#rdsList");
-  const input = popover.querySelector("#rdsSearch");
-  const draw = () => {
-    const q = input.value;
-    const found = searchRooms(q);
-    const groups = groupRooms(found);
-    const custom =
-      q.trim() && !found.some((f) => f.label.toLowerCase() === q.trim().toLowerCase())
-        ? `<button class="rds-opt custom" data-label="${esc(q.trim())}"><i data-lucide="plus"></i>Use "${esc(q.trim())}"</button>`
-        : "";
-    list.innerHTML =
-      custom +
-      (groups.length
-        ? groups
-            .map(
-              (g) =>
-                `<div class="rds-pop-g">${esc(g.group)}</div>` +
-                g.rooms
-                  .map(
-                    (r2) =>
-                      `<button class="rds-opt" data-label="${esc(r2.label)}"><i data-lucide="${r2.icon}"></i>${esc(r2.label)}</button>`,
-                  )
-                  .join(""),
-            )
-            .join("")
-        : custom
-          ? ""
-          : '<p class="rds-pop-e">No Rooms Match That Search.</p>');
-    paint();
-    list.querySelectorAll("[data-label]").forEach((b) =>
-      b.addEventListener("click", () => {
-        onPick(b.getAttribute("data-label"));
-        closePopover();
-      }),
-    );
-  };
-  input.addEventListener("input", draw);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closePopover();
-    if (e.key === "Enter") {
-      const first = list.querySelector("[data-label]");
-      if (first) first.click();
-    }
-  });
-  draw();
-  paint();
-  input.focus();
   if (key && S) {
     S.activeKey = key;
     const it = S.items.find((i) => i.key === key);
     if (it) syncCard(it);
   }
-  setTimeout(() => {
-    const away = (e) => {
-      if (popover && !popover.contains(e.target)) {
-        closePopover();
-        document.removeEventListener("mousedown", away);
-      }
-    };
-    document.addEventListener("mousedown", away);
-  }, 0);
+  const current = key && S ? (S.items.find((i) => i.key === key) || {}).room || "" : "";
+  const restore = () => {
+    if (anchor && anchor.setAttribute) anchor.setAttribute("aria-expanded", "false");
+    if (S && S.activeKey) {
+      const prev = S.activeKey;
+      S.activeKey = null;
+      const it = S.items.find((i) => i.key === prev);
+      if (it) syncCard(it);
+    }
+  };
+  openRoomAreaPicker({
+    space: current ? roomSpace(current) : "interior",
+    currentLabel: current,
+    mode: "photo-design",
+    allowCustom: true,
+    allowUnassigned: true,
+    allowNeedsReview: true,
+    ...(scopeHint ? { description: scopeHint } : {}),
+    opener: anchor,
+    onCancel: restore,
+    onApply: (selection) => {
+      restore();
+      onPick(selection.label);
+    },
+  });
 }
 
 /* --------------------------------------------------------- canvas handoff */
