@@ -2105,6 +2105,15 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       }
       return;
     }
+    /* Row overflow menu: opens one menu at a time, closes on any other click. */
+    const mmenu = t.closest("[data-sp-menu]") as HTMLElement | null;
+    if (mmenu) {
+      const id = mmenu.dataset["spMenu"] || null;
+      state.mediaMenu = state.mediaMenu === id ? null : id;
+      render();
+      return;
+    }
+    if (state.mediaMenu) state.mediaMenu = null;
     /* Preview is a separate control: it opens the modal, never toggles. */
     const peye = t.closest("[data-sp-preview]") as HTMLElement | null;
     if (peye) {
