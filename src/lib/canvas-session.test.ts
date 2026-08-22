@@ -7,9 +7,9 @@ describe("canvas session", () => {
   it("creates every slot up front in numerical order", () => {
     const s = two();
     expect(s.outputs.map((o) => o.outputIndex)).toEqual([0, 1]);
-    expect(CS.outputLabel(s, s.outputs[0])).toBe("Concept 1");
-    expect(CS.outputLabel(s, s.outputs[1])).toBe("Concept 2");
-    expect(s.activeOutputId).toBe(s.outputs[0].outputId);
+    expect(CS.outputLabel(s, s.outputs[0]!)).toBe("Concept 1");
+    expect(CS.outputLabel(s, s.outputs[1]!)).toBe("Concept 2");
+    expect(s.activeOutputId).toBe(s.outputs[0]!.outputId);
     expect(s.generationStatus).toBe("generating");
   });
 
@@ -19,7 +19,7 @@ describe("canvas session", () => {
     expect(CS.activeOutput(s)?.outputIndex).toBe(1);
     CS.markImage(s, 0, "a.png");
     expect(CS.orderedOutputs(s).map((o) => o.displayUrl)).toEqual(["a.png", "b.png"]);
-    CS.setActive(s, s.outputs[0].outputId);
+    CS.setActive(s, s.outputs[0]!.outputId);
     CS.markSaved(s, 1, { path: "p1" });
     expect(CS.activeOutput(s)?.outputIndex).toBe(0);
   });
@@ -103,7 +103,7 @@ describe("canvas session", () => {
     expect(CS.actionState(s).enabled).toBe(false);
     CS.markImage(s, 0, "a.png");
     expect(CS.actionState(s).enabled).toBe(true);
-    expect(CS.actionState(s).outputId).toBe(s.outputs[0].outputId);
+    expect(CS.actionState(s).outputId).toBe(s.outputs[0]!.outputId);
   });
 
   it("summarizes history for the version header", () => {
