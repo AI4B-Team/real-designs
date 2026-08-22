@@ -872,91 +872,229 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   }
 
+  function designShell(inner: string, extra = "") {
+    return (
+      '<div class="sp-pane spd' +
+      (extra ? " " + extra : "") +
+      '">' +
+      '<div class="spd-head">' +
+      '<div class="spd-head-t"><b>Select designs</b>' +
+      "<span>Choose the saved designs you want to use as video scenes.</span></div>" +
+      designHeadActions() +
+      "</div>" +
+      inner +
+      "</div>"
+    );
+  }
+
+  function designHeadActions() {
+    const n = state.designSel.length;
+    if (!n) return '<div class="spd-head-a"></div>';
+    return (
+      '<div class="spd-head-a"><span class="spd-count" aria-live="polite">' +
+      n +
+      " selected</span>" +
+      '<button type="button" class="sp-link" data-sp="dclear">Clear selection</button></div>'
+    );
+  }
+
+  /** Selected designs, in the order they were picked. */
+  function selectedDesigns() {
+    const byId = new Map(state.designs.map((d) => [d.id, d]));
+    const seen = new Set<string>();
+    const out: PickerDesign[] = [];
+    for (const id of state.designSel) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const d = byId.get(id);
+      if (d) out.push(d);
+    }
+    return out;
+  }
+
   function designPanel() {
     if (state.designState === "loading" || state.designState === "idle") {
-      return (
-        '<div class="sp-pane"><div class="sp-dgrid" aria-busy="true" aria-live="polite" aria-label="Loading your finished designs">' +
-        Array.from({ length: 6 })
-          .map(
-            () =>
-              '<div class="sp-dcard is-skel"><span class="sp-dth"></span><span class="sp-db"><i></i><i></i></span></div>',
-          )
-          .join("") +
-        "</div></div>"
+      return designShell(
+        '<div class="spd-grid" aria-busy="true" aria-live="polite" aria-label="Loading your saved designs">' +
+          Array.from({ length: 4 })
+            .map(
+              () =>
+                '<div class="spd-card is-skel"><span class="spd-th"></span><span class="spd-body"><i></i><i></i></span></div>',
+            )
+            .join("") +
+          "</div>",
       );
     }
     if (state.designState === "error") {
-      return (
-        '<div class="sp-pane sp-dempty" role="alert">' +
-        '<i data-lucide="triangle-alert"></i>' +
-        "<b>We Couldn\u2019t Load Your Designs</b>" +
-        "<span>Something went wrong reading your library.</span>" +
-        '<span class="sp-dacts"><button type="button" class="btn btn-primary btn-sm" data-sp="dretry">Retry</button></span>' +
-        "</div>"
+      return designShell(
+        '<div class="spd-empty" role="alert">' +
+          '<i data-lucide="triangle-alert"></i>' +
+          "<b>We couldn\u2019t load your designs</b>" +
+          "<span>Something went wrong reading your library.</span>" +
+          '<span class="spd-empty-a"><button type="button" class="btn btn-primary btn-sm" data-sp="dretry">Retry</button></span>' +
+          "</div>",
       );
     }
     if (!state.designs.length) {
-      return (
-        '<div class="sp-pane sp-dempty">' +
-        '<i data-lucide="images"></i>' +
-        "<b>No Finished Designs Yet</b>" +
-        "<span>Create a design first, or start your video with property photos.</span>" +
-        '<span class="sp-dacts">' +
-        '<button type="button" class="btn btn-primary btn-sm" data-sp="dupload" aria-label="Upload photos for your video">Upload Photos</button>' +
-        '<button type="button" class="btn btn-ghost btn-sm" data-sp="dproperty" aria-label="Choose an existing property">Choose Property</button>' +
-        "</span></div>"
+      return designShell(
+        '<div class="spd-empty">' +
+          '<i data-lucide="images"></i>' +
+          "<b>No saved designs yet</b>" +
+          "<span>Create a design first or choose another photo source.</span>" +
+          '<span class="spd-empty-a">' +
+          '<button type="button" class="btn btn-primary btn-sm" data-sp="ddesign">Design a space</button>' +
+          '<button type="button" class="btn btn-ghost btn-sm" data-sp="dupload">Upload photos</button>' +
+          "</span></div>",
       );
     }
-    const n = state.designSel.length;
-    return (
-      '<div class="sp-pane">' +
-      '<div class="sp-dgrid" role="group" aria-label="Your Finished Designs">' +
-      state.designs.map(designCard).join("") +
-      "</div>" +
-      (n
-        ? '<div class="sp-dfoot"><button type="button" class="btn btn-primary btn-sm" data-sp="dcontinue">' +
-          "Continue With " +
-          n +
-          " Design" +
-          (n === 1 ? "" : "s") +
-          "</button></div>"
-        : "") +
-      "</div>"
+    return designShell(
+      designOrderRow() +
+        '<div class="spd-grid" role="group" aria-label="Your saved designs">' +
+        state.designs.map(designCard).join("") +
+        "</div>" +
+        designFooter() +
+        designPreviewModal(),
     );
+  }
+
+  function designOrderRow() {
+    const picked = selectedDesigns();
+    if (picked.length < 2) return "";
+    return (
+      '<div class="spd-order"><span class="spd-order-l">Selected order</span>' +
+      '<div class="spd-order-list" role="list">' +
+      picked
+        .map(
+          (d, i) =>
+            '<div class="spd-chip" role="listitem" draggable="true" data-sp-order="' +
+            esc(d.id) +
+            '" title="' +
+            esc("Drag to reorder " + (d.room || "Design")) +
+            '">' +
+            '<span class="spd-chip-th" data-sp-thumb="' +
+            esc(d.path) +
+            '"></span>' +
+            '<em class="spd-chip-n">' +
+            (i + 1) +
+            "</em></div>",
+        )
+        .join("") +
+      "</div></div>"
+    );
+  }
+
+  function designFooter() {
+    const n = state.designSel.length;
+    const label = state.adding
+      ? "Preparing video\u2026"
+      : "Continue with " + (n || 0) + " design" + (n === 1 ? "" : "s");
+    return (
+      '<div class="spd-foot">' +
+      '<span class="spd-foot-l">' +
+      (n
+        ? n + " design" + (n === 1 ? "" : "s") + " selected \u00b7 " + n + " scenes"
+        : "No designs selected") +
+      "</span>" +
+      '<span class="spd-foot-a">' +
+      (n
+        ? '<button type="button" class="btn btn-ghost btn-sm" data-sp="dclear">Cancel</button>'
+        : "") +
+      '<button type="button" class="btn btn-primary btn-sm" data-sp="dcontinue"' +
+      (!n || state.adding ? " disabled" : "") +
+      ">" +
+      esc(label) +
+      "</button></span></div>"
+    );
+  }
+
+  function designLines(d: PickerDesign) {
+    const two = [d.style || "", d.versionNo ? "Version " + d.versionNo : ""].filter(Boolean);
+    const status =
+      d.status && /approved|draft/i.test(d.status)
+        ? d.status.charAt(0).toUpperCase() + d.status.slice(1).toLowerCase()
+        : "";
+    return { two: two.join(" \u00b7 "), three: d.address || "", status };
   }
 
   function designCard(d: PickerDesign) {
     const i = state.designSel.indexOf(d.id);
     const on = i > -1;
-    const meta = [d.address || "", designDate(d.createdAt)].filter(Boolean);
+    const l = designLines(d);
     return (
-      '<button type="button" class="sp-dcard' +
+      '<div class="spd-card' +
       (on ? " is-sel" : "") +
       '" data-sp-design="' +
       esc(d.id) +
-      '"' +
-      ' role="checkbox" aria-checked="' +
+      '" tabindex="0" role="checkbox" aria-checked="' +
       (on ? "true" : "false") +
-      '"' +
-      ' aria-label="' +
-      esc((on ? "Selected: " : "") + (d.room || "Design") + (d.address ? ", " + d.address : "")) +
+      '" aria-label="' +
+      esc((d.room || "Design") + (l.two ? ", " + l.two : "") + (l.three ? ", " + l.three : "")) +
       '">' +
-      '<span class="sp-dth" data-sp-thumb="' +
+      '<span class="spd-th" data-sp-thumb="' +
       esc(d.path) +
+      '" data-sp-thumb-id="' +
+      esc(d.id) +
+      '" data-sp-thumb-alt="' +
+      esc(d.room || "Design") +
       '"></span>' +
-      '<span class="sp-dpick' +
+      '<button type="button" class="spd-eye" data-sp-preview="' +
+      esc(d.id) +
+      '" title="Preview design" aria-label="' +
+      esc("Preview design: " + (d.room || "Design")) +
+      '"><i data-lucide="eye"></i></button>' +
+      '<span class="spd-check' +
       (on ? " on" : "") +
-      '">' +
-      (on ? '<i data-lucide="check"></i>' : "") +
-      (on ? '<em class="sp-dn">' + (i + 1) + "</em>" : "") +
+      '" aria-hidden="true">' +
+      (on ? '<i data-lucide="check"></i><em class="spd-n">' + (i + 1) + "</em>" : "") +
       "</span>" +
-      '<span class="sp-db"><b>' +
+      '<span class="spd-body"><b>' +
       esc(d.room || "Design") +
       "</b>" +
-      (meta.length ? "<span>" + esc(meta.join(" \u00b7 ")) + "</span>" : "") +
-      "</span></button>"
+      (l.two ? "<span>" + esc(l.two) + "</span>" : "") +
+      (l.three ? '<span class="spd-addr">' + esc(l.three) + "</span>" : "") +
+      (l.status ? '<span class="spd-status">' + esc(l.status) + "</span>" : "") +
+      "</span></div>"
     );
   }
+
+  function designPreviewModal() {
+    const d = state.designs.find((x) => x.id === state.designPreview);
+    if (!d) return "";
+    const on = state.designSel.includes(d.id);
+    const l = designLines(d);
+    const rows = [
+      ["Room", d.room || "Design"],
+      ["Style", d.style || "\u2014"],
+      ["Version", d.versionNo ? String(d.versionNo) : "\u2014"],
+      ["Property", d.address || "\u2014"],
+    ];
+    return (
+      '<div class="sp-modal spd-modal" role="dialog" aria-modal="true" aria-label="' +
+      esc("Preview design: " + (d.room || "Design")) +
+      '">' +
+      '<div class="sp-scrim" data-sp="dpclose"></div>' +
+      '<div class="spd-prev">' +
+      '<div class="spd-prev-h"><b>' +
+      esc(d.room || "Design") +
+      "</b>" +
+      '<button type="button" class="sp-link" data-sp="dpclose">Close</button></div>' +
+      '<span class="spd-prev-img" data-sp-thumb="' +
+      esc(d.path) +
+      '" data-sp-thumb-alt="' +
+      esc(d.room || "Design") +
+      '"></span>' +
+      '<dl class="spd-prev-meta">' +
+      rows.map(([k, v]) => "<div><dt>" + esc(k!) + "</dt><dd>" + esc(v!) + "</dd></div>").join("") +
+      "</dl>" +
+      (l.status ? '<span class="spd-status">' + esc(l.status) + "</span>" : "") +
+      '<div class="spd-prev-f">' +
+      '<button type="button" class="btn btn-primary btn-sm" data-sp="dptoggle">' +
+      (on ? "Deselect" : "Select") +
+      "</button></div>" +
+      "</div></div>"
+    );
+  }
+
 
   function chooser() {
     if (!state.choose.length) return "";
