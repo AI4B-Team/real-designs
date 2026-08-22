@@ -61,6 +61,12 @@ export const savePhotoEdit = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => SaveInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    /* The upload a user gave us is untouchable: an edit always renders to a new
+       object. Refusing this here means no client bug can ever overwrite it. */
+    if (data.edited_path && data.edited_path === data.source_path) {
+      throw new Error("An edit cannot overwrite the original photo.");
+    }
+
     const base = {
       user_id: userId,
       asset_key: data.as_copy ? `${data.asset_key}:copy:${crypto.randomUUID()}` : data.asset_key,
