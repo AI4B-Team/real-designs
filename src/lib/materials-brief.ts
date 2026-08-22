@@ -250,14 +250,10 @@ export function materialsCostSentence(results: number): string {
 
 /* ---------------------------------------------------------- mask support */
 
-export const MASK_SUPPORT = {
-  native: false,
-  label: "Mask-Guided",
-  note:
-    "This provider does not accept a separate mask layer, so the surface you selected is sent as a rendered " +
-    "mask overlay with exact coordinates and hard instructions to repaint only that surface. Precision is very " +
-    "good but not pixel-exact — check the edges and refine the mask if the material bled anywhere.",
-} as const;
+export const MASK_SUPPORT = maskSupport(
+  "the surface you selected",
+  "check the edges and refine the mask if the material bled anywhere.",
+);
 
 /* ------------------------------------------------------- classification */
 
