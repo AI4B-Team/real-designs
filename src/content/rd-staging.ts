@@ -2336,7 +2336,8 @@ registerCardMenu("photo", {
       cmToast("New Variation Added. Your Saved Versions Are Untouched.");
       return void openInCanvas(clone.key);
     }
-    if (action === "rotate") return void rotateItem(it);
+    if (action === "rotate") return void rotateItem(it, "right");
+    if (action === "rotateleft") return void rotateItem(it, "left");
     if (action === "ratio") return void openRatioOverride(it);
     if (action === "room") {
       const btn = document.querySelector(
