@@ -1,3 +1,4 @@
+import "@/styles/rd-modal.css";
 /**
  * Bulk design for the Photo Staging grid.
  *
@@ -282,7 +283,7 @@ export function openBulkDesign(opts) {
   if (node) node.remove();
   node = document.createElement("div");
   node.id = "rdsBulkModal";
-  node.className = "rd-app up-modal on";
+  node.className = "rd-modal up-modal on";
   document.body.appendChild(node);
   /* Only the modal body scrolls: the page behind it stays exactly where it was. */
   const priorOverflow = document.body.style.overflow;
