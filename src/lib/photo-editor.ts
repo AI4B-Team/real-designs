@@ -1171,88 +1171,167 @@ export async function openPhotoEditor(opts: {
 
   /* ---------------------------------------------------------------- crop */
 
+  /* The frame is stationary; the photograph is dragged behind it. Everything
+     the interaction needs is derived from the viewport, the image's layout box
+     and the crop state — never from the live (already transformed) rect. */
+
+  function viewBox(): CropBox {
+    const stageEl = $("#rdpeStage");
+    const r = stageEl?.getBoundingClientRect();
+    return { w: Math.max(1, r?.width || 1), h: Math.max(1, r?.height || 1) };
+  }
+
+  /** The image's untransformed layout box, with quarter rotations swapped. */
+  function baseBox(): CropBox {
+    const img = $("#rdpeImg") as HTMLImageElement;
+    const s = st();
+    const w = Math.max(1, img?.offsetWidth || 1);
+    const h = Math.max(1, img?.offsetHeight || 1);
+    const quarter = ((s.rotation % 360) + 360) % 360;
+    return quarter === 90 || quarter === 270 ? { w: h, h: w } : { w, h };
+  }
+
+  function ratioAspect(id: string, base: CropBox): number {
+    if (id === "original" || id === "free") return base.w / base.h;
+    return cropPreset(id)?.v || base.w / base.h;
+  }
+
+  function syncCrop(record = true) {
+    const s = st();
+    if (!cropView) return;
+    const base = baseBox();
+    const view = viewBox();
+    const o = clampOffset(cropView, base, view);
+    cropView = { ...cropView, ...o, ...focalOf({ ...cropView, ...o }, base, view) };
+    if (record) {
+      const rect = cropRect(cropView, base, view);
+      s.crop = { ...rect, ratio: cropView.ratio };
+      saveFailed = false;
+      s.dirty = true;
+    }
+    paintCropBox();
+    paintStageTransform();
+  }
+
+  /** The image transform while cropping: the base geometry, then the pan/zoom. */
+  function paintStageTransform() {
+    const img = $("#rdpeImg") as HTMLImageElement;
+    if (!img) return;
+    const s = st();
+    if (comparing) {
+      img.style.transform = "none";
+      return;
+    }
+    const pan =
+      cropMode && cropView
+        ? `translate(${cropView.offsetX.toFixed(2)}px, ${cropView.offsetY.toFixed(2)}px) scale(${cropView.scale.toFixed(4)}) `
+        : "";
+    img.style.transform = `${pan}${transformString(s)}`;
+  }
+
   function setRatio(id: string) {
     const s = st();
     push();
-    if (id === "original") {
+    if (id === "original" && !cropMode) {
       s.crop = null;
-      cropMode = false;
-    } else {
-      const r = RATIOS.find((x) => x.id === id);
-      const stageImg = $("#rdpeImg") as HTMLImageElement;
-      const iw = stageImg?.naturalWidth || 4;
-      const ih = stageImg?.naturalHeight || 3;
-      const target = r?.v || iw / ih;
-      let w = 1;
-      let h = 1;
-      if (iw / ih > target) w = (target * ih) / iw;
-      else h = iw / target / ih;
-      s.crop = { x: (1 - w) / 2, y: (1 - h) / 2, w, h, ratio: id };
-      cropMode = true;
+      cropView = null;
+      paint();
+      return paintCropBox();
     }
+    cropMode = true;
+    const base = baseBox();
+    const view = viewBox();
+    const focal = cropView ? { focalX: cropView.focalX, focalY: cropView.focalY } : undefined;
+    cropView = createCrop(id, ratioAspect(id, base), base, view, focal);
+    cropHinted = false;
+    syncCrop();
     paint();
-    paintCropBox();
+  }
+
+  function resetCropPosition() {
+    if (!cropView) return;
+    const base = baseBox();
+    const view = viewBox();
+    cropView = createCrop(cropView.ratio, ratioAspect(cropView.ratio, base), base, view);
+    syncCrop();
+    paint();
+  }
+
+  function setCropZoom(v: number) {
+    if (!cropView) return;
+    cropView = zoomTo(cropView, baseBox(), viewBox(), v);
+    syncCrop();
   }
 
   function paintCropBox() {
     const box = $("#rdpeCropBox");
-    const s = st();
     if (!box) return;
-    if (!s.crop || !cropMode) {
+    if (!cropMode || !cropView) {
       box.style.display = "none";
+      box.classList.remove("acting");
+      const hint = $("#rdpeCropHint");
+      if (hint) hint.hidden = true;
       return;
     }
-    const img = $("#rdpeImg") as HTMLImageElement;
-    const r = img.getBoundingClientRect();
-    const wrap = $("#rdpeStage").getBoundingClientRect();
     box.style.display = "block";
-    box.style.left = `${r.left - wrap.left + s.crop.x * r.width}px`;
-    box.style.top = `${r.top - wrap.top + s.crop.y * r.height}px`;
-    box.style.width = `${s.crop.w * r.width}px`;
-    box.style.height = `${s.crop.h * r.height}px`;
+    box.style.left = `${cropView.frame.x}px`;
+    box.style.top = `${cropView.frame.y}px`;
+    box.style.width = `${cropView.frame.width}px`;
+    box.style.height = `${cropView.frame.height}px`;
+    box.classList.toggle("free", cropView.ratio === "free");
+    const hint = $("#rdpeCropHint");
+    if (hint) hint.hidden = cropHinted;
   }
 
+  /** Drag inside the frame moves the photograph; a handle resizes the frame. */
   function dragCrop(e: PointerEvent) {
-    const s = st();
-    if (!s.crop || !cropMode) return;
+    if (!cropMode || !cropView) return;
     const handle = (e.target as HTMLElement).getAttribute("data-h");
-    const img = $("#rdpeImg") as HTMLImageElement;
-    const r = img.getBoundingClientRect();
-    const c0 = s.crop;
-    const start = { px: e.clientX, py: e.clientY, x: c0.x, y: c0.y, w: c0.w, h: c0.h, ratio: c0.ratio };
+    if (handle && cropView.ratio !== "free") return;
+    e.preventDefault();
+    const box = $("#rdpeCropBox");
+    const base = baseBox();
+    const view = viewBox();
+    const start = { px: e.clientX, py: e.clientY, ...cropView };
+    let moved = false;
     push();
+    try {
+      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    } catch {
+      /* pointer capture is a nicety, not a requirement */
+    }
+    box?.classList.add("acting");
     const move = (ev: PointerEvent) => {
-      const dx = (ev.clientX - start.px) / r.width;
-      const dy = (ev.clientY - start.py) / r.height;
-      const c = { ...start } as any;
-      if (!handle) {
-        c.x = Math.min(1 - start.w, Math.max(0, start.x + dx));
-        c.y = Math.min(1 - start.h, Math.max(0, start.y + dy));
+      if (!cropView) return;
+      const dx = ev.clientX - start.px;
+      const dy = ev.clientY - start.py;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) moved = true;
+      if (handle) {
+        cropView = { ...cropView, frame: resizeFrame(start.frame, handle, dx, dy, view) };
+        cropView = refit(cropView, 0, base, view);
       } else {
-        if (handle.includes("e")) c.w = Math.min(1 - start.x, Math.max(0.06, start.w + dx));
-        if (handle.includes("s")) c.h = Math.min(1 - start.y, Math.max(0.06, start.h + dy));
-        if (handle.includes("w")) {
-          c.x = Math.min(start.x + start.w - 0.06, Math.max(0, start.x + dx));
-          c.w = start.w + (start.x - c.x);
-        }
-        if (handle.includes("n")) {
-          c.y = Math.min(start.y + start.h - 0.06, Math.max(0, start.y + dy));
-          c.h = start.h + (start.y - c.y);
-        }
+        cropView = { ...cropView, offsetX: start.offsetX + dx, offsetY: start.offsetY + dy };
       }
-      s.crop = { x: c.x, y: c.y, w: c.w, h: c.h, ratio: handle ? "free" : start.ratio };
-      saveFailed = false;
-    s.dirty = true;
-      paintCropBox();
+      syncCrop();
     };
-    const up = () => {
+    const up = (ev: PointerEvent) => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      try {
+        (ev.target as HTMLElement).releasePointerCapture?.(ev.pointerId);
+      } catch {
+        /* noop */
+      }
+      box?.classList.remove("acting");
+      if (moved && !handle) cropHinted = true;
       paint();
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
   }
+
 
   /* ------------------------------------------------------------ AI edits */
 
