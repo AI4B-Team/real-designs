@@ -9176,8 +9176,8 @@
 }
 /* selection changes paint only — never geometry */
 .rd-app .app.sidemin .side .nav-i.on {
-  background: var(--ink);
-  color: #fff;
+  background: var(--paper);
+  color: var(--ink);
   box-shadow: 0 0 0 2px var(--red);
 }
 .rd-app .app.sidemin .side .nav-i:focus-visible {
