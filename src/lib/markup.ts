@@ -635,5 +635,108 @@ export function markupMetadata(doc: MarkupDoc) {
     visible_disclosure: doc.visibleDisclosure ? MARKUP_DISCLOSURE_TEXT : null,
     source_version: doc.sourceVersionId ?? null,
     credits: MARKUP_CREDITS,
+    scale: scaleMetadata(doc.scale),
+    parcel: doc.parcel ? parcelProvenance(doc.parcel, doc.parcelAudit || []) : null,
+    parcel_warning: doc.parcel ? PARCEL_WARNING : null,
+    callouts: layers
+      .filter((l) => !!l.meta)
+      .map((l) => ({ id: l.id, type: l.type, meta: l.meta })),
+    is_survey: false as const,
+  };
+}
+
+/* ------------------------------------------------- measurement & callouts */
+
+/**
+ * The measurement for one layer, or the reason there is none. A measured layer
+ * without calibration returns a message, never a number.
+ */
+export function layerMeasurement(layer: MarkupLayer, doc: MarkupDoc) {
+  if (!MEASURED_TYPES.includes(layer.type)) return null;
+  return measureShape(layer.points, layer.closed, doc.scale);
+}
+
+/** Refresh the stored measurement text on every measured layer. */
+export function refreshMeasurements(doc: MarkupDoc): MarkupDoc {
+  return {
+    ...doc,
+    layers: doc.layers.map((l) => {
+      if (!MEASURED_TYPES.includes(l.type)) return l;
+      const out = measureShape(l.points, l.closed, doc.scale);
+      const first = out.measurements[0];
+      return { ...l, measurementText: first ? first.text : null };
+    }),
+  };
+}
+
+/** Is this layer allowed to display a number yet? */
+export function canMeasure(doc: MarkupDoc): boolean {
+  return !!doc.scale && Number.isFinite(doc.scale.unitsPerPixel) && doc.scale.unitsPerPixel > 0;
+}
+
+/* ------------------------------------------------------------- export set */
+
+export type MarkupExportKind =
+  | "clean"
+  | "image"
+  | "shared_page"
+  | "pdf_report"
+  | "presentation"
+  | "contractor_scope";
+
+export const MARKUP_EXPORTS: { id: MarkupExportKind; label: string; hint: string }[] = [
+  { id: "clean", label: "Clean Image", hint: "The photograph with no markup at all." },
+  { id: "image", label: "Image With Markup", hint: "Flattened picture with the layers you choose." },
+  { id: "shared_page", label: "Interactive Shared Page", hint: "A link where layers can be toggled." },
+  { id: "pdf_report", label: "PDF Property Markup Report", hint: "Every callout, measurement and warning." },
+  { id: "presentation", label: "Presentation Slide", hint: "Sends the marked image to a presentation." },
+  { id: "contractor_scope", label: "Contractor Scope Export", hint: "Renovation and scope callouts only." },
+];
+
+/**
+ * Which layers a given export actually paints. Layer visibility is the control:
+ * a hidden layer never reaches an export, and a clean export paints none.
+ */
+export function exportLayers(
+  doc: MarkupDoc,
+  kind: MarkupExportKind,
+  selectedIds?: string[] | null,
+): MarkupLayer[] {
+  if (kind === "clean") return [];
+  const chosen = selectedIds && selectedIds.length ? new Set(selectedIds) : null;
+  let layers = doc.layers.filter((l) => l.visible && (!chosen || chosen.has(l.id)));
+  if (kind === "contractor_scope") {
+    layers = layers.filter((l) => l.type === "renovation" || l.type === "scope_ref" || l.type === "work_zone");
+  }
+  return layers;
+}
+
+/**
+ * The manifest written beside a flattened export. Vectors are flattened into
+ * pixels only for the static file; this block keeps the document editable and
+ * carries every warning the picture itself cannot state.
+ */
+export function markupExportManifest(
+  doc: MarkupDoc,
+  kind: MarkupExportKind,
+  selectedIds?: string[] | null,
+) {
+  const layers = exportLayers(doc, kind, selectedIds);
+  const parcelVisible = kind !== "clean" && !!doc.parcel;
+  const warnings = [
+    warningRequired(layers, false) ? MARKUP_WARNING : null,
+    parcelVisible ? PARCEL_WARNING : null,
+  ].filter(Boolean) as string[];
+  return {
+    export_kind: kind,
+    exported_at: new Date().toISOString(),
+    layer_ids: layers.map((l) => l.id),
+    layer_count: layers.length,
+    flattened: kind === "image" || kind === "presentation",
+    /* The editable document always survives the flattening. */
+    editable_document: serializeMarkup(doc),
+    warnings,
+    parcel_overlay_visible: parcelVisible,
+    ...markupMetadata({ ...doc, layers }),
   };
 }
