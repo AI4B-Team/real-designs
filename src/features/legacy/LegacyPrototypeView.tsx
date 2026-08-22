@@ -25,11 +25,11 @@ const gatedOverlaysHtml = gateFeatureMarkup(overlaysHtml);
  * script leave these files and this layer shrinks.
  */
 export function LegacyViews() {
-  return <div className="rd-legacy" dangerouslySetInnerHTML={{ __html: viewsHtml }} />;
+  return <div className="rd-legacy" dangerouslySetInnerHTML={{ __html: gatedViewsHtml }} />;
 }
 
 export function LegacyOverlays() {
-  return <div className="rd-legacy-overlays" dangerouslySetInnerHTML={{ __html: overlaysHtml }} />;
+  return <div className="rd-legacy-overlays" dangerouslySetInnerHTML={{ __html: gatedOverlaysHtml }} />;
 }
 
 /**
