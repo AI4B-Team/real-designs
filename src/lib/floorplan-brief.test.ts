@@ -214,7 +214,7 @@ describe("prompt", () => {
     expect(p).toMatch(/Kitchen/);
     expect(p).toMatch(/drawn as 12' x 10'/);
     expect(p).toMatch(/not construction documentation/);
-    expect(p).toMatch(/No measurement is confirmed/);
+    expect(p).toMatch(/No scale was calibrated/);
   });
 
   it("names the room when a single room view is requested", () => {
