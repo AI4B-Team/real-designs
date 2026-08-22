@@ -53,6 +53,7 @@ import {
 import { suggestDesignTitle } from "@/lib/property-address";
 import * as OS from "@/lib/canvas-session";
 import * as CR from "@/lib/canvas-result";
+import * as RDNAV from "@/lib/studio-nav";
 
 
 import { supabase } from "@/integrations/supabase/client";
