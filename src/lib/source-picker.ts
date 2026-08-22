@@ -20,7 +20,7 @@ import {
   type DescribeOutput,
   type RefKind,
 } from "@/lib/describe-composer";
-import { openAreaPicker } from "@/lib/room-picker-modal";
+import { openRoomAreaPicker } from "@/lib/room-area-picker";
 import { openStyleBrowser } from "@/lib/canvas-style-ui";
 import { styleById } from "@/lib/style-catalog";
 
@@ -365,10 +365,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     onImprove: (prompt) => opts.onImprove?.(prompt),
     ...(opts.uploadReference ? { uploadReference: opts.uploadReference } : {}),
     openRoomPicker: (space, current, apply) =>
-      openAreaPicker({
-        space: (String(space || "interior").toLowerCase() as any) || "interior",
-        current,
-        onApply: apply,
+      openRoomAreaPicker({
+        space,
+        currentLabel: current,
+        onApply: (sel) => apply(sel.label),
       }),
     openStylePicker: (space, room, currentId, apply) =>
       openStyleBrowser({

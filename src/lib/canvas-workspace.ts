@@ -15,7 +15,7 @@ import {
 } from "@/lib/space-datasets";
 import { normalizeSpace, toolDescription, toolLabel } from "@/lib/space-tools";
 import { capabilitiesFor } from "@/lib/canvas-capabilities";
-import { openAreaPicker } from "@/lib/room-picker-modal";
+import { openRoomAreaPicker } from "@/lib/room-area-picker";
 import { buildCanvasPanel, refreshCanvasPanel } from "@/lib/canvas-panel";
 import { ensureNotEmpty } from "@/lib/route-states";
 import { initAutoRoom, markManualRoom } from "@/lib/canvas-autoroom";
@@ -371,13 +371,14 @@ export function initCanvasWorkspace() {
     if (t.closest("#rdwRoomAll")) {
       e.preventDefault();
       const sel = document.getElementById("fRoom") as HTMLSelectElement | null;
-      openAreaPicker({
+      openRoomAreaPicker({
         space: currentSpace() as CanvasSpace,
-        current: sel?.value || null,
-        onApply: (label) => {
+        currentLabel: sel?.value || null,
+        opener: t.closest("#rdwRoomAll") as HTMLElement,
+        onApply: (sel2) => {
           roomsExpanded = false;
           markManualRoom();
-          pickRoom(label);
+          pickRoom(sel2.label);
         },
       });
       return;
