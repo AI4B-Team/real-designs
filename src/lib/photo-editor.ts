@@ -261,7 +261,7 @@ export async function openPhotoEditor(opts: {
   host.setAttribute("role", "dialog");
   host.setAttribute("aria-modal", "true");
   host.setAttribute("aria-label", "Photo Editor");
-  host.innerHTML = shellHtml();
+  host.innerHTML = shellHtml(returnLabel(opts.returnDestination));
   document.body.appendChild(host);
   document.body.classList.add("rdpe-open");
   HOST = host;
@@ -991,10 +991,10 @@ export function closePhotoEditor() {
   document.body.classList.remove("rdpe-open");
 }
 
-function shellHtml(): string {
+function shellHtml(back: string): string {
   return `
   <header class="rdpe-top">
-    <button type="button" class="rdpe-ib" data-act="close" aria-label="Close Photo Editor"><i data-lucide="x"></i></button>
+    <button type="button" class="rdpe-back" data-act="close" aria-label="${back}"><i data-lucide="x"></i><span>${back}</span></button>
     <nav class="rdpe-crumb" id="rdpeCrumb"></nav>
     <div class="rdpe-topr">
       <button type="button" class="rdpe-ib" id="rdpeUndo" data-act="undo" title="Undo"><i data-lucide="undo-2"></i></button>
