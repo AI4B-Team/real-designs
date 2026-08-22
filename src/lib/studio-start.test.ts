@@ -173,7 +173,7 @@ describe("studio start source picker", () => {
     const head = () => host.querySelector(".rdset-advh") as HTMLElement;
     expect(head().getAttribute("aria-expanded")).toBe("false");
     expect(head().querySelector('[data-lucide="chevron-down"]')).toBeTruthy();
-    expect(host.textContent).toContain("Advanced settings");
+    expect(host.textContent).toContain("Advanced Settings");
     head().click();
     expect(head().getAttribute("aria-expanded")).toBe("true");
     expect(head().querySelector('[data-lucide="chevron-up"]')).toBeTruthy();

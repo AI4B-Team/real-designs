@@ -769,7 +769,7 @@ export function createDescribeComposer(cfg: Cfg) {
       (state.advOpen ? " is-open" : "") +
       '"><button type="button" class="rdset-advh" data-sp="details" aria-expanded="' +
       (state.advOpen ? "true" : "false") +
-      '"><span class="rdset-advt">Advanced settings</span><span class="rdset-sum">' +
+      '"><span class="rdset-advt">Advanced Settings</span><span class="rdset-sum">' +
       esc(DS.advancedSummary(settingsState())) +
       '</span><i data-lucide="' +
       (state.advOpen ? "chevron-up" : "chevron-down") +
