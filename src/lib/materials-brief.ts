@@ -27,6 +27,17 @@ import {
   type MaterialOption,
   type SurfaceKindId,
 } from "@/lib/materials-catalog";
+import {
+  buildRegions,
+  emptyMask as coreEmptyMask,
+  pushStroke as corePushStroke,
+  redoStroke as coreRedoStroke,
+  undoStroke as coreUndoStroke,
+  maskSupport,
+  type MaskState as CoreMaskState,
+  type MaskStroke as CoreMaskStroke,
+  type SelectionIntent,
+} from "@/lib/selection-mask";
 
 /* ----------------------------------------------------------------- boxes */
 
