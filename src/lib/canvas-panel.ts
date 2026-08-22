@@ -160,7 +160,19 @@ export function refreshVersionRail() {
   const n = list.querySelectorAll(":scope > *").length;
   vers.classList.toggle("rdw-vers-empty", n === 0);
   const count = byId("rdwVersN");
-  if (count) count.textContent = n === 0 ? "No versions yet" : n === 1 ? "1 version" : n + " versions";
+  /* A multi-output batch describes itself ("2 concepts · 1 saved · 1
+     generating"); a plain session just counts versions. */
+  let batch: string | null = null;
+  try {
+    const set = (window as any).rdOutputs?.();
+    if (set && (window as any).rdOutputsLabel) batch = (window as any).rdOutputsLabel(set);
+  } catch (_) {
+    batch = null;
+  }
+  if (count)
+    count.textContent =
+      batch || (n === 0 ? "No versions yet" : n === 1 ? "1 version" : n + " versions");
+
   /* The collapsed control carries the same count as a compact badge. */
   const open = byId("rdwVersOpen");
   if (open) {
