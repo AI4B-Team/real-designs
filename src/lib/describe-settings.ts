@@ -35,16 +35,65 @@ export function spaceKeyOf(space: string): CanvasSpace {
 /* room / area                                                         */
 /* ------------------------------------------------------------------ */
 
-/** The four cards shown inline; the active choice is always included. */
-export function quickAreas(space: string, selectedId?: string | null, max = 4): AreaOption[] {
-  const all = areasForSpace(spaceKeyOf(space));
-  const out: AreaOption[] = [];
-  const sel = all.find((a) => a.id === selectedId);
-  if (sel) out.push(sel);
-  for (const a of all) {
-    if (out.length >= max) break;
-    if (a.id !== sel?.id && a.id.indexOf("other") === -1) out.push(a);
+/** Room types people actually ask for first, per space. */
+const COMMON_AREA_IDS: Record<CanvasSpace, string[]> = {
+  interior: ["i-kitchen", "i-living-room", "i-bedroom", "i-bathroom", "i-dining-room"],
+  exterior: ["e-front-of-house", "e-back-of-house"],
+  garden: ["g-backyard", "g-front-yard", "g-pool-area"],
+};
+
+const RECENT_KEY = "rd.describe.recentRooms";
+
+/** Rooms the user picked before, most recent first. */
+export function recentAreaIds(): string[] {
+  try {
+    if (typeof localStorage === "undefined") return [];
+    const raw = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+    return Array.isArray(raw) ? raw.filter((x) => typeof x === "string").slice(0, 8) : [];
+  } catch (_) {
+    return [];
   }
+}
+
+export function rememberArea(id: string) {
+  if (!id) return;
+  try {
+    if (typeof localStorage === "undefined") return;
+    const next = [id, ...recentAreaIds().filter((x) => x !== id)].slice(0, 8);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+  } catch (_) {
+    /* storage is a nicety here, never a requirement */
+  }
+}
+
+/**
+ * The four cards shown inline, ranked so the room the user actually named
+ * comes first: prompt-inferred, then recent picks, then common rooms, then
+ * whatever is left. Family Room and Great Room stay under View all.
+ */
+export function quickAreas(
+  space: string,
+  selectedId?: string | null,
+  max = 4,
+  opts: { inferredId?: string | null; recents?: string[] } = {},
+): AreaOption[] {
+  const key = spaceKeyOf(space);
+  const all = areasForSpace(key).filter((a) => a.id.indexOf("other") === -1);
+  const byId = new Map(all.map((a) => [a.id, a]));
+  const out: AreaOption[] = [];
+  const seen = new Set<string>();
+  const take = (id?: string | null) => {
+    if (!id || out.length >= max || seen.has(id)) return;
+    const rec = byId.get(id);
+    if (!rec) return;
+    seen.add(id);
+    out.push(rec);
+  };
+  take(selectedId);
+  take(opts.inferredId);
+  for (const id of opts.recents ?? recentAreaIds()) take(id);
+  for (const id of COMMON_AREA_IDS[key] || []) take(id);
+  for (const a of all) take(a.id);
   return out.slice(0, max);
 }
 
@@ -57,6 +106,7 @@ export function searchAreas(space: string, q: string): AreaOption[] {
   const all = areasForSpace(spaceKeyOf(space));
   return term ? all.filter((a) => a.label.toLowerCase().includes(term)) : all;
 }
+
 
 /** Room type inferred from what the user actually wrote. */
 export function inferAreaFromPrompt(prompt: string, space: string): AreaOption | null {
