@@ -55,10 +55,16 @@ describe("createCrop", () => {
     }
   });
 
-  it("keeps the requested focal point under the frame centre", () => {
-    const s = createCrop("1:1", 1, base, view, { focalX: 0.25, focalY: 0.5 });
+  it("keeps a reachable focal point under the frame centre", () => {
+    const s = createCrop("1:1", 1, base, view, { focalX: 0.4, focalY: 0.5 });
     const f = focalOf(s, base, view);
-    expect(f.focalX).toBeCloseTo(0.25, 2);
+    expect(f.focalX).toBeCloseTo(0.4, 2);
+  });
+
+  it("clamps an unreachable focal point to the nearest covering position", () => {
+    /* A 1:1 frame over a 3:2 photo can only pan between 1/3 and 2/3. */
+    const s = createCrop("1:1", 1, base, view, { focalX: 0, focalY: 0.5 });
+    expect(focalOf(s, base, view).focalX).toBeCloseTo(1 / 3, 2);
   });
 });
 
