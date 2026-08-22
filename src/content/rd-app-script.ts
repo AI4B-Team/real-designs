@@ -2444,6 +2444,7 @@ export function initApp(): () => void {
        reorder or hide an earlier one. */
     let OUTPUTS = null;
     window.rdOutputs = () => OUTPUTS;
+    window.rdOutputsLabel = (set) => OS.historyCount(set);
 
     /** The one inline status line, inside the Version History header. */
     function outputStatusEl() {
