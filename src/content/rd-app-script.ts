@@ -10683,7 +10683,7 @@ ${picks
       Declutter: () => runDeclutterFlow(),
       "Material Swap": () => runMaterialsFlow(),
       "Sketch To Render": () => runSketchFlow(),
-      "Multi Angle": () => runRoomToolFlow("angle", "Multi Angle", true),
+      "Multi Angle": () => runAnglesFlow(null),
     };
     const TOOL_COST = {
       Redesign: 1,
