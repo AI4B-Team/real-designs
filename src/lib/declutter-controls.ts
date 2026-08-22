@@ -226,6 +226,8 @@ export function mountDeclutterPanel(opts?: { onChange?: () => void; onDetect?: (
     '<p class="rd-decl-cost" id="rdDeclCost"></p>' +
     '<button type="button" class="btn btn-ghost btn-xs rd-decl-batch" id="rdDeclBatch">' +
     '<i data-lucide="images"></i>Declutter All Photos In This Room</button>' +
+    '<button type="button" class="btn btn-ghost btn-xs rd-decl-batch" id="rdDeclToObject">' +
+    '<i data-lucide="mouse-pointer-square-dashed"></i>Edit One Object Instead</button>' +
     "</div>";
 
   const anchor = byId("rdwCustomize");
@@ -341,6 +343,11 @@ function wire(sec: HTMLElement) {
     }
     if (t.closest("#rdDeclBatch")) {
       batchCb?.();
+      return;
+    }
+    /* One shared Object Edit: Declutter never grows its own targeted editor. */
+    if (t.closest("#rdDeclToObject")) {
+      (window as any).rdOpenObjectEdit?.({ action: "remove" });
       return;
     }
     const res = t.closest("[data-results]") as HTMLElement | null;

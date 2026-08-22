@@ -33,6 +33,7 @@ export const TOOL_CREDITS: Record<string, number> = {
   "Virtual Stage": 1,
   Declutter: 1,
   "Material Swap": 1,
+  "Object Edit": 1,
   "Sketch To Render": 1,
   Budget: 3,
   "Multi Angle": 1,
@@ -69,6 +70,10 @@ const BASE: Record<string, ToolCopy> = {
   "Material Swap": {
     label: "Materials",
     desc: "Replaces one selected surface with a new material and preserves everything else.",
+  },
+  "Object Edit": {
+    label: "Object Edit",
+    desc: "Selects one object or area and changes only that target.",
   },
   "Sketch To Render": {
     label: "Sketch",

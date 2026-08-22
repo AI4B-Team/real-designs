@@ -219,6 +219,8 @@ export function mountMaterialsPanel(opts?: { onChange?: () => void; onDetect?: (
     "</div>" +
     '<p class="rd-decl-cost" id="rdMatCost"></p>' +
     '<p class="rd-decl-muted" id="rdMatBand"></p>' +
+    '<button type="button" class="btn btn-ghost btn-xs" id="rdMatToObject">' +
+    '<i data-lucide="mouse-pointer-square-dashed"></i>Edit One Object Instead</button>' +
     "</div>";
 
   const anchor = byId("rdwCustomize");
@@ -289,6 +291,11 @@ function setMaterial(id: string | null, repaint = true) {
 
 function wire(sec: HTMLElement) {
   sec.addEventListener("click", (e) => {
+    /* One shared Object Edit: Materials never grows its own targeted editor. */
+    if ((e.target as HTMLElement).closest("#rdMatToObject")) {
+      (window as any).rdOpenObjectEdit?.({ action: "material", surfaceKind: state.surfaceKind || null });
+      return;
+    }
     const t = e.target as HTMLElement;
 
     const row = t.closest("[data-surface]") as HTMLElement | null;

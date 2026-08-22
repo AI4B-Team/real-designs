@@ -117,6 +117,31 @@ import {
 } from "@/lib/declutter-controls";
 import { detectClutter, renderDeclutter, checkDeclutteredResult } from "@/lib/declutter.functions";
 import {
+  buildObjectEditBrief,
+  costSentence as objectCostSentence,
+  objectEditMeta,
+} from "@/lib/object-edit-brief";
+import {
+  mountObjectPanel,
+  setObjectPanelVisible,
+  setObjectSpace,
+  setObjectDetections,
+  setObjectDetecting,
+  setObjectCostSentence,
+  resetObjectEdit,
+  objectDetections,
+  objectMask,
+  objectSettings,
+  objectRoomRead,
+  hasObjectDetections,
+  presetObjectEdit,
+  rememberObjectEdit,
+  buildObjectOverlay,
+  openObjectReview,
+  showObjectPreservation,
+} from "@/lib/object-edit-controls";
+import { detectObjects, renderObjectEditResult, checkObjectEditResult } from "@/lib/object-edit.functions";
+import {
   buildMaterialsBrief,
   materialsCredits,
   materialsMeta,
@@ -5008,6 +5033,202 @@ export function initApp(): () => void {
         finish();
         if (!creditGate(e))
           showAlert("Could not declutter this photo. " + ((e && e.message) || "Try again in a moment."));
+      }
+    }
+
+    /* ---------- Object Edit: one targeted change, one credit ---------- */
+
+    /** The Object Edit panel only exists once the Canvas body exists. */
+    function ensureObjectPanel() {
+      try {
+        mountObjectPanel({
+          onChange: () => paintGenGate(),
+          onDetect: () => detectForObjectEdit(true),
+        });
+        setObjectSpace(currentSpace());
+      } catch (_) {}
+    }
+
+    /** Free detection pass: nothing here can ever charge a credit. */
+    async function detectForObjectEdit(force) {
+      const srcImg = document.querySelector("#cBefore img");
+      if (!srcImg || !srcImg.src) return null;
+      if (!force && hasObjectDetections()) return objectDetections();
+      ensureObjectPanel();
+      setObjectDetecting(true);
+      try {
+        const image = await toDataUrl(srcImg.src, 1100);
+        const r = await detectObjects({ data: { image } });
+        setObjectDetections(r.detections, r.room);
+        return r.detections;
+      } catch (e) {
+        setObjectDetecting(
+          false,
+          (e && e.message) || "The photo could not be read. Brush the area you want to change instead.",
+        );
+        return null;
+      }
+    }
+
+    /* A new source photo invalidates the old selection and mask. */
+    window.addEventListener("rd:photo", () => {
+      try {
+        if (activeToolName() !== "Object Edit") resetObjectEdit();
+      } catch (_) {}
+    });
+
+    /**
+     * The one entry point every other tool uses. Declutter, Materials and the
+     * Photo Editor all hand work to this same panel instead of shipping their
+     * own targeted editor.
+     */
+    window.rdOpenObjectEdit = (preset) => {
+      const row = document.getElementById("rdwObjTool");
+      if (row) row.click();
+      ensureObjectPanel();
+      if (preset) {
+        try {
+          presetObjectEdit(preset);
+        } catch (_) {}
+      }
+      /* Detection is free, so the target list is ready before the user looks. */
+      void detectForObjectEdit(false);
+    };
+
+    function readObjectBrief() {
+      const srcImg = document.querySelector("#cBefore img");
+      const room = objectRoomRead();
+      return buildObjectEditBrief({
+        hasSource: !!(srcImg && srcImg.src && STUDIO_SRC !== SRC_EMPTY),
+        detections: objectDetections(),
+        mask: objectMask(),
+        settings: objectSettings(),
+        roomType: (room && room.roomType) || currentRoomType() || null,
+        surfaces: (room && room.surfaces) || [],
+      });
+    }
+
+    async function runObjectEditFlow() {
+      if (busy || GEN_GUARD.busy) return;
+      const srcImg = document.querySelector("#cBefore img");
+      if (STUDIO_SRC === SRC_EMPTY || !srcImg || !srcImg.src) {
+        needSourceModal();
+        return;
+      }
+      ensureObjectPanel();
+      /* Detection is free, so it always runs before the user is asked to pay. */
+      if (!hasObjectDetections()) await detectForObjectEdit(false);
+
+      const brief = readObjectBrief();
+      if (!brief.valid) {
+        try {
+          rdToast(brief.missing.join(" \u00b7 "));
+        } catch (_) {}
+        return;
+      }
+      if (!ensureCredits(brief.credits, "Object Edit")) return;
+
+      const source = await toDataUrl(srcImg.src, 1600);
+      const overlay = await buildObjectOverlay(source, objectDetections(), objectMask());
+      const answer = await openObjectReview(brief, {
+        costLabel: costLabel(brief.credits),
+        sourceLabel: studioSourceLabel(),
+        overlay,
+        balanceNote:
+          CREDITS && CREDITS.plan !== "free" && typeof CREDITS.balance === "number"
+            ? "Balance after this run: " + Math.max(0, CREDITS.balance - brief.credits) + " credits."
+            : null,
+      });
+      if (answer !== "confirm") return;
+      if (busy || !GEN_GUARD.begin()) return;
+      await runObjectEdit(brief, source, overlay);
+    }
+
+    async function runObjectEdit(brief, source, overlay) {
+      busy = true;
+      setCanvasPhase("generating");
+      const btn = document.getElementById("genBtn");
+      if (btn) btn.disabled = true;
+      const ov = document.getElementById("cGen");
+      if (ov) ov.classList.add("on");
+      genPhase(8, "Locking your selection");
+      const finish = () => {
+        setTimeout(() => {
+          if (ov) ov.classList.remove("on");
+          busy = false;
+          if (btn) btn.disabled = false;
+          GEN_GUARD.end();
+        }, 240);
+      };
+      try {
+        genPhase(34, brief.actionLabel + " on " + brief.targetLabel);
+        const r = await renderObjectEditResult({
+          data: { image: source, overlay, payload: brief.payload },
+        });
+
+        genPhase(74, "Saving your result");
+        const label = r.classification + " \u00b7 " + brief.targetLabel;
+        /* Every accepted result carries its mask, its action and its source so
+           any other tool can reopen exactly this work. */
+        window.__rdVersionExtras = objectEditMeta({
+          payload: brief.payload,
+          sourceVersion: studioSourcePath() || null,
+          model: r.model,
+        });
+        let path = null;
+        try {
+          path = await persistRender(r.image, label);
+        } catch (_) {
+          /* The image is paid for and on screen even if the upload failed. */
+        }
+        lastRender = r.image;
+        lastRenderPath = path;
+        cAfter.innerHTML = photo(r.image, brief.actionLabel + ", AI render");
+        addRenderVariant(r.image, label, path);
+
+        setCanvasPhase("");
+        markStudioResult();
+        await finalizeGeneratedDesign(lastRenderPath);
+        window.__rdVersionExtras = null;
+        try {
+          rememberObjectEdit(brief.targetLabel);
+        } catch (_) {}
+        paintStudioSummary({ name: r.classification, scope: brief.targetLabel });
+        window.dispatchEvent(new Event("rd:credits-changed"));
+        genPhase(100, "Done");
+        finish();
+        cRng.value = 100;
+        setC(100);
+        setTimeout(() => {
+          let v = 100;
+          const b2 = setInterval(() => {
+            v -= 2.6;
+            cRng.value = v;
+            setC(v);
+            if (v <= 44) clearInterval(b2);
+          }, 20);
+        }, 600);
+
+        /* Free inspection that proves only the selection changed. */
+        try {
+          const q = await checkObjectEditResult({ data: { before: source, after: r.image } });
+          showObjectPreservation(q.report, {
+            onRetry: () => runObjectEditFlow(),
+            onDiscard: () => {
+              cRng.value = 0;
+              setC(0);
+              rdToast("Showing The Original. The Result Stays In Version History.");
+            },
+          });
+        } catch (_) {
+          /* the checks are advisory, never a reason to lose the result */
+        }
+      } catch (e) {
+        window.__rdVersionExtras = null;
+        setCanvasPhase("");
+        finish();
+        if (!creditGate(e))
+          showAlert("Could not apply that edit. " + ((e && e.message) || "Try again in a moment."));
       }
     }
 
@@ -11051,6 +11272,7 @@ ${picks
       "Virtual Stage": () => runStageFlow(),
       Declutter: () => runDeclutterFlow(),
       "Material Swap": () => runMaterialsFlow(),
+      "Object Edit": () => runObjectEditFlow(),
       "Sketch To Render": () => runSketchFlow(),
       "Multi Angle": () => runAnglesFlow(null),
     };
@@ -11059,6 +11281,7 @@ ${picks
       "Virtual Stage": 1,
       Declutter: 1,
       "Material Swap": 1,
+      "Object Edit": 1,
       "Sketch To Render": 1,
       Budget: 3,
       "Multi Angle": 1,
@@ -11079,7 +11302,7 @@ ${picks
     /* ---------- studio: visual style selection ---------- */
     let CANVAS_STYLE: any = null;
     function activeToolName() {
-      const r = document.querySelector("#fTool .toolrow.on") as any;
+      const r = document.querySelector(".toolrow.on[data-tool]") as any;
       return (r && r.getAttribute("data-tool")) || "Redesign";
     }
     function canvasStyleSelected() {
@@ -11211,6 +11434,13 @@ ${picks
         setMaterialsSpace(space);
         setMaterialsPanelVisible(tool === "Material Swap");
       } catch (_) {}
+      /* The targeted selection controls belong to Object Edit alone. */
+      try {
+        ensureObjectPanel();
+        setObjectSpace(space);
+        setObjectPanelVisible(tool === "Object Edit");
+        if (tool === "Object Edit") setObjectCostSentence(objectCostSentence(readObjectBrief()));
+      } catch (_) {}
       /* The drawing, geometry and camera controls belong to Sketch alone. */
       try {
         ensureSketchPanel();
@@ -11233,6 +11463,7 @@ ${picks
         "Virtual Stage": "Stage Room",
         Declutter: "Declutter Room",
         "Material Swap": "Apply Material",
+        "Object Edit": "Apply Edit",
         "Sketch To Render": "Render Sketch",
         "Multi Angle": "Generate Angles",
         Animate: "Create Motion Clip",

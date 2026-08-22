@@ -707,17 +707,13 @@ export function initCanvasWorkspace() {
       else void openCanvasPhotoEditor();
       return;
     }
-    if (t.closest("#rdwObjTool")) {
-      const sec = document.getElementById("rdwObjSec");
-      const btn = document.getElementById("rdwObjTool");
-      if (sec) {
-        sec.hidden = !sec.hidden;
-        btn?.classList.toggle("on", !sec.hidden);
-        if (!sec.hidden) sec.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }
-      return;
-    }
-    if (t.closest("#fTool .toolrow:not(.rdw-phototool)") || t.closest("#spChips .chip")) {
+    /* Object Edit is a normal Canvas tool: the app script owns the state
+       change, exactly as it does for every other row in the rail. */
+    if (
+      t.closest("#fTool .toolrow:not(.rdw-phototool)") ||
+      t.closest("#rdwObjTool") ||
+      t.closest("#spChips .chip")
+    ) {
       /* Switching tools is a Canvas state change, never navigation. */
       if (b.classList.contains("editing-photo")) closeCanvasPhotoEditor();
 

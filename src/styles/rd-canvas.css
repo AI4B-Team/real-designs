@@ -2980,3 +2980,38 @@
   font-size: 0.76rem;
   line-height: 1.45;
 }
+
+/* ---------------------------------------------------- Object Edit panel */
+/* Object Edit reuses the shared tool-panel look; only its action grid,
+   instruction field and matching-objects toggle are specific. */
+.rd-obj .rd-obj-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.rd-obj .rd-obj-actions .rd-decl-mode b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rd-obj .rd-obj-actions .rd-decl-mode b i {
+  width: 14px;
+  height: 14px;
+}
+.rd-obj .rd-obj-actions .rd-decl-mode[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.rd-obj .rd-obj-text {
+  width: 100%;
+  min-height: 76px;
+  resize: vertical;
+}
+.rd-obj .rd-obj-match {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: var(--mute-2);
+}
