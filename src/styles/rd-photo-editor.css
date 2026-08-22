@@ -770,7 +770,10 @@ body.rdpe-open {
 .rd-app .rdw-stage > img.rdw-editimg {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  /* Match the permanent Canvas image exactly. Redesign's source/result layers
+     fill this viewport with cover; using contain here introduced side gutters
+     and made the photo visibly narrower as soon as Edit was selected. */
+  object-fit: cover;
   object-position: center;
   border-radius: 10px;
   box-shadow: none;
