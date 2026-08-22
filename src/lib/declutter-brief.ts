@@ -11,6 +11,20 @@
  * definitions, so every rule here is unit-testable.
  */
 
+import {
+  boxSentence,
+  buildRegions,
+  emptyMask as coreEmptyMask,
+  pushStroke as corePushStroke,
+  redoStroke as coreRedoStroke,
+  undoStroke as coreUndoStroke,
+  maskSupport,
+  strokeCoversBox,
+  type MaskState as CoreMaskState,
+  type MaskStroke as CoreMaskStroke,
+  type SelectionIntent,
+} from "@/lib/selection-mask";
+
 /* ---------------------------------------------------------------- modes */
 
 export type DeclutterModeId =
