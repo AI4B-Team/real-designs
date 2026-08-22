@@ -637,10 +637,13 @@ export type SketchPayload = {
   style_id: string | null;
   style_name: string | null;
   material_direction: string;
+  material_label: string;
   material_rule: string;
   furniture_level: string;
+  furniture_label: string;
   furniture_rule: string;
   finish_grade: string;
+  finish_label: string;
   finish_rule: string;
   units: UnitId;
   scale: ScaleCalibration;
@@ -809,11 +812,14 @@ export function buildSketchBrief(input: SketchSettings): SketchBrief {
     room_type: input.roomType || null,
     style_id: input.styleId || null,
     style_name: input.styleName || null,
-    material_direction: material.label,
+    material_direction: material.id,
+    material_label: material.label,
     material_rule: material.rule,
-    furniture_level: furniture.label,
+    furniture_level: furniture.id,
+    furniture_label: furniture.label,
     furniture_rule: furniture.rule,
-    finish_grade: finish.label,
+    finish_grade: finish.id,
+    finish_label: finish.label,
     finish_rule: finish.rule,
     units: input.units,
     scale: input.scale,
