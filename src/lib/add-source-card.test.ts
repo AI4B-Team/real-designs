@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { addSourceCardHtml, mountAddSourceCard, isAddSourceCardOpen } from "@/lib/add-source-card";
 
