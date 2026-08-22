@@ -768,7 +768,7 @@ async function propertyPhotos(id) {
 
 function pickerCommon() {
   return {
-    context: "photo",
+    context: "design",
     esc,
     lucide: { createIcons: () => paint() },
     properties: async () => {
