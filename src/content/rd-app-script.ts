@@ -9078,7 +9078,10 @@ ${picks
       approved: ["p-ok", "Approved"],
       changes: ["p-amb", "Changes Requested"],
     };
-    let PRES_ROWS = [];
+    /* `var` on purpose: search metadata reads this through a `typeof` guard
+       long before this line runs, and a `let` would throw in its TDZ. */
+    var PRES_ROWS = [];
+
 
     function presAgo(iso) {
       if (!iso) return "never";
