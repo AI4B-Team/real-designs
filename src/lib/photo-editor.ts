@@ -1304,7 +1304,9 @@ export async function openPhotoEditor(opts: {
 
   function paintCropBox() {
     const box = $("#rdpeCropBox");
+    const stage = $("#rdpeStage");
     if (!box) return;
+    stage?.classList.toggle("rdpe-cropping", !!(cropMode && cropView));
     if (!cropMode || !cropView) {
       box.style.display = "none";
       box.classList.remove("acting");
