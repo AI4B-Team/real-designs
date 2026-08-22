@@ -226,6 +226,20 @@ function showState(m: Modal, label: string, note = "") {
   m.footer.innerHTML = `<button type="button" class="rdpi-btn" data-rdpi-close>Cancel</button>`;
 }
 
+/** Honest, never-blank state for a provider with no working integration. */
+function showUnavailable(m: Modal, cfg: ProviderConfig, opts: ImportOptions) {
+  if (!m.isOpen()) return;
+  m.body.innerHTML = `<p class="rdpi-err">${esc(cfg.label)} isn't connected yet.</p>
+    <p>Choose photos from your computer for now. Your photos, room types and design settings are untouched.</p>`;
+  m.footer.innerHTML = `<button type="button" class="rdpi-btn" data-rdpi-close>Cancel</button>
+    <button type="button" class="rdpi-btn primary" data-rdpi-computer>Choose From Computer</button>`;
+  m.footer.querySelector("[data-rdpi-computer]")?.addEventListener("click", () => {
+    m.close();
+    void opts.onComputer?.();
+  });
+  m.footer.querySelector<HTMLElement>("[data-rdpi-computer]")?.focus();
+}
+
 function showError(m: Modal, message: string, retry: () => void, opts: ImportOptions) {
   if (!m.isOpen()) return;
   m.setLocked(false);
@@ -526,8 +540,14 @@ export async function importFromProvider(id: ProviderId, opts: ImportOptions): P
   if (RUNNING) return false;
   const cfg = providerConfig(id);
   if (!cfg.configured) {
-    opts.onUnavailable?.(providerUnavailableMessage(id));
-    return false;
+    /* Hosts that render their own inline note keep that behaviour. Everyone
+       else gets an honest, compact explanation instead of a dead button. */
+    if (opts.onUnavailable) {
+      opts.onUnavailable(providerUnavailableMessage(id));
+      return false;
+    }
+    showUnavailable(openProviderModal(cfg, opts.paint), cfg, opts);
+    return true;
   }
   RUNNING = true;
   const m = openProviderModal(cfg, opts.paint);
