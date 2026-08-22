@@ -134,7 +134,7 @@ import {
 } from "@/lib/space-tools";
 import { downloadPdf, imageForPdf } from "@/lib/pdf-download";
 import { setHandoff } from "@/lib/handoff";
-import { startVideoFromCanvas } from "@/lib/video-handoff";
+import { startVideoBuilder } from "@/lib/video-handoff";
 import { openStagingReview } from "@/content/rd-staging";
 import { openVideoWorkflow } from "@/content/rd-media-lib";
 
@@ -2771,39 +2771,27 @@ export function initApp(): () => void {
               showAlert("That Concept Has Not Finished Saving Yet.");
               return;
             }
-            const r = startVideoFromCanvas(
+            const r = startVideoBuilder(
               {
-                path: lastRenderPath,
-                name: "Concept",
-                room: (STUDIO_CTX && STUDIO_CTX.room) || null,
+                origin: "studio",
                 propertyId: (STUDIO_CTX && STUDIO_CTX.propertyId) || null,
                 propertyAddress: (STUDIO_CTX && STUDIO_CTX.address) || null,
+                recommendedMotion: o.camera || null,
+                assets: [
+                  {
+                    storagePath: lastRenderPath,
+                    fileName: "Concept",
+                    roomName: (STUDIO_CTX && STUDIO_CTX.room) || null,
+                    sourceType: "generated-version",
+                  },
+                ],
               },
-              "studio",
+              { motion: o.camera || null, duration: o.duration, orientation: o.orientation },
             );
             if (!r.ok) {
               showAlert(r.reason);
               return;
             }
-            try {
-              window.__rdAllowReveal && window.__rdAllowReveal();
-            } catch (_) {}
-            openVideoWorkflow({
-              from: "studio",
-              propertyId: r.handoff.propertyId,
-              propertyAddress: r.handoff.propertyAddress,
-              motion: o.camera || r.motion,
-              duration: o.duration,
-              orientation: o.orientation,
-              assets: r.handoff.assets.map((a, i) => ({
-                id: a.id,
-                storage_path: a.path,
-                file_name: a.name,
-                original_filename: a.name,
-                room_group: a.room || a.name,
-                sort_order: i,
-              })),
-            });
           },
           beginConceptBatch: (info) => beginConceptBatch(info),
           addConcept: (image, label, opts) => addConcept(image, label, opts),
@@ -5571,22 +5559,24 @@ ${picks
         return;
       }
       if (target === "video") {
-        try {
-          window.__rdAllowReveal && window.__rdAllowReveal();
-        } catch (_) {}
-        openVideoWorkflow({
-          from: "batch",
+        const r = startVideoBuilder({
+          origin: "batch",
           propertyId: h.propertyId,
           propertyAddress: h.propertyAddress,
           assets: h.assets.map((a, i) => ({
-            id: a.id,
-            storage_path: a.path,
-            file_name: a.name,
-            original_filename: a.name,
-            room_group: a.room || a.name,
-            sort_order: i,
+            assetId: a.id,
+            storagePath: a.path,
+            fileName: a.name,
+            roomName: a.room || a.name,
+            sortOrder: i,
+            sourceType: "property-photo",
           })),
         });
+        if (!r.ok) {
+          try {
+            window.rdToast && window.rdToast(r.reason);
+          } catch (_) {}
+        }
         return;
       }
       openStagingReview({

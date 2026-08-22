@@ -4,6 +4,7 @@
 // design generations stay labeled and linked back to their source photo.
 /* eslint-disable */
 // @ts-nocheck
+import { startVideoBuilder } from "@/lib/video-handoff";
 import { createIcons, icons } from "lucide";
 import { mountSourcePicker } from "@/lib/source-picker";
 import { roomPhotoUrl } from "@/lib/room-photos";
@@ -723,14 +724,12 @@ function renderBulk() {
       else if (k === "hide") await patch(ids, { hidden: true });
       else if (k === "edit") openScope({ ids, label: null, op: null, family: "property" });
       else if (k === "lvideo") {
-        try {
-          window.rdListingVideo({
-            propertyId: STATE.propertyId,
-            propertyLabel: STATE.propertyLabel,
-            assets: STATE.assets.filter((a) => ids.includes(a.id)),
-            from: "media",
-          });
-        } catch (_) {}
+        startVideoBuilder({
+          origin: "media",
+          propertyId: STATE.propertyId,
+          propertyAddress: STATE.propertyLabel || null,
+          assets: STATE.assets.filter((a) => ids.includes(a.id)),
+        });
       } else if (k === "export") openExport(ids);
       else if (k === "del") {
         if (

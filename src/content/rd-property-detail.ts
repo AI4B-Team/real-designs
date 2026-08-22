@@ -10,7 +10,7 @@ import { listPackages } from "@/lib/presentation-packages.functions";
 import { resolvePhotoUrl } from "@/lib/room-photos";
 import { setHandoff } from "@/lib/handoff";
 import { openStagingReview } from "@/content/rd-staging";
-import { openVideoWorkflow } from "@/content/rd-media-lib";
+import { startVideoBuilder } from "@/lib/video-handoff";
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(
@@ -166,22 +166,24 @@ function startBuild(target, b) {
     return;
   }
   if (target === "video") {
-    try {
-      window.__rdAllowReveal && window.__rdAllowReveal();
-    } catch (_) {}
-    openVideoWorkflow({
-      from: "property",
+    const r = startVideoBuilder({
+      origin: "property",
       propertyId: h.propertyId,
       propertyAddress: h.propertyAddress,
       assets: h.assets.map((a, i) => ({
-        id: a.id,
-        storage_path: a.path,
-        file_name: a.name,
-        original_filename: a.name,
-        room_group: a.room || a.name,
-        sort_order: i,
+        assetId: a.id,
+        storagePath: a.path,
+        fileName: a.name,
+        roomName: a.room || a.name,
+        sortOrder: i,
+        sourceType: "property-photo",
       })),
     });
+    if (!r.ok) {
+      try {
+        window.rdToast && window.rdToast(r.reason);
+      } catch (_) {}
+    }
     return;
   }
   openStagingReview({
