@@ -65,3 +65,30 @@ describe("Add More Photos card", () => {
     expect(document.querySelector(".rds-srcmodal")).toBeNull();
   });
 });
+
+describe("Add More Photos expanded controls", () => {
+  it("offers a back control that returns to the collapsed card", () => {
+    document.body.innerHTML = addSourceCardHtml({ id: "addB" });
+    const card = document.querySelector(".rv-addcard") as HTMLElement;
+    mountAddSourceCard(card, { onComputer: () => {} });
+    card.querySelector<HTMLElement>("[data-addface]")!.click();
+    expect(isAddSourceCardOpen(card)).toBe(true);
+    const back = card.querySelector<HTMLElement>("[data-addback]")!;
+    expect(back.getAttribute("aria-label")).toBe("Back To Add More Photos");
+    back.click();
+    expect(isAddSourceCardOpen(card)).toBe(false);
+  });
+
+  it("centres the icon and label as one group at every width", async () => {
+    const { readFileSync } = await import("node:fs");
+    const css = readFileSync("src/styles/rd-reveal.css", "utf8");
+    const rule = css.split(".rd-app .rv-addsrc {")[1]!.split("}")[0]!;
+    expect(rule).toContain("display: inline-flex");
+    expect(rule).toContain("align-items: center");
+    expect(rule).toContain("justify-content: center");
+    expect(rule).toContain("gap: 10px");
+    expect(rule).toContain("height: 44px");
+    /* A fixed icon box means different logo widths never shift the label. */
+    expect(css).toContain(".rd-app .rv-addsrc-i { display: inline-flex; width: 20px");
+  });
+});
