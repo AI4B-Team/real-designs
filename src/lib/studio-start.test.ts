@@ -94,12 +94,13 @@ describe("studio start source picker", () => {
     expect(onDescribe).not.toHaveBeenCalled();
     ta.value = "A warm modern living room";
     ta.dispatchEvent(new Event("input", { bubbles: true }));
+    const ta2 = host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement;
+    console.log("PROMPT", JSON.stringify(ta2.value), host.querySelector(".sp-describe-foot .sp-meta")?.textContent);
     const pick = () => {
       (host.querySelector("[data-sp-room]") as HTMLElement).click();
       (host.querySelector("[data-sp-style]") as HTMLElement).click();
     };
     pick();
-    console.log("META", host.querySelector(".sp-describe-foot .sp-meta")?.textContent, host.querySelectorAll("[data-sp-room]").length, host.querySelectorAll("[data-sp-style]").length);
     cta().click();
     expect(onDescribe).toHaveBeenCalledWith(
       "A warm modern living room",
