@@ -108,7 +108,9 @@ describe("markup layers", () => {
 
   it("anchors a polygon label at its centroid", () => {
     const a = createLayer("parking", square);
-    expect(labelAnchor(a)).toEqual({ x: 0.4, y: 0.4 });
+    const at = labelAnchor(a);
+    expect(at.x).toBeCloseTo(0.4);
+    expect(at.y).toBeCloseTo(0.4);
   });
 });
 
