@@ -51,6 +51,8 @@ import {
   progressLabel,
 } from "@/lib/concept-batch";
 import { suggestDesignTitle } from "@/lib/property-address";
+import * as OS from "@/lib/output-slots";
+
 
 import { supabase } from "@/integrations/supabase/client";
 import {
