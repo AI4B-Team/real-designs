@@ -1187,7 +1187,9 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const plural = (k: number) => k + " " + noun + (k === 1 ? "" : "s");
     const label = state.adding
       ? "Preparing\u2026"
-      : "Continue With " + (n ? plural(n) : plural(0));
+      : n
+        ? "Continue With " + plural(n)
+        : "Continue";
     return (
       '<div class="spd-foot">' +
       '<span class="spd-foot-l">' +
@@ -1211,7 +1213,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   }
 
   function designLines(d: PickerDesign) {
-    const two = [d.style || "", d.versionNo ? "Version " + d.versionNo : ""].filter(Boolean);
+    const style = String(d.style || "")
+      .replace(/[-_]+/g, " ")
+      .replace(/\b\w/g, (m) => m.toUpperCase());
+    const two = [style, d.versionNo ? "Version " + d.versionNo : ""].filter(Boolean);
     const status =
       d.status && /approved|draft/i.test(d.status)
         ? d.status.charAt(0).toUpperCase() + d.status.slice(1).toLowerCase()
