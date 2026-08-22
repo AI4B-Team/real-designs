@@ -9,7 +9,37 @@ import { priceScopePreview } from "@/lib/estimator-preview.functions";
 import { detectChanges } from "@/lib/change-detect.functions";
 import { estimateDimensions } from "@/lib/dimensions.functions";
 import { renderDesign } from "@/lib/design-render.functions";
-import { renderPlan3d } from "@/lib/plan3d.functions";
+import {
+  classifyFloorplan,
+  detectFloorplan,
+  renderFloorplan,
+  checkFloorplanDrift,
+} from "@/lib/floorplan.functions";
+import {
+  buildFloorplanBrief,
+  floorplanCredits,
+  floorplanMeta,
+  outputType as floorplanOutputType,
+  rejectionMessage as floorplanRejection,
+  restoreFromMeta as restoreFromFloorplanMeta,
+} from "@/lib/floorplan-brief";
+import {
+  mountFloorplanPanel,
+  setFloorplanPanelVisible,
+  readFloorplanSettings,
+  setFloorplanClassification,
+  setFloorplanClassifying,
+  floorplanClassification,
+  setFloorplanGeometry,
+  setFloorplanDetecting,
+  floorplanGeometry,
+  hasFloorplanGeometry,
+  resetFloorplan,
+  loadFloorplanState,
+  interpretedPlan,
+  openFloorplanBriefReview,
+  showFloorplanDrift,
+} from "@/lib/floorplan-controls";
 import { runRoomTool } from "@/lib/room-tools.functions";
 import {
   startMotionClip,
