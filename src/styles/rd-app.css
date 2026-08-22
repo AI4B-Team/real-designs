@@ -10536,3 +10536,34 @@
     display: none;
   }
 }
+
+/* ---------- source picker: Cloud panel ---------- */
+.sp-cloud .sp-cloud-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 14px;
+  border: 1px solid rgba(204, 0, 0, .26);
+  border-radius: 12px;
+  background: #fdf3f3;
+  color: var(--ink, #111);
+}
+.sp-cloud .sp-cloud-warn i,
+.sp-cloud .sp-cloud-warn svg { width: 16px; height: 16px; flex: 0 0 16px; margin-top: 2px; color: #cc0000; }
+.sp-cloud .sp-cloud-warn p { margin: 0; font-size: .86rem; line-height: 1.45; text-transform: none; }
+.sp-cloud .sp-cloud-warn .sp-link { flex: 0 0 auto; white-space: nowrap; }
+.sp-cloud-grid { display: grid; grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: 12px; }
+@media (max-width: 720px) { .sp-cloud-grid { grid-template-columns: 1fr; } }
+.sp-cloud-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px; border: 1px solid var(--line, #e6e6e6);
+  border-radius: 14px; background: #fff;
+}
+.sp-cloud-card.is-off { background: #fafafa; }
+.sp-cloud-logo { display: inline-flex; width: 28px; height: 28px; flex: 0 0 28px; align-items: center; justify-content: center; }
+.sp-cloud-logo svg { width: 26px; height: 26px; }
+.sp-cloud-t { display: grid; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.sp-cloud-t b { font-size: .92rem; }
+.sp-cloud-t span { font-size: .78rem; color: var(--mute-2, #767676); }
+.sp-cloud-a { flex: 0 0 auto; }
