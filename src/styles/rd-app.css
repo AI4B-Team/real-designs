@@ -9857,6 +9857,13 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* the shared pane packs children to their content width; the media
+     workspace must use the whole available column instead */
+  align-items: stretch;
+  width: 100%;
+}
+.spd > * {
+  width: 100%;
 }
 .spd-head {
   display: grid;
@@ -9944,10 +9951,16 @@
 }
 .spd-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 16px;
-  max-height: 62vh;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+  align-items: start;
+  justify-content: start;
+  max-height: 58vh;
   overflow-y: auto;
+  padding-bottom: 8px;
+}
+.spd-card {
+  max-width: 320px;
 }
 .spd-card {
   position: relative;
@@ -10314,4 +10327,211 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+
+/* ---------- Select Media: toolbar, cards, list and footer ---------- */
+.spd-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.spd-bar .spd-fq {
+  flex: 1 1 220px;
+  max-width: 340px;
+  margin: 0;
+}
+.spd-sel {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 10px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--ink);
+}
+.spd-bar-r {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+.spd-views {
+  display: flex;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 3px;
+  background: #fff;
+}
+.spd-vb {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--mute-2);
+  cursor: pointer;
+}
+.spd-vb.on {
+  background: var(--ink);
+  color: #fff;
+}
+.spd-vb i,
+.spd-vb svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* card */
+.spd-th {
+  aspect-ratio: 4 / 3;
+}
+.spd-badge {
+  position: absolute;
+  left: 8px;
+  bottom: auto;
+  top: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(20, 18, 15, 0.72);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+.spd-body {
+  gap: 2px;
+  padding: 10px 12px 12px;
+}
+.spd-body b {
+  font-size: 0.9rem;
+}
+.spd-body span {
+  font-size: 0.78rem;
+  color: var(--mute-2);
+}
+.spd-card.is-sel {
+  border: 2px solid var(--red);
+}
+.spd-card.is-sel .spd-body {
+  background: rgba(204, 0, 0, 0.045);
+}
+/* selection must never change the box: compensate the extra border */
+.spd-card {
+  border: 2px solid var(--line);
+}
+
+/* list view */
+.spd-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 58vh;
+  overflow-y: auto;
+  padding-bottom: 8px;
+}
+.spd-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px 64px minmax(0, 1.6fr) minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 0.8fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+.spd-row.is-sel {
+  border-color: var(--red);
+  background: rgba(204, 0, 0, 0.045);
+}
+.spd-row .spd-check {
+  position: static;
+}
+.spd-rth {
+  display: block;
+  width: 64px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg);
+}
+.spd-rth img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.spd-rn {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.spd-rn b {
+  font-size: 0.88rem;
+}
+.spd-rn span,
+.spd-rm {
+  font-size: 0.78rem;
+  color: var(--mute-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* grouping */
+.spd-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-height: 58vh;
+  overflow-y: auto;
+}
+.spd-groups .spd-grid,
+.spd-groups .spd-list {
+  max-height: none;
+  overflow: visible;
+}
+.spd-group-h {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 0 0 8px;
+}
+.spd-group-h b {
+  font-size: 0.9rem;
+}
+.spd-group-h span {
+  font-size: 0.78rem;
+  color: var(--mute-2);
+}
+
+/* footer */
+.spd-foot {
+  padding: 12px 0 4px;
+  gap: 16px;
+}
+.spd-foot-l {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.82rem;
+  color: var(--ink);
+}
+@media (max-width: 640px) {
+  .spd-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .spd-row {
+    grid-template-columns: 28px 56px minmax(0, 1fr) auto;
+  }
+  .spd-row .spd-rm:nth-of-type(n + 2) {
+    display: none;
+  }
 }
