@@ -8636,39 +8636,47 @@ ${picks
       }
     }
 
-    document.getElementById("scBrief").addEventListener("click", exportBrief);
-    document.getElementById("scBrief").disabled = true;
-    document.getElementById("allowBuild").addEventListener("click", () => {
+    /* The Scope/Budget view is stripped from the markup while the feature is
+       hidden, so every handle here is optional: a missing node must never
+       abort the rest of app initialization (that is what killed the sidebar
+       collapse toggle). */
+    const scOn = (id: string, ev: string, fn: (e?: any) => void) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener(ev, fn as any);
+      return el as any;
+    };
+    const scBriefEl = scOn("scBrief", "click", exportBrief);
+    if (scBriefEl) scBriefEl.disabled = true;
+    scOn("allowBuild", "click", () => {
       lastScope ? renderAllowance(lastScope) : runScope();
     });
-    document.getElementById("allowCsv").addEventListener("click", allowanceCsv);
+    scOn("allowCsv", "click", allowanceCsv);
     renderAllowance(null);
-    document.getElementById("scDims").addEventListener("click", runDims);
+    scOn("scDims", "click", runDims);
 
-    document.getElementById("scDimsOk").addEventListener("click", async () => {
+    scOn("scDimsOk", "click", async () => {
       dimsConfirmed = true;
       setDimsSource();
       await runScope();
     });
     ["scFloor", "scWall", "scPerim"].forEach((id) =>
-      document.getElementById(id).addEventListener("input", () => {
+      scOn(id, "input", () => {
         if (dimsProposal) {
           dimsConfirmed = false;
           setDimsSource();
         }
       }),
     );
-    document.getElementById("scDetect").addEventListener("click", detectScopeChanges);
-    document.getElementById("scRun").addEventListener("click", runScope);
-    ["scGrade", "scMarket"].forEach((id) =>
-      document.getElementById(id).addEventListener("change", runScope),
-    );
+    scOn("scDetect", "click", detectScopeChanges);
+    scOn("scRun", "click", runScope);
+    ["scGrade", "scMarket"].forEach((id) => scOn(id, "change", runScope));
     let bTimer = null;
-    document.getElementById("scBudget").addEventListener("input", () => {
+    scOn("scBudget", "input", () => {
       clearTimeout(bTimer);
       bTimer = setTimeout(runScope, 500);
     });
     runScope();
+
 
     /* ---------- budget bands: each one reprices the same room ---------- */
     const BAND_ITEMS = {

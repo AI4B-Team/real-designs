@@ -327,7 +327,9 @@
   background: var(--ink);
   color: #fff;
   font-weight: 700;
+  box-shadow: 0 0 0 2px var(--red);
 }
+
 
 .rd-app .nav-i svg {
   width: 16px;
