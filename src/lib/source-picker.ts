@@ -985,6 +985,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       .sort(sortMedia);
   }
 
+  /** True when every item passing the current filters is already selected. */
+  function allVisibleSelected() {
+    const vis = visibleMedia();
+    return vis.length > 0 && vis.every((d) => state.designSel.includes(d.id));
+  }
+
   const time = (d: PickerDesign) => {
     const t = Date.parse(String(d.createdAt || ""));
     return isNaN(t) ? 0 : t;
