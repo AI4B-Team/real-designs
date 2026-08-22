@@ -844,6 +844,21 @@ export async function openPhotoEditor(opts: {
           )
           .join("")}</div>
         ${
+          cropMode && cropView
+            ? `<div class="rdpe-zoomrow">
+                <div class="rdpe-zoomhead">
+                  <span>Crop Zoom</span>
+                  <button type="button" class="rdpe-linkbtn" data-act="cropreset">Reset Position</button>
+                </div>
+                <input type="range" data-cropzoom min="${(cropMinScale() * 100).toFixed(0)}"
+                  max="${(MAX_CROP_ZOOM * 100).toFixed(0)}" step="1"
+                  value="${(cropView.scale * 100).toFixed(0)}" aria-label="Crop Zoom">
+                <span class="rdpe-num">${Math.round(cropView.scale * 100)}%</span>
+              </div>
+              <p class="rdpe-hint">Drag The Photo To Reposition It Inside The Crop.</p>`
+            : ""
+        }
+        ${
           cropMode
             ? `<div class="rdpe-autobtns">
                 <button type="button" class="btn btn-primary btn-sm" data-act="cropapply">Apply Crop</button>
@@ -851,6 +866,7 @@ export async function openPhotoEditor(opts: {
                </div>`
             : ""
         }
+
         <p class="rdpe-sub">Rotate And Flip</p>
         <div class="rdpe-rotrow">
           <button type="button" class="rdpe-ib" data-act="rotl" title="Rotate Left" aria-label="Rotate Left"><i data-lucide="rotate-ccw"></i></button>
