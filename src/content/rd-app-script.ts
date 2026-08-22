@@ -11,7 +11,31 @@ import { estimateDimensions } from "@/lib/dimensions.functions";
 import { renderDesign } from "@/lib/design-render.functions";
 import { renderPlan3d } from "@/lib/plan3d.functions";
 import { runRoomTool } from "@/lib/room-tools.functions";
-import { startWalkthrough, pollWalkthrough } from "@/lib/walkthrough.functions";
+import {
+  startMotionClip,
+  pollMotionClip,
+  listMotionClips,
+  updateMotionClip,
+  deleteMotionClip,
+  checkMotionClip,
+} from "@/lib/animate.functions";
+import {
+  mountAnimatePanel,
+  setAnimatePanelVisible,
+  setAnimateSources,
+  setAnimateJobs,
+  animateBrief,
+  animateCredits,
+  animateSettings,
+  applyAnimateSettings,
+} from "@/lib/animate-controls";
+import {
+  TOOL_PROMISE as ANIMATE_PROMISE,
+  idempotencyKey as animateKey,
+  isActive as clipActive,
+  reducedMotion,
+  statusLine as clipStatusLine,
+} from "@/lib/animate-brief";
 import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
 import {
   saveEstimate,
