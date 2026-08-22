@@ -519,8 +519,15 @@ function hoverBar(m, g, proc) {
 
 const READY = (m) => ["ready", "shared", "draft"].includes(m.status);
 const videoReady = (m) => READY(m) && !m.draft && typeGroup(m.type) !== "videos" && !!m.path;
+/* Pixel editing is available on any finished still image, uploaded or
+   generated. Edits never write over the stored source, so this is safe. */
 const canEditImage = (m) =>
-  m.type === "uploaded_image" && !m.job && !m.draft && !!m.refId && READY(m);
+  (m.type === "uploaded_image" || m.type === "generated_image") &&
+  !m.job &&
+  !m.draft &&
+  !!m.refId &&
+  READY(m);
+
 const selectedItems = () => S.items.filter((m) => S.sel.has(m.id));
 
 const planBlocked = (m) => isPlanBlocked((m && m.error) || "");
