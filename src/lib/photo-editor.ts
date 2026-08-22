@@ -630,10 +630,15 @@ export async function openPhotoEditor(opts: {
 
     $("#rdpeUndo").toggleAttribute("disabled", !s.history.length);
     $("#rdpeRedo").toggleAttribute("disabled", !s.future.length);
-    $("#rdpeSave").toggleAttribute("disabled", !s.dirty || s.saving);
+    /* A failed save stays actionable: the primary button becomes the retry. */
+    $("#rdpeSave").toggleAttribute("disabled", (!s.dirty && !saveFailed) || s.saving);
     $("#rdpeSaveCopy").toggleAttribute("disabled", !hasEdits(s) || s.saving);
     $("#rdpeReset").toggleAttribute("disabled", !hasEdits(s));
-    $("#rdpeSave").textContent = s.saving ? "Saving…" : primarySaveLabel({ mode: modeFor(p) });
+    $("#rdpeSave").textContent = s.saving
+      ? "Saving…"
+      : saveFailed
+        ? "Retry Save"
+        : primarySaveLabel({ mode: modeFor(p) });
     const edited = hasEdits(s) || !!aiPreview;
     const hold = $("#rdpeHold") as HTMLButtonElement;
     if (hold) {
@@ -1865,6 +1870,11 @@ export async function openPhotoEditor(opts: {
         s.crop = row.crop || null;
         s.rotation = n(row.rotation, 0);
         s.flipH = !!row.flip_h;
+        const g = row.geometry || {};
+        s.straighten = n(g.straighten, 0);
+        s.vertical = n(g.vertical, 0);
+        s.horizontal = n(g.horizontal, 0);
+        s.flipV = !!g.flip_v;
         s.aiOps = row.ai_ops || [];
         if (row.edited_path && row.ai_ops?.length) {
           const url = await roomPhotoUrl(row.edited_path, 3600);
