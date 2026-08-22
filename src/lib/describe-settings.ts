@@ -149,8 +149,13 @@ export function stylePool(space: string): StyleRecord[] {
 
 const PREFERRED_STYLE_IDS = ["modern", "contemporary", "transitional", "warm-minimal"];
 
-/** The four style cards; the active selection is always among them. */
-export function quickStyleCards(space: string, selectedId?: string | null, max = 4): StyleRecord[] {
+/** The four style cards; the active and the inferred style are always shown. */
+export function quickStyleCards(
+  space: string,
+  selectedId?: string | null,
+  max = 4,
+  inferredId?: string | null,
+): StyleRecord[] {
   const pool = stylePool(space);
   const byId = new Map(pool.map((s) => [s.id, s]));
   const out: StyleRecord[] = [];
@@ -161,10 +166,28 @@ export function quickStyleCards(space: string, selectedId?: string | null, max =
     out.push(rec);
   };
   if (selectedId) take(byId.get(selectedId));
+  if (inferredId) take(byId.get(inferredId));
   for (const id of PREFERRED_STYLE_IDS) take(byId.get(id));
   for (const rec of pool) take(rec);
   return out;
 }
+
+/** Design style named in the description: "modern luxury kitchen" → Modern Luxury. */
+export function inferStyleFromPrompt(prompt: string, space: string): StyleRecord | null {
+  const text = String(prompt || "").toLowerCase();
+  if (!text.trim()) return null;
+  const pool = stylePool(space);
+  const candidates: { rec: StyleRecord; name: string }[] = [];
+  for (const rec of pool) {
+    candidates.push({ rec, name: rec.displayName.toLowerCase() });
+    for (const a of rec.aliases || []) candidates.push({ rec, name: String(a).toLowerCase() });
+  }
+  /* Longest name first so "Modern Luxury" beats "Modern". */
+  candidates.sort((a, b) => b.name.length - a.name.length);
+  for (const c of candidates) if (c.name && text.includes(c.name)) return c.rec;
+  return null;
+}
+
 
 export function styleImage(rec: StyleRecord, space: string): string {
   const sp = spaceKeyOf(space);
