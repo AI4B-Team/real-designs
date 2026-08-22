@@ -72,7 +72,7 @@ describe("source classification", () => {
   });
 
   it("offers plan-shaped modes for a floor plan and perspective for a sketch", () => {
-    expect(modesForKind("floor_plan")).toContain("plan_3d");
+    expect(modesForKind("floor_plan")).toContain("floor_plan_3d_furnished");
     expect(modesForKind("hand_sketch")[0]).toBe("interior_perspective");
   });
 });
@@ -139,7 +139,7 @@ describe("brief validation", () => {
   it("forces an empty room for plan modes that cannot be furnished", () => {
     const c = normalizeClassification({ kind: "floor_plan", confidence: 0.9 });
     const b = buildSketchBrief(
-      settings({ classification: { ...c, confirmed: true }, mode: "elevation", furnitureLevel: "styled" }),
+      settings({ classification: { ...c, confirmed: true }, mode: "floor_plan_3d_unfurnished", furnitureLevel: "styled" }),
     );
     expect(b.payload.furniture_level).toBe("empty");
   });
