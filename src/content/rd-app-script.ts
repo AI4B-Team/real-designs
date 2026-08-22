@@ -4357,8 +4357,21 @@ export function initApp(): () => void {
           },
         });
         paintVersionBadge(afterPath, "Saved As Version " + v.version_no, "rd-vsaved");
+        /* The server assigned this number inside this room: it is now the
+           authoritative active result. */
         if (afterPath === lastRenderPath)
-          DISPLAYED_VERSION = { id: v.id, version_no: v.version_no, path: afterPath };
+          setActiveResult(
+            CR.versionResult(
+              {
+                id: v.id,
+                room_id: roomId,
+                version_no: v.version_no,
+                before_path: before,
+                after_path: afterPath,
+              },
+              { roomId },
+            ),
+          );
         /* The temporary draft may retire only now: durable image + version row. */
         try {
           await clearStudioDraft();
