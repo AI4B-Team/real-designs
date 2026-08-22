@@ -35,7 +35,6 @@ import {
   batchStatus,
   conceptSummary,
   canvasModeFor,
-  progressLabel,
   type ConceptBatch,
 } from "@/lib/concept-batch";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
