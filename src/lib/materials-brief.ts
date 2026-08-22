@@ -34,6 +34,7 @@ import {
   redoStroke as coreRedoStroke,
   undoStroke as coreUndoStroke,
   maskSupport,
+  type Region as CoreRegion,
   normalizePolygon,
   polygonBox,
   polygonCentroid,
@@ -219,8 +220,8 @@ export function maskRegions(
   others: SurfaceDetection[],
   mask: MaskState,
 ): {
-  target: Array<{ label: string; box: Box }>;
-  keep: Array<{ label: string; box: Box }>;
+  target: CoreRegion[];
+  keep: CoreRegion[];
   strokes: MaskStroke[];
   hasTarget: boolean;
 } {
