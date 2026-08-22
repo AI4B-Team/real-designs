@@ -4200,7 +4200,7 @@ export function initApp(): () => void {
       const saved = !!(STUDIO_CTX && STUDIO_CTX.roomId);
       /* Concepts have no source photo, so the room becomes savable the moment
          the first durable concept lands: no refresh, no upload wording. */
-      const gate = OUTPUTS ? OS.saveRoomState(OUTPUTS) : null;
+      const gate = OUTPUTS ? OS.saveRoomState(OUTPUTS, { roomSaved: saved }) : null;
       const canSave = gate
         ? gate.enabled
         : STUDIO_SRC !== SRC_EMPTY && !!studioSourcePath();
