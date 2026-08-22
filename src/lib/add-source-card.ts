@@ -152,6 +152,15 @@ export function mountAddSourceCard(
     buttons()[0]?.focus();
   });
 
+  /* Back control returns to the collapsed card without leaving the tile. */
+  card.querySelector<HTMLElement>("[data-addback]")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    close();
+    face?.focus();
+  });
+
+
   /* Hover only previews; it may never steal a locked-open card away. */
   card.addEventListener("mouseenter", () => {
     if (locked) return;
