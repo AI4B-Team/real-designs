@@ -1134,9 +1134,19 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   function recentHtml() {
     const list = (ctx.getRecent ? ctx.getRecent() : []).slice(0, 4);
     if (!list.length) return "";
+    /* While the user is actively picking video source designs, this strip
+       must not compete with the selection above it. */
+    const quiet = state.sourceTab === "design";
+    if (quiet)
+      return (
+        '<details class="stw-recent is-quiet">' +
+        '<summary class="stw-sec-h"><h3>Continue Where You Left Off</h3>' +
+        "<span>Your Most Recent Work</span></summary></details>"
+      );
     return (
       '<section class="stw-recent">' +
       '<div class="stw-sec-h"><h3>Continue Where You Left Off</h3><span>Your Most Recent Work</span></div>' +
+
       '<div class="stw-recent-g">' +
       list
         .map(
