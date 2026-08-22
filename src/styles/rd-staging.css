@@ -2046,3 +2046,325 @@
 .rds-strip.rds-film.collapsed .rds-film-b {
   display: none;
 }
+
+/* ------------------------------------------------- Design + Review pages
+   Same page chrome as Prepare Your Photos: these are steps in the builder,
+   never modals, so they inherit the rail, spacing and footer treatment. */
+.rdd-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.rdd-intro h2 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+.rdd-intro p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.rdd-notice {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--brand);
+  border-radius: 10px;
+  font-size: 13px;
+}
+.rdd-notice i {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--brand);
+}
+.rdd-groups,
+.rdd-rgroups {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.rdd-group,
+.rdd-rgroup,
+.rdd-shared {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+}
+.rdd-group-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.rdd-group-h h3,
+.rdd-rgroup h3,
+.rdd-shared h3 {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.rdd-shared h3 {
+  margin: 18px 0 10px;
+}
+.rdd-shared h3:first-child {
+  margin-top: 0;
+}
+.rdd-optional {
+  font-style: normal;
+  text-transform: none;
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 12px;
+  margin-left: 6px;
+}
+.rdd-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--brand);
+}
+.rdd-warn i {
+  width: 14px;
+  height: 14px;
+}
+
+/* Every style card is identical in size whatever its name length. */
+.rdd-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 12px;
+}
+.rdd-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: transparent;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+}
+.rdd-card-th {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  background: var(--surface-2, rgba(127, 127, 127, 0.12));
+}
+.rdd-card-th img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rdd-card-th i {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 20px;
+  height: 20px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+  opacity: 0;
+}
+.rdd-card.on {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 1px var(--brand);
+}
+.rdd-card.on .rdd-card-th i {
+  opacity: 1;
+}
+.rdd-card-t {
+  padding: 0 10px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Per-photo rows: what each photo will actually be rendered with. */
+.rdd-photos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+.rdd-photo,
+.rdd-rrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.rdd-photo.own {
+  border-color: var(--brand);
+}
+.rdd-photo-th {
+  width: 72px;
+  height: 48px;
+  flex: none;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface-2, rgba(127, 127, 127, 0.12));
+}
+.rdd-photo-th img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rdd-photo-m {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.rdd-photo-m b {
+  font-size: 13px;
+}
+.rdd-photo-m em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--muted);
+}
+.rdd-photo-a {
+  display: flex;
+  gap: 12px;
+  flex: none;
+}
+.rdd-rn {
+  width: 22px;
+  flex: none;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Direction and grade choices read as sentences, not jargon. */
+.rdd-opts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+.rdd-opt {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.rdd-opt b {
+  font-size: 13px;
+}
+.rdd-opt em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--muted);
+}
+.rdd-opt.on {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 1px var(--brand);
+}
+.rdd-chk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.rdd-shared textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13px;
+  background: transparent;
+  color: inherit;
+  resize: vertical;
+}
+.rdd-shared textarea:focus-visible {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.18);
+}
+
+/* Review facts: the exact contract of what will be generated. */
+.rdd-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.rdd-facts dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+.rdd-facts dd {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.rdd-rnotes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  font-size: 13px;
+}
+.rdd-rnotes span {
+  color: var(--muted);
+}
+.rdd-rstyle {
+  margin: 6px 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.rdd-rlist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* A disabled action always says why, right next to itself. */
+.rdd-blocks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rdd-blocks li,
+.rdd-block {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--brand);
+}
+.rdd-blocks i,
+.rdd-block i {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
