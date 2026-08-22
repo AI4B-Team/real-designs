@@ -2410,31 +2410,258 @@ export async function openPhotoEditor(opts: {
     rdToast("Preset Saved.");
   }
 
-  /** Batch editing: push the current adjustments onto other photographs. */
+  /* ------------------------------------------------------ batch workspace */
+
+  const photoLabel = (x: EditorPhoto, i: number) => x.room || x.name || `Photo ${i + 1}`;
+
+  function mixedReadout(keys: string[]): string {
+    const list = keys.map((k) => states.get(k)?.adj || {});
+    const values = mixedValues(list as any);
+    const rows = Object.entries(values)
+      .filter(([, v]) => v.mixed || v.value !== 0)
+      .slice(0, 8)
+      .map(
+        ([k, v]) =>
+          `<span class="rdpe-mix ${v.mixed ? "is-mixed" : ""}">${esc(k)}<b>${
+            v.mixed ? "Mixed" : Math.round(v.value)
+          }</b></span>`,
+      )
+      .join("");
+    return rows
+      ? `<div class="rdpe-mixrow">${rows}</div>`
+      : `<p class="rdpe-hint">The Selected Photographs Share No Adjustments Yet.</p>`;
+  }
+
+  /**
+   * Batch Edit. Ordinary adjustments only: masks, crops and generative work
+   * never travel with a batch, and nothing is saved unless it is confirmed.
+   */
   async function batchApply() {
     const here = cur();
-    const others = photos.filter((x) => x.key !== here.key);
-    if (!others.length) return;
+    if (photos.length < 2) return void rdToast("This Property Has Only One Photograph.");
+    if (!copied) copyCurrentAdjustments();
     const root = await formDialog({
-      title: "Apply To Other Photos",
-      body: `<p class="rdpe-hint">Selected Photographs Receive The Current Light, Colour And Detail Settings. Nothing Is Saved Until You Save Each Photo.</p>${chipList(
-        others.map((x, i) => ({ id: x.key, label: x.room || x.name || `Photo ${i + 2}` })),
-      )}`,
-      confirmLabel: "Apply Adjustments",
+      title: "Batch Edit",
+      body: `<p class="rdpe-hint">Source: <b>${esc(copied!.sourceLabel)}</b>. Light, Colour, Detail And Geometry Transfer. Masks, Crop Position, Privacy Blur And AI Generations Stay With Their Own Photograph.</p>
+        <div class="rdpe-batch-cats">${categoryChecklist()}</div>
+        <label class="rdpe-dlg-l">Photographs</label>
+        ${chipList(photos.map((x, i) => ({ id: x.key, label: photoLabel(x, i) + (x.key === here.key ? " (Source)" : "") })))}
+        <label class="rdpe-dlg-l">Apply Mode</label>
+        <div class="rdpe-batch-modes">${APPLY_MODES.map(
+          (m, i) =>
+            `<label class="rdpe-dlg-c"><input type="radio" name="rdpeMode" data-mode="${m.id}" ${
+              i === 0 ? "checked" : ""
+            } /> <b>${esc(m.label)}</b><em>${esc(m.hint)}</em></label>`,
+        ).join("")}</div>
+        <div data-x="mixed"></div>
+        <label class="rdpe-dlg-c"><input type="checkbox" data-x="saveall" /> Save A Version For Each Photograph After Applying</label>`,
+      confirmLabel: "Apply To Selected",
+      cancelLabel: "Cancel",
+      onInput: (dlg) => {
+        const box = dlg.querySelector('[data-x="mixed"]');
+        if (box) box.innerHTML = mixedReadout(chipValues(dlg));
+      },
     });
     if (!root) return;
-    const picked = chipValues(root);
+    const keys = chipValues(root);
+    if (!keys.length) return void rdToast("No Photographs Were Selected.");
+    const cats = pickedCategories(root);
+    if (!cats.length) return void rdToast("No Adjustment Categories Were Selected.");
+    const mode = ((root.querySelector("[data-mode]:checked") as HTMLInputElement)?.getAttribute(
+      "data-mode",
+    ) || "replace") as ApplyMode;
+    const saveAll = !!(root.querySelector('[data-x="saveall"]') as HTMLInputElement)?.checked;
+
+    let batch = newBatch({
+      operation: "adjustments",
+      generative: false,
+      photos: keys.map((k) => {
+        const i = photos.findIndex((x) => x.key === k);
+        return { key: k, label: photoLabel(photos[i] as EditorPhoto, i) };
+      }),
+      copied: copied!,
+      categories: cats,
+      mode,
+    });
+    const clipped: string[] = [];
+    for (const key of keys) {
+      const target = states.get(key) || st(key);
+      batch = markPhoto(batch, key, "running", { before: snapshotBefore(target) });
+      try {
+        const out = applyCopied(target as any, copied!, cats, mode);
+        mergePaste(target, out);
+        clipped.push(...out.clipped);
+        batch = markPhoto(batch, key, "done");
+      } catch (err: any) {
+        batch = markPhoto(batch, key, "failed", { error: err?.message || "Could Not Apply" });
+      }
+    }
+    lastBatch = batch;
+    saveBatchLocal(batch);
+    paint();
+    void refreshStats();
+    void persistBatch(batch);
+
+    const note = clippingNotice([...new Set(clipped)]);
+    if (note) rdToast(note, "error");
+    const prog = batchProgress(batch);
+    rdToast(`Batch Applied To ${prog.done} Of ${prog.total} Photographs.`);
+
+    if (saveAll) await saveBatchVersions(batch);
+  }
+
+  /** Write one durable version per photograph in the batch. */
+  async function saveBatchVersions(batch: BatchRecord) {
+    let ok = 0;
+    for (const item of batch.photos) {
+      if (item.status !== "done") continue;
+      const p = photos.find((x) => x.key === item.key);
+      const s = states.get(item.key);
+      if (!p || !s) continue;
+      try {
+        await savePhotoState(p, s, false);
+        s.dirty = false;
+        ok++;
+      } catch (err: any) {
+        lastBatch = markPhoto(batch, item.key, "failed", { error: err?.message || "Save Failed" });
+      }
+    }
+    if (lastBatch) saveBatchLocal(lastBatch);
+    paint();
+    rdToast(`${ok} Photograph${ok === 1 ? "" : "s"} Saved As New Versions.`);
+  }
+
+  async function persistBatch(batch: BatchRecord) {
+    try {
+      await saveBatch({
+        data: {
+          batch_id: batch.id,
+          operation: batch.operation,
+          generative: batch.generative,
+          status: batchProgress(batch).failed ? "partial" : "complete",
+          photos: batch.photos,
+          settings: { categories: batch.categories, mode: batch.mode },
+        },
+      });
+    } catch {
+      /* the local record already survives a refresh */
+    }
+  }
+
+  /** Analyse each selected photograph on its own and propose a correction. */
+  async function batchAutoEnhanceFlow() {
+    if (photos.length < 2) return void rdToast("This Property Has Only One Photograph.");
+    const root = await formDialog({
+      title: "Auto Enhance Photos",
+      body: `<p class="rdpe-hint">Each Photograph Is Analysed On Its Own. Nothing Is Applied Until You Approve It.</p>
+        ${chipList(photos.map((x, i) => ({ id: x.key, label: photoLabel(x, i) })))}`,
+      confirmLabel: "Analyse Selected",
+      cancelLabel: "Cancel",
+    });
+    if (!root) return;
+    const keys = chipValues(root);
+    if (!keys.length) return;
+    rdToast("Analysing Photographs…");
+
+    const inputs: { key: string; label: string; adj: any; stats: any }[] = [];
+    for (const key of keys) {
+      const i = photos.findIndex((x) => x.key === key);
+      const p = photos[i] as EditorPhoto;
+      const s = states.get(key) || st(key);
+      const src = s.base || s.original || p.src || null;
+      const measured = src ? await measure(src, null) : null;
+      inputs.push({ key, label: photoLabel(p, i), adj: s.adj, stats: measured });
+    }
+    const recs = batchAutoEnhance(inputs as any, autoStrength);
+    const approve = await formDialog({
+      title: "Review Auto Enhance",
+      body: `<p class="rdpe-hint">Uncheck Any Photograph You Would Rather Leave Alone.</p>
+        ${recs
+          .map(
+            (r) =>
+              `<label class="rdpe-dlg-c"><input type="checkbox" data-rec="${esc(r.key)}" ${
+                r.skipped ? "" : "checked"
+              } ${r.skipped ? "disabled" : ""} /> <b>${esc(r.label)}</b><em>${esc(
+                r.summary,
+              )}</em></label>`,
+          )
+          .join("")}`,
+      confirmLabel: "Apply Approved",
+      cancelLabel: "Cancel",
+    });
+    if (!approve) return;
+    const picked = Array.from(approve.querySelectorAll<HTMLInputElement>("[data-rec]"))
+      .filter((i) => i.checked)
+      .map((i) => i.getAttribute("data-rec") as string);
     if (!picked.length) return;
-    const bundle = bundleOf(st());
+
+    let batch = newBatch({
+      operation: "auto-enhance",
+      generative: false,
+      photos: picked.map((k) => ({
+        key: k,
+        label: recs.find((r) => r.key === k)?.label || "Photo",
+      })),
+      copied: null,
+      categories: ["light", "color", "detail"],
+      mode: "replace",
+    });
     for (const key of picked) {
-      const target = states.get(key) || null;
-      if (!target) continue;
-      target.adj = { ...bundle.adj };
+      const target = states.get(key) || st(key);
+      const rec = recs.find((r) => r.key === key);
+      if (!rec) continue;
+      batch = markPhoto(batch, key, "running", { before: snapshotBefore(target) });
+      target.adj = { ...target.adj, ...rec.adj };
+      target.auto = true;
+      target.dirty = true;
+      batch = markPhoto(batch, key, "done");
+    }
+    lastBatch = batch;
+    saveBatchLocal(batch);
+    void persistBatch(batch);
+    paint();
+    void refreshStats();
+    rdToast(`Auto Enhance Applied To ${picked.length} Photograph${picked.length === 1 ? "" : "s"}.`);
+  }
+
+  /** Undo a whole batch, or just the photographs the user picks. */
+  async function undoBatchFlow() {
+    if (!lastBatch) return;
+    const changed = changedPhotos(lastBatch);
+    if (!changed.length) return void rdToast("There Is Nothing Left To Undo.");
+    const root = await formDialog({
+      title: "Undo Batch",
+      body: `<p class="rdpe-hint">${changed.length} Photograph${
+        changed.length === 1 ? " Was" : "s Were"
+      } Changed By The Last Batch. Undo Returns Them To Their Previous Settings.</p>
+        ${chipList(changed.map((c) => ({ id: c.key, label: c.label })), changed.map((c) => c.key))}`,
+      confirmLabel: "Undo Selected",
+      cancelLabel: "Keep Changes",
+    });
+    if (!root) return;
+    const keys = chipValues(root);
+    if (!keys.length) return;
+    for (const key of keys) {
+      const item = lastBatch.photos.find((x) => x.key === key);
+      const target = states.get(key);
+      if (!item?.before || !target) continue;
+      target.adj = { ...item.before.adj };
+      target.rotation = item.before.rotation;
+      target.flipH = item.before.flipH;
+      target.flipV = item.before.flipV;
+      target.straighten = item.before.straighten;
+      target.vertical = item.before.vertical;
+      target.horizontal = item.before.horizontal;
       target.dirty = true;
     }
+    lastBatch = markUndone(lastBatch, keys);
+    saveBatchLocal(lastBatch);
+    void persistBatch(lastBatch);
     paint();
-    rdToast(`Adjustments Applied To ${picked.length} Photo${picked.length === 1 ? "" : "s"}.`);
+    void refreshStats();
+    rdToast(`${keys.length} Photograph${keys.length === 1 ? "" : "s"} Restored.`);
   }
+
 
   async function resetPhoto() {
     const ok = await confirmDialog({
