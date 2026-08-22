@@ -217,9 +217,12 @@ export function setCanvasTool(tool: "edit-photo" | null) {
 
 /** Closes the embedded editor and restores the normal Canvas stage. */
 export function closeCanvasPhotoEditor() {
+  returnCanvasChrome();
   void import("@/lib/photo-editor").then((m) => m.closePhotoEditor());
   setCanvasTool(null);
+  applyZoom();
 }
+
 
 /** Mounts the ONE shared editor inside the Canvas on the visible image. */
 async function openCanvasPhotoEditor(): Promise<void> {
