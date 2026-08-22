@@ -902,6 +902,10 @@ body.rdpe-open {
    off-canvas drawer as the Redesign panel, toggled by .panel-on. */
 @media (max-width: 1099px) {
   .rd-app .studio.rdw .rdpe-embed .rdpe-panel {
+    /* The responsive Designer has only rail + Canvas columns. Keep the fixed
+       drawer assigned to the Canvas column so it cannot create an implicit
+       third grid track before fixed positioning is resolved. */
+    grid-column: 2;
     position: fixed;
     top: var(--app-header-height, 58px);
     right: 0;
