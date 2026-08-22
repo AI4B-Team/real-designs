@@ -2003,20 +2003,25 @@ export function initApp(): () => void {
       setKpi(
         0,
         String(s.counts.designs),
-        s.counts.designs ? s.counts.priced + " Priced With A Budget" : "Save A Room To Get Started",
+        s.counts.designs ? "Across Your Properties" : "Save A Room To Get Started",
       );
       setKpi(
         1,
         String(s.counts.properties),
         s.counts.properties ? "Saved To Your Account" : "No Properties Yet",
       );
-      setKpi(
-        2,
-        s.counts.scopedTotal ? kfmt(s.counts.scopedTotal) : "Coming Soon",
-        s.counts.scopedTotal
-          ? s.counts.priced + " Priced " + (s.counts.priced === 1 ? "Room" : "Rooms")
-          : "Verified Local Cost Data Coming Soon",
-      );
+      /* The budget KPI is a budget surface: while budgets are hidden the card
+         is removed, never filled with a "Coming Soon" placeholder number. */
+      if (s.counts.scopedTotal) {
+        setKpi(
+          2,
+          kfmt(s.counts.scopedTotal),
+          s.counts.priced + " Priced " + (s.counts.priced === 1 ? "Room" : "Rooms"),
+        );
+      } else {
+        const bk = document.getElementById("kpiBudget");
+        if (bk) bk.hidden = true;
+      }
       setKpi(
         3,
         String(s.counts.drafts),
