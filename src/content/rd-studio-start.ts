@@ -1139,7 +1139,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     if (!list.length) return "";
     /* While the user is actively picking video source designs, this strip
        must not compete with the selection above it. */
-    const quiet = state.sourceTab === "design";
+    const quiet = state.sourceTab === "media";
     if (quiet)
       return (
         '<details class="stw-recent is-quiet">' +
