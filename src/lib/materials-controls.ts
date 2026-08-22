@@ -293,7 +293,7 @@ function wire(sec: HTMLElement) {
   sec.addEventListener("click", (e) => {
     /* One shared Object Edit: Materials never grows its own targeted editor. */
     if ((e.target as HTMLElement).closest("#rdMatToObject")) {
-      (window as any).rdOpenObjectEdit?.({ action: "material", surfaceKind: readMaterialsSettings?.().surface ?? null });
+      (window as any).rdOpenObjectEdit?.({ action: "material", surfaceKind: state.surfaceKind || null });
       return;
     }
     const t = e.target as HTMLElement;
