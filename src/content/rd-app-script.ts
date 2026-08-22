@@ -10812,6 +10812,12 @@ ${picks
             price = sketchCredits(readSketchResults());
           } catch (_) {}
         }
+        /* Angles prices every selected camera, not one flat render. */
+        if (tool === "Multi Angle") {
+          try {
+            price = angleCredits(readAngleResults());
+          } catch (_) {}
+        }
         cost.textContent = costLabel(price);
       }
       /* The staging controls belong to the Stage tool alone. */
