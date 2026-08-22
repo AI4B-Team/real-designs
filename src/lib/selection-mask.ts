@@ -131,7 +131,74 @@ export function boxSentence(box: Box): string {
 
 /* ------------------------------------------------------------- regions */
 
-export type Region = { label: string; box: Box };
+export type Point = { x: number; y: number };
+
+/**
+ * A region is a box plus, when the detector gave us one, the real outline of
+ * the surface. Everything downstream — the on-image overlay, the review image
+ * and the binary mask sent to the backend — reads the same polygon, so what a
+ * user hovers is literally what the model is allowed to change.
+ */
+export type Region = { label: string; box: Box; polygon?: Point[] };
+
+/** Normalizes an arbitrary polygon: clamped, deduped, 3+ points or nothing. */
+export function normalizePolygon(raw: unknown): Point[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const pts: Point[] = [];
+  raw.slice(0, 64).forEach((entry) => {
+    const e = (entry || {}) as Record<string, unknown>;
+    const x = Number(Array.isArray(entry) ? (entry as unknown[])[0] : e["x"]);
+    const y = Number(Array.isArray(entry) ? (entry as unknown[])[1] : e["y"]);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    const pt = { x: clamp01(x), y: clamp01(y) };
+    const last = pts[pts.length - 1];
+    if (last && Math.abs(last.x - pt.x) < 0.001 && Math.abs(last.y - pt.y) < 0.001) return;
+    pts.push(pt);
+  });
+  return pts.length >= 3 ? pts : undefined;
+}
+
+/** The bounding box of a polygon, so box-based code keeps working. */
+export function polygonBox(points: Point[]): Box {
+  const xs = points.map((p) => p.x);
+  const ys = points.map((p) => p.y);
+  const x = Math.min(...xs);
+  const y = Math.min(...ys);
+  return { x, y, w: Math.max(0.01, Math.max(...xs) - x), h: Math.max(0.01, Math.max(...ys) - y) };
+}
+
+/** Area-weighted centroid, used to anchor the label on the image. */
+export function polygonCentroid(points: Point[]): Point {
+  let a = 0;
+  let cx = 0;
+  let cy = 0;
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i]!;
+    const q = points[(i + 1) % points.length]!;
+    const f = p.x * q.y - q.x * p.y;
+    a += f;
+    cx += (p.x + q.x) * f;
+    cy += (p.y + q.y) * f;
+  }
+  if (Math.abs(a) < 1e-9) {
+    const b = polygonBox(points);
+    return { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+  }
+  return { x: clamp01(cx / (3 * a)), y: clamp01(cy / (3 * a)) };
+}
+
+/** Even-odd hit test in normalized space: which surface is under the cursor. */
+export function pointInPolygon(points: Point[], pt: Point): boolean {
+  let inside = false;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+    const a = points[i]!;
+    const b = points[j]!;
+    const hit =
+      a.y > pt.y !== b.y > pt.y && pt.x < ((b.x - a.x) * (pt.y - a.y)) / (b.y - a.y || 1e-9) + a.x;
+    if (hit) inside = !inside;
+  }
+  return inside;
+}
 
 export type Regions<K extends string = string> = {
   /** Areas the model may change. */
@@ -167,8 +234,12 @@ export function buildRegions<K extends string>(input: RegionInput<K>): Regions<K
 
   const edit = input.selected
     .filter((r) => !excludeStrokes.some((s) => strokeCoversBox(s, r.box)))
-    .map((r) => ({ label: r.label, box: padBox(r.box, mask.grow) }));
-  const protect = input.protectedRegions.map((r) => ({ label: r.label, box: { ...r.box } }));
+    .map((r) => ({ label: r.label, box: padBox(r.box, mask.grow), ...(r.polygon ? { polygon: r.polygon.map((p) => ({ ...p })) } : {}) }));
+  const protect = input.protectedRegions.map((r) => ({
+    label: r.label,
+    box: { ...r.box },
+    ...(r.polygon ? { polygon: r.polygon.map((p) => ({ ...p })) } : {}),
+  }));
 
   const finalEdit = mask.invert ? protect.map((r) => ({ ...r })) : edit;
   const finalProtect = mask.invert ? edit.map((r) => ({ ...r })) : protect;
