@@ -330,6 +330,19 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     mediaProperty: "all",
     mediaRoom: "all",
     mediaQuery: "",
+    /** Sort order, optional property grouping and the grid/list view. */
+    mediaSort: "newest" as "newest" | "oldest" | "room" | "property",
+    mediaGroup: false,
+    mediaView: (() => {
+      try {
+        const v = localStorage.getItem("rd.media.view");
+        return v === "list" ? "list" : "grid";
+      } catch (_) {
+        return "grid";
+      }
+    })() as "grid" | "list",
+    /** Anchor for shift-click range selection. */
+    mediaAnchor: null as string | null,
 
     /** Many photos landed in a single-image context: let the user choose one. */
     choose: [] as PickedFile[],
