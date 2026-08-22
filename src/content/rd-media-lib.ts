@@ -53,6 +53,10 @@ import { openMotionClip } from "@/lib/rd-motion-clip";
 import { openSocialCopy } from "@/lib/rd-social-copy";
 import { openBulkRestyle } from "@/lib/rd-bulk-restyle";
 import { isPlanBlocked, openUpgrade as openUpgradeFlow } from "@/lib/rd-upgrade";
+import { isFavorite, toggleFavorite, favoriteToast } from "@/lib/favorites";
+import { bootFavorites } from "@/lib/favorites-boot";
+import { beginResume, markResumeConsumed } from "@/lib/resume";
+import { resumeInputForMedia } from "@/lib/media-resume";
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(
@@ -65,26 +69,20 @@ const paint = () => {
   } catch (_) {}
 };
 
-const FAV_KEY = "rd.media.favs.v1";
-const readFavs = () => {
-  try {
-    const v = JSON.parse(localStorage.getItem(FAV_KEY) || "[]");
-    return Array.isArray(v) ? v : [];
-  } catch (_) {
-    return [];
+/* Favorites live on the user's account, so the heart is the same on every
+   surface and survives a refresh, a new device and a new sign-in. */
+const isFav = (id) => isFavorite({ kind: "media", id: String(id) });
+async function toggleFav(id) {
+  const res = await toggleFavorite({ kind: "media", id: String(id) });
+  render();
+  if (!res.ok) {
+    toast("Favorite Could Not Be Saved. Tap To Retry.");
+    return res;
   }
-};
-let FAVS = readFavs();
-const isFav = (id) => FAVS.indexOf(String(id)) > -1;
-function toggleFav(id) {
-  const s = String(id);
-  const i = FAVS.indexOf(s);
-  if (i > -1) FAVS.splice(i, 1);
-  else FAVS.push(s);
-  try {
-    localStorage.setItem(FAV_KEY, JSON.stringify(FAVS));
-  } catch (_) {}
+  toast(favoriteToast(res.favorite));
+  return res;
 }
+
 
 const S = {
   items: [],
@@ -326,7 +324,12 @@ async function load(quiet) {
     S.loading = true;
     render();
   }
+  /* Hearts come from the account, so they are correct on first paint. */
   try {
+    await bootFavorites();
+  } catch (_) {}
+  try {
+
     S.items = await loadMediaLibrary();
   } catch (_) {
     S.items = [];
@@ -468,7 +471,7 @@ function card(m) {
       ${badges ? `<div class="ml-badges">${badges}</div>` : ""}
       <div class="ml-ov">
         ${S.selMode ? `<button class="ml-ob${sel ? " on" : ""}" data-pick="${m.id}" aria-label="Select"><i data-lucide="${sel ? "check" : "square"}"></i></button>` : ""}
-        <button class="ml-ob${isFav(m.id) ? " fav" : ""}" data-fav="${m.id}" aria-label="Favorite"><i data-lucide="heart"></i></button>
+        <button class="ml-ob${isFav(m.id) ? " fav" : ""}" data-fav="${m.id}" aria-pressed="${isFav(m.id)}" aria-label="${isFav(m.id) ? "Remove From Favorites" : "Add To Favorites"}" title="${isFav(m.id) ? "Remove From Favorites" : "Add To Favorites"}"><i data-lucide="heart"></i></button>
       </div>
       ${hoverBar(m, g, proc)}
     </div>
@@ -1089,30 +1092,61 @@ function isDesignDraft(m) {
   return m && m.type === "generated_video" && m.status === "draft";
 }
 
-/** Reopen a durable draft in the builder that owns it. */
-function continueProject(m) {
-  if (!m) return;
-  if (!m.draft) return openVideo(m);
-  if (m.draftType === "photo_staging") {
-    const st = (window as any).rdStaging;
-    if (st && st.resume) {
-      st.resume(m.draftId).then((ok) => {
-        if (!ok) toast("That project could not be reopened. Its photos may have been removed.");
-      });
-      return;
-    }
-    S.go("staging");
-    return;
-  }
-  if (m.draftType === "photo_redesign") {
+/**
+ * Reopen a durable draft in the workflow that owns it.
+ *
+ * The envelope is written before navigating and only marked consumed once the
+ * destination restored the project, so a refresh mid-handoff still lands in
+ * the same place. Failure is reported to the caller, never swallowed.
+ */
+async function continueProject(m, onFail?) {
+  if (!m) return false;
+  const fail = (id) => {
     try {
-      (window as any).__rdStudioDraft = m.draftId;
+      console.warn("[rd] continue editing failed", id);
     } catch (_) {}
-    S.go("studio");
-    return;
-  }
-  openVideo(m);
+    if (onFail) onFail(id);
+    else toast("This project couldn't be reopened.");
+    return false;
+  };
+  let restored = false;
+  const out = await beginResume({
+    input: resumeInputForMedia(m),
+    navigate: (view, ctx) => {
+      if (view === "staging") {
+        const st = (window as any).rdStaging;
+        if (st && st.resume && ctx.projectDraftId) {
+          st.resume(ctx.projectDraftId).then((ok) => {
+            if (ok) markResumeConsumed(ctx.diagnosticId);
+            else fail(ctx.diagnosticId);
+          });
+          restored = true;
+          return;
+        }
+        S.go("staging");
+        return;
+      }
+      if (view === "lvideo") {
+        openVideo(m);
+        markResumeConsumed(ctx.diagnosticId);
+        restored = true;
+        return;
+      }
+      if (view === "media") {
+        editImage(m);
+        markResumeConsumed(ctx.diagnosticId);
+        restored = true;
+        return;
+      }
+      /* Studio restores from the envelope and consumes it once it is on screen. */
+      S.go("studio");
+      restored = true;
+    },
+  });
+  if (!out.ok) return fail(out.diagnosticId);
+  return restored;
 }
+
 
 function openVideo(m, tab) {
   try {
@@ -1562,7 +1596,7 @@ async function openDetail(m, opts) {
       <div class="ml-dr-hb">${canRename(m) ? `<button class="icon-btn" data-ren aria-label="Rename" title="Rename"><i data-lucide="type"></i></button>` : ""}
       <button class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button></div></div>
     <div class="ml-dr-b">
-      <div class="ml-dr-prev">${
+      <div class="ml-dr-prev"><button class="ml-ob ml-dr-fav${isFav(m.id) ? " fav" : ""}" data-fav-dr aria-pressed="${isFav(m.id)}" aria-label="${isFav(m.id) ? "Remove From Favorites" : "Add To Favorites"}" title="${isFav(m.id) ? "Remove From Favorites" : "Add To Favorites"}"><i data-lucide="heart"></i></button>${
         compare
           ? `<div class="ml-cmp"><figure><img src="${srcUrl}" alt="Source photo"><figcaption>Source</figcaption></figure><figure><img src="${url}" alt="${esc(m.title)}"><figcaption>Result</figcaption></figure></div>`
           : g === "videos" && m.assetPath && url
@@ -1578,7 +1612,7 @@ async function openDetail(m, opts) {
           : ""
       }
       ${
-        m.draft
+        m.draft && !m.path
           ? `<div class="ml-dr-note"><i data-lucide="pencil-ruler"></i><div><b>Unfinished Project</b><span>Saved at the ${esc(stepLabel(m.builderStep))} step. Pick up where you left off.</span></div></div>`
           : ""
       }
@@ -1641,10 +1675,20 @@ async function openDetail(m, opts) {
     closeDrawer();
     videoFrom([m]);
   });
-  bind("[data-cont]", () => {
-    closeDrawer();
-    continueProject(m);
+  bind("[data-cont]", async (ev) => {
+    const btn = ev && ev.currentTarget;
+    if (btn) btn.disabled = true;
+    /* The drawer stays open until the destination really has the project. */
+    const ok = await continueProject(m, (id) => showResumeError(d, m, id));
+    if (btn) btn.disabled = false;
+    if (ok) closeDrawer();
   });
+  const favBtn = d.querySelector("[data-fav-dr]") as any;
+  if (favBtn)
+    favBtn.onclick = async () => {
+      await toggleFav(m.id);
+      openDetail(m);
+    };
   bind("[data-editvid]", () => {
     closeDrawer();
     openVideo(m, "video");
@@ -1667,6 +1711,31 @@ async function openDetail(m, opts) {
   );
   const first = d.querySelector(".ml-dr-a button, .ml-dr-h .icon-btn") as any;
   first && first.focus();
+}
+
+/** A failed reopen never closes the drawer and never uses a browser alert. */
+function showResumeError(d, m, diagnosticId) {
+  const body = d.querySelector(".ml-dr-b");
+  if (!body) return;
+  let box = d.querySelector(".ml-dr-resume-err") as any;
+  if (!box) {
+    box = document.createElement("div");
+    box.className = "ml-dr-note bad ml-dr-resume-err";
+    body.insertBefore(box, body.firstChild);
+  }
+  box.innerHTML = `<i data-lucide="alert-triangle"></i><div><b>This project couldn\u2019t be reopened.</b>
+    <span>Reference ${esc(String(diagnosticId || "").slice(0, 12))}</span>
+    <div class="ml-dr-errb"><button class="btn btn-primary btn-xs" data-resume-retry>Retry</button>
+      <button class="btn btn-ghost btn-xs" data-resume-details>View Details</button></div></div>`;
+  paint();
+  const retry = box.querySelector("[data-resume-retry]") as any;
+  if (retry) retry.onclick = () => continueProject(m, (id) => showResumeError(d, m, id));
+  const det = box.querySelector("[data-resume-details]") as any;
+  if (det)
+    det.onclick = () => {
+      box.remove();
+      openDetail(m);
+    };
 }
 
 /** A clean address, or an honest "Unassigned" — never a raw record id. */
