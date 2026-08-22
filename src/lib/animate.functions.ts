@@ -316,26 +316,20 @@ export const updateMotionClip = createServerFn({ method: "POST" })
     z.object({ id: z.string().uuid(), title: z.string().min(1).max(90) }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+    const { data: row, error } = await context.supabase
       .from("motion_clip_jobs")
       .update({ title: data.title })
-      .eq("id", data.id);
+      .eq("id", data.id)
+      .select("video_project_id")
+      .maybeSingle();
     if (error) throw new Error(error.message);
-    await context.supabase
-      .from("video_projects")
-      .update({ title: data.title })
-      .eq("id", data.id === data.id ? (await projectIdFor(context, data.id)) || "" : "");
+    if (row?.video_project_id)
+      await context.supabase
+        .from("video_projects")
+        .update({ title: data.title })
+        .eq("id", row.video_project_id);
     return { ok: true };
   });
-
-async function projectIdFor(context: any, id: string): Promise<string | null> {
-  const { data } = await context.supabase
-    .from("motion_clip_jobs")
-    .select("video_project_id")
-    .eq("id", id)
-    .maybeSingle();
-  return data?.video_project_id ?? null;
-}
 
 export const deleteMotionClip = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
