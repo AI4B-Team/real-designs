@@ -941,3 +941,193 @@ body.rdpe-open {
     transform: none;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Inspector: Auto Enhance, sub-headings, histogram, Continue With.     */
+/* Every rule here is layout only — the Canvas geometry is untouched.   */
+/* ------------------------------------------------------------------ */
+
+.rdpe-autocard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rdpe-autohead {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+.rdpe-autohead i,
+.rdpe-autohead svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #cc0000;
+  stroke: currentColor;
+}
+.rdpe-autohead b {
+  display: block;
+  font-size: 13.5px;
+}
+.rdpe-autohead em {
+  display: block;
+  font-style: normal;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #5f6067;
+}
+.rdpe-autostate {
+  color: #111214;
+  font-weight: 600;
+}
+.rdpe-autobtns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.rdpe-autobtns .btn {
+  flex: 1 1 auto;
+  justify-content: center;
+  padding: 7px 12px;
+  font-size: 12.5px;
+}
+
+.rdpe-sub {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b6c73;
+}
+.rdpe-subv {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #111214;
+}
+
+.rdpe-hist {
+  border: 1px solid #e6e6e8;
+  border-radius: 10px;
+  background: #fff;
+}
+.rdpe-hist > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.rdpe-hist > summary::-webkit-details-marker {
+  display: none;
+}
+.rdpe-hist > summary i,
+.rdpe-hist > summary svg {
+  width: 14px;
+  height: 14px;
+  color: #4a4b52;
+  stroke: currentColor;
+}
+.rdpe-hist[open] .rdpe-caret {
+  transform: rotate(180deg);
+}
+.rdpe-histb {
+  padding: 0 11px 11px;
+}
+.rdpe-histb canvas {
+  width: 100%;
+  height: 64px;
+  display: block;
+  border-radius: 6px;
+}
+.rdpe-clip {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #a11212;
+}
+.rdpe-clip i,
+.rdpe-clip svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+  stroke: currentColor;
+}
+
+.rdpe-cont {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 11px;
+  border: 1px solid #e6e6e8;
+  background: #fff;
+  color: #111214;
+  text-align: left;
+  cursor: pointer;
+}
+.rdpe-cont + .rdpe-cont {
+  margin-top: 6px;
+}
+.rdpe-cont:hover {
+  border-color: #cc0000;
+}
+.rdpe-cont > i:first-child,
+.rdpe-cont > svg:first-child {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  color: #cc0000;
+  stroke: currentColor;
+}
+.rdpe-cont span {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.rdpe-cont b {
+  display: block;
+  font-size: 12.5px;
+}
+.rdpe-cont em {
+  display: block;
+  font-style: normal;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #5f6067;
+}
+.rdpe-cont > i:last-child,
+.rdpe-cont > svg:last-child {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  color: #9a9ba1;
+  stroke: currentColor;
+}
+
+.rdpe-resetgeo {
+  align-self: flex-start;
+}
+.rdpe-aiop.busy {
+  border-color: #cc0000;
+}
+.rdpe-run {
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #cc0000;
+}
