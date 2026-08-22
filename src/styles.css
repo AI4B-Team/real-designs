@@ -720,6 +720,10 @@ select:not([multiple]) {
   border: 1px solid transparent;
   border-radius: 999px;
   cursor: pointer;
+  /* The label must never wrap or be squeezed by a flex footer, or it overlaps
+     the pill edge. */
+  white-space: nowrap;
+  flex-shrink: 0;
   font:
     600 14px/1 "DM Sans",
     system-ui,
