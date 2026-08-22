@@ -6562,7 +6562,8 @@
   box-shadow: none;
   transition:
     border-color 0.15s,
-    transform 0.15s;
+    background 0.15s,
+    color 0.15s;
 }
 .rd-app .stw-door:hover {
   border-color: var(--red);
