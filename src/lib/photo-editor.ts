@@ -21,16 +21,24 @@ import { runPhotoEdit } from "@/lib/photo-edit.functions";
 import {
   type EditorMode,
   compareEnabled,
+  continueWithTools,
   defaultGenerationSource,
   defaultOpenSections,
   detectPhotoTraits,
   editedFromLabel,
   enhancementByOp,
   footerLayout,
-  generativeEdits,
   photoEnhancements,
   primarySaveLabel,
 } from "@/lib/photo-editor-context";
+import {
+  type PhotoStats,
+  type Strength,
+  STRENGTHS,
+  analyzeImageData,
+  autoEnhanceAdjustments,
+  clippingWarning,
+} from "@/lib/photo-auto-enhance";
 
 /* ------------------------------------------------------------------ model */
 
@@ -61,11 +69,17 @@ type Adj = Record<string, number>;
 
 type Crop = { x: number; y: number; w: number; h: number; ratio: string } | null;
 
+type AutoState = { strength: Strength; values: Adj } | null;
+
 type PhotoState = {
   adj: Adj;
   rotation: number;
   straighten: number;
+  /** Keystone correction, in degrees. Perspective, not a canvas resize. */
+  vertical: number;
+  horizontal: number;
   flipH: boolean;
+  flipV: boolean;
   crop: Crop;
   aiOps: string[];
   base: string | null; // current image (original or AI result)
@@ -75,6 +89,9 @@ type PhotoState = {
   saving: boolean;
   history: string[];
   future: string[];
+  /** Applied Auto Enhance, and the adjustments it was layered on top of. */
+  auto: AutoState;
+  autoBase: Adj | null;
 };
 
 const ADJUSTMENTS = [
@@ -86,38 +103,37 @@ const ADJUSTMENTS = [
   { group: "light", key: "blacks", label: "Blacks", min: -100, max: 100 },
   { group: "color", key: "temperature", label: "Temperature", min: -100, max: 100 },
   { group: "color", key: "tint", label: "Tint", min: -100, max: 100 },
-  { group: "color", key: "saturation", label: "Saturation", min: -100, max: 100 },
   { group: "color", key: "vibrance", label: "Vibrance", min: -100, max: 100 },
+  { group: "color", key: "saturation", label: "Saturation", min: -100, max: 100 },
   { group: "detail", key: "sharpen", label: "Sharpen", min: 0, max: 100 },
-  { group: "detail", key: "denoise", label: "Noise Reduction", min: 0, max: 100 },
+  { group: "detail", key: "denoise", label: "Denoise", min: 0, max: 100 },
 ] as const;
 
 const RATIOS: { id: string; label: string; v: number | null }[] = [
   { id: "original", label: "Original", v: null },
+  { id: "free", label: "Free", v: null },
   { id: "1:1", label: "1:1", v: 1 },
   { id: "4:3", label: "4:3", v: 4 / 3 },
   { id: "3:2", label: "3:2", v: 3 / 2 },
   { id: "16:9", label: "16:9", v: 16 / 9 },
-  { id: "4:5", label: "4:5", v: 4 / 5 },
   { id: "9:16", label: "9:16", v: 9 / 16 },
 ];
 
-const AUTO_ENHANCE: Adj = {
-  exposure: 8,
-  contrast: 12,
-  shadows: 14,
-  highlights: -10,
-  saturation: 8,
-  vibrance: 10,
-  sharpen: 20,
-};
+const GEOMETRY = [
+  { key: "straighten", label: "Straighten", min: -15, max: 15, step: 0.5 },
+  { key: "vertical", label: "Vertical Correction", min: -12, max: 12, step: 0.5 },
+  { key: "horizontal", label: "Horizontal Correction", min: -12, max: 12, step: 0.5 },
+] as const;
 
 function blankState(): PhotoState {
   return {
     adj: {},
     rotation: 0,
     straighten: 0,
+    vertical: 0,
+    horizontal: 0,
     flipH: false,
+    flipV: false,
     crop: null,
     aiOps: [],
     base: null,
@@ -127,6 +143,8 @@ function blankState(): PhotoState {
     saving: false,
     history: [],
     future: [],
+    auto: null,
+    autoBase: null,
   };
 }
 
@@ -162,15 +180,34 @@ export function filterString(adj: Adj): string {
   return parts.join(" ");
 }
 
-function hasEdits(st: PhotoState): boolean {
+function hasGeometry(st: PhotoState): boolean {
   return (
-    Object.values(st.adj).some((v) => n(v) !== 0) ||
     st.rotation !== 0 ||
     st.straighten !== 0 ||
+    st.vertical !== 0 ||
+    st.horizontal !== 0 ||
     st.flipH ||
-    !!st.crop ||
-    st.aiOps.length > 0
+    st.flipV ||
+    !!st.crop
   );
+}
+
+function hasEdits(st: PhotoState): boolean {
+  return (
+    Object.values(st.adj).some((v) => n(v) !== 0) || hasGeometry(st) || st.aiOps.length > 0
+  );
+}
+
+/** CSS transform for the stage image: rotation, flips and keystone. */
+export function transformString(st: PhotoState): string {
+  const parts = [`rotate(${st.rotation + st.straighten}deg)`];
+  if (st.vertical || st.horizontal) {
+    parts.unshift("perspective(1400px)");
+    if (st.vertical) parts.push(`rotateX(${(-st.vertical).toFixed(2)}deg)`);
+    if (st.horizontal) parts.push(`rotateY(${st.horizontal.toFixed(2)}deg)`);
+  }
+  parts.push(`scaleX(${st.flipH ? -1 : 1})`, `scaleY(${st.flipV ? -1 : 1})`);
+  return parts.join(" ");
 }
 
 /* -------------------------------------------------------------- rendering */
@@ -183,6 +220,47 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.onerror = () => rej(new Error("That photo could not be loaded."));
     img.src = src;
   });
+}
+
+/**
+ * Keystone correction. A 2D context has no true perspective transform, so the
+ * image is drawn as a stack of slices whose width tapers — visually identical
+ * to the CSS preview at the small angles this control allows.
+ */
+function drawKeystone(
+  c: CanvasRenderingContext2D,
+  img: CanvasImageSource,
+  iw: number,
+  ih: number,
+  vertical: number,
+  horizontal: number,
+) {
+  if (!vertical && !horizontal) {
+    c.drawImage(img, -iw / 2, -ih / 2, iw, ih);
+    return;
+  }
+  const kv = vertical * 0.012;
+  const kh = horizontal * 0.012;
+  const steps = 240;
+  if (vertical) {
+    for (let i = 0; i < steps; i += 1) {
+      const t = i / steps;
+      const sy = (ih * i) / steps;
+      const sh = ih / steps + 1;
+      const scale = 1 + kv * (1 - 2 * t);
+      const w = iw * scale;
+      c.drawImage(img as any, 0, sy, iw, sh, -w / 2, -ih / 2 + sy, w, sh);
+    }
+    return;
+  }
+  for (let i = 0; i < steps; i += 1) {
+    const t = i / steps;
+    const sx = (iw * i) / steps;
+    const sw = iw / steps + 1;
+    const scale = 1 + kh * (1 - 2 * t);
+    const h = ih * scale;
+    c.drawImage(img as any, sx, 0, sw, ih, -iw / 2 + sx, -h / 2, sw, h);
+  }
 }
 
 /** Flatten the current state into a JPEG data URL. */
@@ -203,9 +281,9 @@ export async function renderPhoto(st: PhotoState): Promise<string> {
   c.save();
   c.translate(stage.width / 2, stage.height / 2);
   c.rotate(((quarter + st.straighten) * Math.PI) / 180);
-  if (st.flipH) c.scale(-1, 1);
+  if (st.flipH || st.flipV) c.scale(st.flipH ? -1 : 1, st.flipV ? -1 : 1);
   (c as any).filter = filterString(st.adj);
-  c.drawImage(img, -iw / 2, -ih / 2, iw, ih);
+  drawKeystone(c, img, iw, ih, st.vertical, st.horizontal);
   c.restore();
 
   let out = stage;
@@ -261,6 +339,14 @@ export async function openPhotoEditor(opts: {
   );
   let comparing = false;
   let cropMode = false;
+  /* Auto Enhance and the live histogram. Neither ever runs on open. */
+  let autoStrength: Strength = "balanced";
+  let autoBusy = false;
+  let autoPreview = false;
+  let cropBackup: Crop = null;
+  let stats: PhotoStats | null = null;
+  let sourceStats: { src: string; stats: PhotoStats } | null = null;
+  let previewAdj: Adj | null = null;
   let aiPreview: { op: string; label: string; image: string } | null = null;
   let aiBusy = "";
   let saveFailed = false;
@@ -390,10 +476,10 @@ export async function openPhotoEditor(opts: {
     if (stage) {
       const preview = aiPreview && !comparing ? aiPreview.image : null;
       if (preview && stage.getAttribute("src") !== preview) stage.setAttribute("src", preview);
-      stage.style.filter = comparing ? "none" : filterString(s.adj);
-      stage.style.transform = comparing
-        ? "none"
-        : `rotate(${s.rotation + s.straighten}deg) scaleX(${s.flipH ? -1 : 1})`;
+      /* An Auto Enhance preview is a filter overlay only: the stored
+         adjustments stay exactly where the user left them. */
+      stage.style.filter = comparing ? "none" : filterString(previewAdj || s.adj);
+      stage.style.transform = comparing ? "none" : transformString(s);
     }
 
     if (embedded) {
@@ -465,27 +551,93 @@ export async function openPhotoEditor(opts: {
     }
   }
 
-  function sliderRow(a: (typeof ADJUSTMENTS)[number], v: number) {
-    return `<label class="rdpe-slider">
-      <span>${a.label}</span>
-      <input type="range" min="${a.min}" max="${a.max}" step="1" value="${v}" data-adj="${a.key}"
-        aria-label="${a.label}" title="Double-Click To Reset">
-      <b class="rdpe-num">${v > 0 && a.min < 0 ? "+" : ""}${v}</b>
-      <button type="button" class="rdpe-rst" data-reset-adj="${a.key}" aria-label="Reset ${a.label}"
-        ${v === 0 ? "hidden" : ""}><i data-lucide="rotate-ccw"></i></button>
-    </label>`;
+  function sliderRow(o: {
+    key: string;
+    label: string;
+    v: number;
+    min: number;
+    max: number;
+    step?: number;
+    suffix?: string;
+    attr: string;
+  }) {
+    const sign = o.v > 0 && o.min < 0 ? "+" : "";
+    return `<div class="rdpe-slider">
+      <span>${o.label}</span>
+      <b class="rdpe-num">${sign}${o.v}${o.suffix || ""}</b>
+      <button type="button" class="rdpe-rst" ${o.attr}="${o.key}" aria-label="Reset ${o.label}"
+        ${o.v === 0 ? "disabled" : ""}><i data-lucide="rotate-ccw"></i></button>
+      <input type="range" min="${o.min}" max="${o.max}" step="${o.step ?? 1}" value="${o.v}"
+        data-${o.attr === "data-reset-adj" ? "adj" : "geo"}="${o.key}"
+        aria-label="${o.label}" title="Double-Click To Reset">
+    </div>`;
+  }
+
+  function adjRows(group: string) {
+    const s = st();
+    return ADJUSTMENTS.filter((a) => a.group === group)
+      .map((a) =>
+        sliderRow({
+          key: a.key,
+          label: a.label,
+          v: n(s.adj[a.key], 0),
+          min: a.min,
+          max: a.max,
+          attr: "data-reset-adj",
+        }),
+      )
+      .join("");
+  }
+
+  function autoCard() {
+    const s = st();
+    const applied = !!s.auto;
+    const chips = STRENGTHS.map(
+      (x) =>
+        `<button type="button" class="rdpe-chip ${autoStrength === x.id ? "on" : ""}" data-auto-strength="${x.id}"
+          ${autoBusy ? "disabled" : ""}>${x.label}</button>`,
+    ).join("");
+    const status = autoBusy
+      ? "Analyzing The Photograph…"
+      : applied
+        ? `Applied — ${STRENGTHS.find((x) => x.id === s.auto?.strength)?.label} Strength`
+        : autoPreview
+          ? "Previewing. Apply To Keep It."
+          : "";
+    return `<div class="rdpe-autocard">
+      <p class="rdpe-note">Automatically balance lighting, color, and detail.</p>
+      <div class="rdpe-ratios" role="group" aria-label="Auto Enhance Strength">${chips}</div>
+      ${status ? `<p class="rdpe-note rdpe-autostate">${status}</p>` : ""}
+      <div class="rdpe-autobtns">
+        <button type="button" class="btn btn-ghost btn-sm" data-act="autopreview" ${autoBusy ? "disabled" : ""}>
+          <i data-lucide="eye"></i>Preview</button>
+        <button type="button" class="btn btn-primary btn-sm" data-act="autoapply" ${autoBusy ? "disabled" : ""}>
+          <i data-lucide="check"></i>Apply</button>
+        ${
+          applied
+            ? `<button type="button" class="btn btn-ghost btn-sm" data-act="autoundo"><i data-lucide="undo-2"></i>Undo Auto Enhance</button>`
+            : ""
+        }
+      </div>
+      <p class="rdpe-note">Bounded, Scene Aware And Free. Windows, White Cabinetry And Reflective Surfaces Are Protected, And Applying It Twice Gives The Same Result.</p>
+    </div>`;
+  }
+
+  function histogramBlock() {
+    const warn = clippingWarning(stats);
+    return `<details class="rdpe-hist" data-sec="hist"${OPEN.has("hist") ? " open" : ""}>
+      <summary><i data-lucide="bar-chart-3"></i>Histogram<i data-lucide="chevron-down" class="rdpe-caret"></i></summary>
+      <div class="rdpe-histb">
+        <canvas id="rdpeHistCanvas" width="256" height="64" aria-label="Live Histogram Of The Current Preview"></canvas>
+        ${warn ? `<p class="rdpe-clip"><i data-lucide="triangle-alert"></i>${warn}</p>` : ""}
+      </div>
+    </details>`;
   }
 
   function paintPanel() {
     const s = st();
-    const g = (grp: string) =>
-      ADJUSTMENTS.filter((a) => a.group === grp)
-        .map((a) => sliderRow(a, n(s.adj[a.key], 0)))
-        .join("");
-
     const traits = detectPhotoTraits(cur());
     const ops = photoEnhancements(traits);
-    const gens = generativeEdits();
     const opBtn = (o: { op: string; label: string; icon: string; credits: number }) =>
       `<button type="button" class="rdpe-aiop ${s.aiOps.includes(o.op) ? "on" : ""} ${
         aiBusy === o.op ? "busy" : ""
@@ -499,46 +651,93 @@ export async function openPhotoEditor(opts: {
       </button>`;
 
     $("#rdpePanelBody").innerHTML = `
-      <button type="button" class="rdpe-auto" data-act="auto"><i data-lucide="wand-sparkles"></i>
-        <span><b>Quick Enhance</b><em>One-Click Exposure, Contrast And Color — No Credits</em></span></button>
+      ${section("auto", "Auto Enhance", "wand-sparkles", autoCard())}
 
-      ${section("light", "Light", "sun", g("light"))}
-      ${section("color", "Color", "palette", g("color"))}
-      ${section("detail", "Detail", "focus", g("detail"))}
+      ${section(
+        "light",
+        "Light & Color",
+        "sun",
+        `${histogramBlock()}
+         <p class="rdpe-sub">Light</p>${adjRows("light")}
+         <p class="rdpe-sub">Color</p>${adjRows("color")}`,
+      )}
+
+      ${section("detail", "Detail", "focus", adjRows("detail"))}
+
       ${section(
         "crop",
-        "Crop & Rotate",
+        "Crop & Geometry",
         "crop",
-        `<div class="rdpe-ratios">${RATIOS.map(
+        `<p class="rdpe-sub">Crop Ratio<span class="rdpe-subv">${esc(
+          RATIOS.find((r) => r.id === (s.crop?.ratio || "original"))?.label || "Original",
+        )}</span></p>
+        <div class="rdpe-ratios">${RATIOS.map(
           (r) =>
             `<button type="button" class="rdpe-chip ${
               (s.crop?.ratio || "original") === r.id ? "on" : ""
             }" data-ratio="${r.id}">${r.label}</button>`,
         ).join("")}</div>
+        ${
+          cropMode
+            ? `<div class="rdpe-autobtns">
+                <button type="button" class="btn btn-primary btn-sm" data-act="cropapply">Apply Crop</button>
+                <button type="button" class="btn btn-ghost btn-sm" data-act="cropcancel">Cancel</button>
+               </div>`
+            : ""
+        }
+        <p class="rdpe-sub">Rotate And Flip</p>
         <div class="rdpe-rotrow">
-          <button type="button" class="rdpe-ib" data-act="rotl" title="Rotate Left"><i data-lucide="rotate-ccw"></i></button>
-          <button type="button" class="rdpe-ib" data-act="rotr" title="Rotate Right"><i data-lucide="rotate-cw"></i></button>
-          <button type="button" class="rdpe-ib ${s.flipH ? "on" : ""}" data-act="flip" title="Flip Horizontal"><i data-lucide="flip-horizontal"></i></button>
-          <button type="button" class="rdpe-ib ${cropMode ? "on" : ""}" data-act="cropmode" title="Adjust Crop"><i data-lucide="crop"></i></button>
+          <button type="button" class="rdpe-ib" data-act="rotl" title="Rotate Left" aria-label="Rotate Left"><i data-lucide="rotate-ccw"></i></button>
+          <button type="button" class="rdpe-ib" data-act="rotr" title="Rotate Right" aria-label="Rotate Right"><i data-lucide="rotate-cw"></i></button>
+          <button type="button" class="rdpe-ib ${s.flipH ? "on" : ""}" data-act="flip" title="Flip Horizontal" aria-label="Flip Horizontal"><i data-lucide="flip-horizontal"></i></button>
+          <button type="button" class="rdpe-ib ${s.flipV ? "on" : ""}" data-act="flipv" title="Flip Vertical" aria-label="Flip Vertical"><i data-lucide="flip-vertical"></i></button>
+          <button type="button" class="rdpe-ib ${cropMode ? "on" : ""}" data-act="cropmode" title="Adjust Crop" aria-label="Adjust Crop"><i data-lucide="crop"></i></button>
         </div>
-        <label class="rdpe-slider"><span>Straighten</span>
-          <input type="range" min="-15" max="15" step="0.5" value="${s.straighten}" data-straighten aria-label="Straighten">
-          <b class="rdpe-num">${s.straighten}°</b></label>`,
+        <p class="rdpe-sub">Perspective</p>
+        ${GEOMETRY.map((gm) =>
+          sliderRow({
+            key: gm.key,
+            label: gm.label,
+            v: n((s as any)[gm.key], 0),
+            min: gm.min,
+            max: gm.max,
+            step: gm.step,
+            suffix: "°",
+            attr: "data-reset-geo",
+          }),
+        ).join("")}
+        <button type="button" class="rdpe-reset rdpe-resetgeo" data-act="resetgeo" ${
+          hasGeometry(s) ? "" : "disabled"
+        }><i data-lucide="rotate-ccw"></i><span>Reset Geometry</span></button>`,
       )}
+
       ${section(
-        "enhance",
-        "Photo Enhancements",
+        "ai",
+        "AI Enhancements",
         "sparkles",
-        `<p class="rdpe-note">These Correct The Photograph. They Never Restage Or Redesign The Space.</p>
-         <div class="rdpe-ai">${ops.map(opBtn).join("")}</div>`,
+        `<p class="rdpe-note">Real Estate Corrections That Run On The Server. Nothing Runs Automatically, And Every Result Is Saved As A New Version.</p>
+         <div class="rdpe-ai">${ops.map(opBtn).join("")}</div>
+         <button type="button" class="rdpe-cont" data-continue="object">
+           <i data-lucide="mouse-pointer-square-dashed"></i>
+           <span><b>Continue In Object Edit</b><em>Select, remove, replace, or modify a specific object.</em></span>
+           <i data-lucide="arrow-right"></i></button>`,
       )}
+
       ${section(
-        "generative",
-        "Generative Edits",
-        "wand",
-        `<p class="rdpe-note">These Change What Is In The Scene. You Mark The Target And Confirm The Credit Cost First.</p>
-         <div class="rdpe-ai">${gens.map(opBtn).join("")}</div>`,
+        "continue",
+        "Continue With",
+        "arrow-right-circle",
+        `<p class="rdpe-note">Keeps This Photo And Version. Nothing Generates And No Credit Is Spent Until You Review The Settings.</p>
+         ${continueWithTools()
+           .map(
+             (t) => `<button type="button" class="rdpe-cont" data-continue="${esc(t.tool)}">
+             <i data-lucide="${t.icon}"></i>
+             <span><b>${esc(t.label)}</b><em>${esc(t.blurb)}</em></span>
+             <i data-lucide="arrow-right"></i></button>`,
+           )
+           .join("")}`,
       )}
+
       ${
         aiPreview
           ? `<div class="rdpe-aipreview"><b>${esc(aiPreview.label)} Preview</b>
@@ -548,6 +747,12 @@ export async function openPhotoEditor(opts: {
               </div></div>`
           : ""
       }`;
+    try {
+      createIcons({ icons, nameAttr: "data-lucide", root: $("#rdpePanelBody") as any });
+    } catch {
+      /* noop */
+    }
+    drawHistogram();
   }
 
   function section(id: string, label: string, icon: string, body: string) {
@@ -558,6 +763,190 @@ export async function openPhotoEditor(opts: {
     </details>`;
   }
   const OPEN = new Set<string>(defaultOpenSections());
+
+  /* ------------------------------------------------- analysis & histogram */
+
+  /** Downsample the given image (optionally through a filter) and measure it. */
+  async function measure(src: string, adj: Adj | null): Promise<PhotoStats | null> {
+    try {
+      const img = await loadImage(src);
+      const w = 180;
+      const h = Math.max(1, Math.round((img.naturalHeight / img.naturalWidth) * w)) || 120;
+      const cv = document.createElement("canvas");
+      cv.width = w;
+      cv.height = h;
+      const c = cv.getContext("2d", { willReadFrequently: true });
+      if (!c) return null;
+      if (adj) (c as any).filter = filterString(adj);
+      c.drawImage(img, 0, 0, w, h);
+      return analyzeImageData(c.getImageData(0, 0, w, h).data);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Measure the untouched image once per source: keeps Auto Enhance idempotent. */
+  async function baseStats(): Promise<PhotoStats | null> {
+    const s = st();
+    const src = s.base || s.original;
+    if (!src) return null;
+    if (sourceStats?.src === src) return sourceStats.stats;
+    const measured = await measure(src, null);
+    if (measured) sourceStats = { src, stats: measured };
+    return measured;
+  }
+
+  function drawHistogram() {
+    const cv = host.querySelector("#rdpeHistCanvas") as HTMLCanvasElement | null;
+    if (!cv || !stats) return;
+    const c = cv.getContext("2d");
+    if (!c) return;
+    c.clearRect(0, 0, cv.width, cv.height);
+    c.fillStyle = "#ececed";
+    c.fillRect(0, 0, cv.width, cv.height);
+    c.fillStyle = "#4a4b52";
+    stats.histogram.forEach((v, i) => {
+      const bh = Math.round(Math.sqrt(v) * cv.height);
+      c.fillRect(i, cv.height - bh, 1, bh);
+    });
+    if (stats.clippedShadows > 0.02) {
+      c.fillStyle = "rgba(204,0,0,.35)";
+      c.fillRect(0, 0, 4, cv.height);
+    }
+    if (stats.clippedHighlights > 0.02) {
+      c.fillStyle = "rgba(204,0,0,.35)";
+      c.fillRect(cv.width - 4, 0, 4, cv.height);
+    }
+  }
+
+  let statsTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Recompute the histogram from what is actually on screen. Never edits. */
+  function refreshStats(immediate = false) {
+    if (statsTimer) clearTimeout(statsTimer);
+    const run = async () => {
+      const s = st();
+      const src = (aiPreview?.image || s.base || s.original) as string | null;
+      if (!src) return;
+      stats = await measure(src, s.adj);
+      const warn = clippingWarning(stats);
+      const box = host.querySelector(".rdpe-histb");
+      const line = box?.querySelector(".rdpe-clip");
+      if (box) {
+        if (warn && !line) {
+          const p = document.createElement("p");
+          p.className = "rdpe-clip";
+          p.textContent = warn;
+          box.appendChild(p);
+        } else if (warn && line) line.textContent = warn;
+        else line?.remove();
+      }
+      drawHistogram();
+    };
+    if (immediate) void run();
+    else statsTimer = setTimeout(run, 180);
+  }
+
+  /* ----------------------------------------------------------- auto enhance */
+
+  /** Compute the correction for the current photo at the current strength. */
+  async function computeAuto(): Promise<Adj | null> {
+    autoBusy = true;
+    paintPanel();
+    try {
+      const measured = await baseStats();
+      if (!measured) return null;
+      return autoEnhanceAdjustments(measured, autoStrength);
+    } finally {
+      autoBusy = false;
+    }
+  }
+
+  /**
+   * Auto Enhance is layered on the adjustments the user made themselves, so
+   * running it twice (or at another strength) replaces its own contribution
+   * instead of stacking on top of it.
+   */
+  function layerAuto(values: Adj) {
+    const s = st();
+    const base = s.autoBase ?? { ...s.adj };
+    s.autoBase = base;
+    s.adj = { ...base };
+    for (const [k, v] of Object.entries(values)) {
+      s.adj[k] = Math.round(clampAdj(k, n(base[k], 0) + v) * 10) / 10;
+    }
+  }
+
+  function clampAdj(key: string, v: number): number {
+    const def = ADJUSTMENTS.find((a) => a.key === key);
+    return Math.max(def?.min ?? -100, Math.min(def?.max ?? 100, v));
+  }
+
+  async function runAutoEnhance(apply: boolean) {
+    const values = await computeAuto();
+    if (!values) {
+      rdToast("That Photo Could Not Be Analyzed.", "error");
+      return paintPanel();
+    }
+    const s = st();
+    if (apply) {
+      push();
+      layerAuto(values);
+      s.auto = { strength: autoStrength, values };
+      autoPreview = false;
+      rdToast("Auto Enhance Applied.");
+    } else {
+      /* Preview leaves the saved state alone: nothing is pushed to history. */
+      const before = { ...s.adj };
+      layerAuto(values);
+      autoPreview = true;
+      const preview = { ...s.adj };
+      s.adj = before;
+      s.autoBase = s.auto ? s.autoBase : null;
+      previewAdj = preview;
+      applyPreviewFilter();
+      paintPanel();
+      refreshStats();
+      return;
+    }
+    previewAdj = null;
+    paint();
+    refreshStats();
+  }
+
+  /** A preview overlays the filter only — the stored adjustments never move. */
+  function applyPreviewFilter() {
+    const img = $("#rdpeImg") as HTMLImageElement;
+    if (img && previewAdj) img.style.filter = filterString(previewAdj);
+  }
+
+  function undoAuto() {
+    const s = st();
+    if (!s.auto) return;
+    push();
+    s.adj = { ...(s.autoBase || {}) };
+    s.auto = null;
+    s.autoBase = null;
+    autoPreview = false;
+    previewAdj = null;
+    paint();
+    refreshStats();
+  }
+
+  function resetGeometry() {
+    const s = st();
+    push();
+    s.crop = null;
+    s.rotation = 0;
+    s.straighten = 0;
+    s.vertical = 0;
+    s.horizontal = 0;
+    s.flipH = false;
+    s.flipV = false;
+    cropMode = false;
+    paint();
+    paintCropBox();
+  }
+
 
   /* ---------------------------------------------------------------- crop */
 
@@ -828,6 +1217,26 @@ export async function openPhotoEditor(opts: {
     closePhotoEditor();
   }
 
+  /**
+   * Hand the current photo to another Canvas tool. Editing edits are saved
+   * first, the tool is only selected, and nothing generates until the user
+   * reviews the settings and presses Generate there.
+   */
+  async function continueWith(tool: string) {
+    if ((await guardUnsaved(`Continuing In ${tool === "object" ? "Object Edit" : tool}`)) === "stay") return;
+    const target =
+      tool === "object"
+        ? document.getElementById("rdwObjTool")
+        : document.querySelector<HTMLElement>(`#fTool .toolrow[data-tool="${tool}"]`);
+    if (!target) {
+      rdToast("That Tool Is Not Available Here.", "error");
+      return;
+    }
+    const { closeCanvasPhotoEditor } = await import("@/lib/canvas-workspace");
+    closeCanvasPhotoEditor();
+    target.click();
+  }
+
   /* ------------------------------------------------------------- events */
 
   host.addEventListener("click", (e) => {
@@ -836,12 +1245,30 @@ export async function openPhotoEditor(opts: {
     if (go1) return void go(Number(go1.getAttribute("data-go")));
     const ratio = t.closest("[data-ratio]");
     if (ratio) return setRatio(ratio.getAttribute("data-ratio") as string);
+    const strength = t.closest("[data-auto-strength]");
+    if (strength) {
+      autoStrength = strength.getAttribute("data-auto-strength") as Strength;
+      paintPanel();
+      /* Changing strength while a result is on screen re-derives it in place. */
+      if (autoPreview) return void runAutoEnhance(false);
+      if (st().auto) return void runAutoEnhance(true);
+      return;
+    }
     const rst = t.closest("[data-reset-adj]");
     if (rst) {
       push();
       st().adj[rst.getAttribute("data-reset-adj") as string] = 0;
+      paint();
+      return refreshStats();
+    }
+    const rgeo = t.closest("[data-reset-geo]");
+    if (rgeo) {
+      push();
+      (st() as any)[rgeo.getAttribute("data-reset-geo") as string] = 0;
       return paint();
     }
+    const cont = t.closest("[data-continue]");
+    if (cont) return void continueWith(cont.getAttribute("data-continue") as string);
     const ai = t.closest("[data-ai]");
     if (ai) return void runAi(ai.getAttribute("data-ai") as string);
     const act = t.closest("[data-act]")?.getAttribute("data-act");
@@ -866,11 +1293,10 @@ export async function openPhotoEditor(opts: {
       aiPreview = null;
       return paint();
     }
-    if (act === "auto") {
-      push();
-      s.adj = { ...s.adj, ...AUTO_ENHANCE };
-      return paint();
-    }
+    if (act === "autopreview") return void runAutoEnhance(false);
+    if (act === "autoapply") return void runAutoEnhance(true);
+    if (act === "autoundo") return undoAuto();
+    if (act === "resetgeo") return resetGeometry();
     if (act === "rotl" || act === "rotr") {
       push();
       s.rotation = (((s.rotation + (act === "rotr" ? 90 : -90)) % 360) + 360) % 360;
@@ -881,8 +1307,27 @@ export async function openPhotoEditor(opts: {
       s.flipH = !s.flipH;
       return paint();
     }
+    if (act === "flipv") {
+      push();
+      s.flipV = !s.flipV;
+      return paint();
+    }
+    if (act === "cropapply") {
+      cropMode = false;
+      cropBackup = null;
+      paint();
+      return paintCropBox();
+    }
+    if (act === "cropcancel") {
+      s.crop = cropBackup;
+      cropBackup = null;
+      cropMode = false;
+      paint();
+      return paintCropBox();
+    }
     if (act === "cropmode") {
       cropMode = !cropMode;
+      cropBackup = cropMode ? (s.crop ? { ...s.crop } : null) : null;
       if (cropMode && !s.crop) return setRatio("1:1");
       paint();
       return paintCropBox();
@@ -904,19 +1349,36 @@ export async function openPhotoEditor(opts: {
       if (out) out.textContent = `${n(t.value) > 0 ? "+" : ""}${t.value}`;
       const img = $("#rdpeImg") as HTMLImageElement;
       img.style.filter = filterString(s.adj);
+      refreshStats();
     }
-    if (t.hasAttribute("data-straighten")) {
+    if (t.hasAttribute("data-geo")) {
       if (!t.dataset['pushed']) {
         push();
         t.dataset['pushed'] = "1";
       }
-      s.straighten = n(t.value);
+      (s as any)[t.getAttribute("data-geo") as string] = n(t.value);
       saveFailed = false;
-    s.dirty = true;
+      s.dirty = true;
       const img = $("#rdpeImg") as HTMLImageElement;
-      img.style.transform = `rotate(${s.rotation + s.straighten}deg) scaleX(${s.flipH ? -1 : 1})`;
+      img.style.transform = transformString(s);
       const out = t.parentElement?.querySelector(".rdpe-num");
-      if (out) out.textContent = `${t.value}°`;
+      if (out) out.textContent = `${n(t.value) > 0 ? "+" : ""}${t.value}°`;
+    }
+  });
+
+  /* Double-click a slider to return that single control to zero. */
+  host.addEventListener("dblclick", (e) => {
+    const t = e.target as HTMLInputElement;
+    const s = st();
+    if (t.hasAttribute("data-adj")) {
+      push();
+      s.adj[t.getAttribute("data-adj") as string] = 0;
+      paint();
+      refreshStats();
+    } else if (t.hasAttribute("data-geo")) {
+      push();
+      (s as any)[t.getAttribute("data-geo") as string] = 0;
+      paint();
     }
   });
 
@@ -925,6 +1387,7 @@ export async function openPhotoEditor(opts: {
     if (t.dataset) delete t.dataset['pushed'];
     if (t.tagName === "INPUT") paint();
   });
+
 
   host.addEventListener("toggle", (e) => {
     const d = e.target as HTMLDetailsElement;
