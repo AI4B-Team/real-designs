@@ -36,7 +36,19 @@ import {
 } from "@/lib/rooms.functions";
 import { openSaveRoomModal } from "@/lib/save-room";
 import { initCanvasInspector } from "@/lib/canvas-inspector";
-import { initCanvasWorkspace } from "@/lib/canvas-workspace";
+import { initCanvasWorkspace, paintPanelHeader } from "@/lib/canvas-workspace";
+import { setConceptSummary } from "@/lib/canvas-panel";
+import {
+  makeBatch,
+  markGenerating,
+  addResult,
+  failResult,
+  batchStatus,
+  conceptSummary,
+  canvasModeFor,
+  overlayPlan,
+  progressLabel,
+} from "@/lib/concept-batch";
 import { suggestDesignTitle } from "@/lib/property-address";
 
 import { supabase } from "@/integrations/supabase/client";
