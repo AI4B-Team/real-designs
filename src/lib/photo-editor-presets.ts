@@ -72,43 +72,26 @@ export function exportFileName(name: string, presetId: string, version?: number 
 
 /* ------------------------------------------------------------- disclosure */
 
-export type Classification = "Original" | "Enhanced" | "Digitally Altered" | "Virtually Staged" | "Proposed Design";
+export type { Classification } from "@/lib/disclosure";
+import { classifyVersion, captionFor, DEFAULT_DISCLOSURE_SETTINGS, recommendDisclosure, type Classification } from "@/lib/disclosure";
 
-/** Which operations force which disclosure. Enhanced is the mildest. */
-const OP_CLASS: Record<string, Classification> = {
-  window_balance: "Enhanced",
-  sky: "Digitally Altered",
-  lawn: "Digitally Altered",
-  dusk: "Digitally Altered",
-  privacy_blur: "Digitally Altered",
-  reflection: "Digitally Altered",
-  tv_off: "Digitally Altered",
-  fireplace: "Digitally Altered",
-};
-
-const ORDER: Classification[] = [
-  "Original",
-  "Enhanced",
-  "Digitally Altered",
-  "Virtually Staged",
-  "Proposed Design",
-];
-
-/** The strongest classification implied by the edits applied so far. */
+/**
+ * Classification and disclosure wording both come from the canonical
+ * Disclosure & Watermark system, so the editor, batch exports, shares and
+ * videos can never disagree about what a version is.
+ */
 export function classifyEdits(input: { aiOps: string[]; hasAdjustments: boolean }): Classification {
-  let out: Classification = input.hasAdjustments ? "Enhanced" : "Original";
-  for (const op of input.aiOps || []) {
-    const c = OP_CLASS[op] || "Digitally Altered";
-    if (ORDER.indexOf(c) > ORDER.indexOf(out)) out = c;
-  }
-  return out;
+  return classifyVersion({
+    operations: [...(input.aiOps || []), ...(input.hasAdjustments ? ["adjust"] : [])],
+    hasAdjustments: !!input.hasAdjustments,
+  });
 }
 
-/** Overlay caption burned into an export when disclosure is requested. */
+/** Caption a given classification would carry in an export. */
 export function disclosureText(c: Classification): string | null {
-  if (c === "Original") return null;
-  if (c === "Enhanced") return "Photo Enhanced";
-  return c;
+  const rec = recommendDisclosure({ classification: c });
+  if (rec.id === "none") return null;
+  return captionFor({ ...DEFAULT_DISCLOSURE_SETTINGS, id: rec.id, style: "translucent" });
 }
 
 /* -------------------------------------------------------- quality review */
