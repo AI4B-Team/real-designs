@@ -9390,10 +9390,8 @@ ${picks
       try {
         (host.querySelector(".cs-qtile") as HTMLElement | null)?.focus();
       } catch (_) {}
-      try {
-        window.rdToast &&
-          window.rdToast("Choose A " + sectionTitle((need || "design") as any));
-      } catch (_) {}
+      /* The scroll + flash highlight already point at the style cards, so the
+         transient "Choose A Design Style" toast pill is intentionally omitted. */
     }
     try {
       CANVAS_STYLE = mountCanvasStyle(
