@@ -15,6 +15,7 @@ import {
   getCustomTracks,
   loadCustomTracks,
 } from "@/lib/rd-music";
+import { addSourceCardHtml, mountAddSourceCard } from "@/lib/add-source-card";
 import { stopAvatarVoice } from "@/lib/rd-avatar-voice";
 import { voiceRequest } from "@/lib/rd-voice";
 import { openSocialCopy } from "@/lib/rd-social-copy";
@@ -2715,14 +2716,7 @@ function endingControlHtml(w, s) {
 
 /** The permanent action card that closes every card grid. */
 function addCardHtml(id) {
-  return `<div class="rv-addcard">
-    <button type="button" class="rv-addcard-b" id="${id}" aria-label="Add More Photos">
-      <i data-lucide="image-plus"></i>
-      <b>Add More Photos</b>
-      <em>Upload, Import, or Use Media</em>
-      <small class="rv-addcard-types">JPG · PNG · WebP · HEIC</small>
-    </button>
-  </div>`;
+  return addSourceCardHtml({ id });
 }
 
 /**
@@ -5969,8 +5963,17 @@ function bind() {
     });
     /* Header and notice shortcuts both reopen the picker step without losing work. */
     on("#rvHeadAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
-    on("#rvGridAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
     on("#rvEmptyAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
+    /* The grid's Add More card adds files in place — never a second browser. */
+    mountAddSourceCard(el.querySelector(".rv-grid .rv-addcard"), {
+      paint,
+      onComputer: () => el.querySelector("#rvHeadFile")?.click(),
+      onDrop: (files) =>
+        addUploads(files).catch(() => {
+          w.uploadError = "Those photos could not be added. Please try again.";
+          render();
+        }),
+    });
     on("#rvEmptyProp", "click", () => openSourcePicker("property"));
     on("#rvEmptyDesigns", "click", () => openSourcePicker("designs"));
     on("#rvHandoffRetry", "click", () => retryHandoff());
