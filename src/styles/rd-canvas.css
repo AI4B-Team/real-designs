@@ -2676,3 +2676,171 @@
 .rd-sketch .rd-sketch-cam button.x { padding: 5px 8px 5px 0; color: var(--muted); }
 .rd-sketch .rd-sketch-cam button.x svg { width: 13px; height: 13px; }
 .rd-sketch .rd-sketch-range { width: 100%; margin: 2px 0 10px; }
+
+/* ---------------------------------------------------------------- angles */
+
+.rd-app .rd-angle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.rd-app .rd-angle-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--rd-line, #e6e6e6);
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  min-height: 44px;
+}
+.rd-app .rd-angle-card b {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.rd-app .rd-angle-card svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  opacity: 0.7;
+}
+.rd-app .rd-angle-card:hover {
+  border-color: #bdbdbd;
+}
+.rd-app .rd-angle-card.on {
+  border-color: #cc0000;
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.12);
+}
+.rd-app .rd-angle-card.on svg {
+  color: #cc0000;
+  opacity: 1;
+}
+.rd-app .rd-angle-warn {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 8px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: #fff6f6;
+  border: 1px solid #f2d3d3;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.rd-app .rd-angle-warn svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  color: #cc0000;
+}
+.rd-app .rd-angle-lock {
+  margin: 6px 0 10px;
+  padding-left: 16px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #555;
+}
+.rd-app .rd-angle-customrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.rd-app .rd-stage-chip.is-off {
+  opacity: 0.42;
+}
+
+/* contact sheet */
+.rd-app .rd-sheet-card {
+  max-width: 1040px;
+  width: min(96vw, 1040px);
+  max-height: 88vh;
+  overflow: auto;
+}
+.rd-app .rd-sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  margin: 12px 0 6px;
+}
+.rd-app .rd-sheet-cell {
+  border: 1px solid var(--rd-line, #e6e6e6);
+  border-radius: 14px;
+  padding: 10px;
+  background: #fff;
+}
+.rd-app .rd-sheet-cell.is-bad {
+  border-color: #f0c4c4;
+  background: #fffafa;
+}
+.rd-app .rd-sheet-cell img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 10px;
+  cursor: zoom-in;
+  display: block;
+}
+.rd-app .rd-sheet-fail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  background: #f7f7f7;
+  font-size: 12px;
+  color: #777;
+  text-align: center;
+  padding: 10px;
+}
+.rd-app .rd-sheet-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.rd-app .rd-sheet-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 5px 6px;
+  background: #f7f7f7;
+}
+.rd-app .rd-sheet-name:focus {
+  border-color: #cc0000;
+  background: #fff;
+  outline: none;
+}
+.rd-app .rd-sheet-score {
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-size: 11.5px;
+  color: #666;
+}
+.rd-app .rd-sheet-issues {
+  margin: 8px 0 0;
+  padding-left: 16px;
+  font-size: 11.5px;
+  color: #a33;
+  line-height: 1.4;
+}
+.rd-app .rd-sheet-act {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.rd-app .rd-sheet-act .btn.on {
+  border-color: #cc0000;
+  color: #cc0000;
+}

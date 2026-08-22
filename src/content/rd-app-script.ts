@@ -147,6 +147,33 @@ import {
   renderSketch,
   checkSketchDrift,
 } from "@/lib/sketch.functions";
+import {
+  buildAngleBrief,
+  angleCredits,
+  angleMeta,
+  summarizeConsistency,
+  failedResults,
+  restoreFromAngleMeta,
+  type AngleResult,
+} from "@/lib/angles-brief";
+import {
+  mountAnglesPanel,
+  setAnglesPanelVisible,
+  readAngleSettings,
+  readAngleResults,
+  setAngleContinuity,
+  setAngleReading,
+  angleContinuity,
+  setAngleSourceKind,
+  noteAngleSignal,
+  resetAngles,
+  loadAngleState,
+  openAngleBriefReview,
+  openAngleContactSheet,
+  showAngleQa,
+  setAngleResults,
+} from "@/lib/angles-controls";
+import { readAngleRoom, renderAngleSet, scoreAngleView } from "@/lib/angles.functions";
 import { peekResume, markResumeConsumed } from "@/lib/resume";
 import { isFavorite } from "@/lib/favorites";
 import {
@@ -5264,6 +5291,379 @@ export function initApp(): () => void {
       return true;
     };
 
+    /* ---------- Angles: coordinated views of one room ---------- */
+
+    let ANGLE_STATE = { results: [] as any[], payload: null as any, source: null as any };
+
+    function ensureAnglesPanel() {
+      try {
+        mountAnglesPanel({
+          onChange: () => paintGenGate(),
+          onRead: () => readRoomForAngles(true),
+        });
+        syncAngleSource();
+      } catch (_) {}
+    }
+
+    /**
+     * Angles are only as honest as their source. A generated, staged or
+     * sketch-derived image carries a brief; a bare photograph does not, and
+     * has to say so.
+     */
+    function syncAngleSource() {
+      try {
+        let kind = "photograph";
+        const signals = [];
+        if (lastRender) {
+          kind = "generated";
+          signals.push("prior_prompt", "seed");
+          if (window.__rdSketchMeta) {
+            kind = "sketch_render";
+            signals.push("structured_geometry");
+          } else if (window.__rdStageMeta) {
+            kind = "staged";
+          }
+        } else if (studioSourcePath && studioSourcePath()) {
+          kind = "photograph";
+        }
+        if (currentRoomType()) signals.push("source_metadata");
+        if (window.__rdDesignDna) signals.push("design_dna");
+        setAngleSourceKind(kind, signals);
+      } catch (_) {}
+    }
+
+    /** Free room read. Every angle in a set is locked to this one description. */
+    async function readRoomForAngles(force) {
+      const src = angleSourceImage();
+      if (!src) return null;
+      if (!force && angleContinuity()) return angleContinuity();
+      ensureAnglesPanel();
+      setAngleReading(true);
+      try {
+        const image = await toDataUrl(src, 1100);
+        const r = await readAngleRoom({ data: { image } });
+        setAngleContinuity(r.continuity);
+        return r.continuity;
+      } catch (e) {
+        setAngleReading(false, (e && e.message) || "The room could not be read.");
+        return null;
+      }
+    }
+
+    /** Angles always work from the newest approved picture of the room. */
+    function angleSourceImage() {
+      if (lastRender) return lastRender;
+      const img = document.querySelector("#cBefore img") as any;
+      return (img && img.src) || null;
+    }
+
+    window.addEventListener("rd:photo", () => {
+      try {
+        if (activeToolName() !== "Multi Angle") resetAngles();
+      } catch (_) {}
+    });
+
+    async function runAnglesFlow(retryRuns) {
+      if (busy || GEN_GUARD.busy) return;
+      const src = angleSourceImage();
+      if (STUDIO_SRC === SRC_EMPTY || !src) {
+        needSourceModal();
+        return;
+      }
+      ensureAnglesPanel();
+      syncAngleSource();
+      /* Reading the room is free and always happens before a credit is spent. */
+      if (!angleContinuity()) await readRoomForAngles(false);
+
+      const s = readAngleSettings();
+      const sel = currentStyleSelection();
+      const brief = buildAngleBrief({
+        ...s,
+        runs: retryRuns && retryRuns.length ? retryRuns : null,
+        hasSource: true,
+        roomType: currentRoomType() || null,
+        styleId: (sel && sel.styleId) || null,
+        styleName: (sel && sel.style && sel.style.displayName) || null,
+        priorPrompt: (window.__rdLastBriefText as any) || null,
+        designDna: (window.__rdDesignDna as any) || null,
+        notes: ((document.getElementById("agentNote") || {}).value || "").trim() || null,
+      });
+      if (!brief.valid) {
+        try {
+          rdToast(brief.missing.join(" \u00b7 "));
+        } catch (_) {}
+        return;
+      }
+      if (!ensureCredits(brief.credits, "Multi Angle")) return;
+
+      const answer = await openAngleBriefReview(brief, {
+        costLabel: costLabel(brief.credits),
+        balanceNote:
+          CREDITS && CREDITS.plan !== "free" && typeof CREDITS.balance === "number"
+            ? "Balance after this run: " + Math.max(0, CREDITS.balance - brief.credits) + " credits."
+            : null,
+      });
+      if (answer !== "confirm") return;
+      if (busy || !GEN_GUARD.begin()) return;
+      await runAngleRender(brief, !!(retryRuns && retryRuns.length));
+    }
+
+    async function runAngleRender(brief, isRetry) {
+      busy = true;
+      setCanvasPhase("generating");
+      const btn = document.getElementById("genBtn") as any;
+      if (btn) btn.disabled = true;
+      const ov = document.getElementById("cGen");
+      if (ov) ov.classList.add("on");
+      genPhase(8, "Locking the room");
+      const finish = () => {
+        setTimeout(() => {
+          if (ov) ov.classList.remove("on");
+          busy = false;
+          if (btn) btn.disabled = false;
+          GEN_GUARD.end();
+        }, 240);
+      };
+      try {
+        const source = await toDataUrl(angleSourceImage(), 1400);
+        genPhase(
+          32,
+          brief.runs.length > 1
+            ? "Rendering " + brief.runs.length + " coordinated angles"
+            : "Rendering " + brief.runs[0].label,
+        );
+        window.__rdAngleRefs = window.__rdAngleRefs || {};
+        const setId = brief.payload.set_id;
+        const r = await renderAngleSet({
+          data: {
+            image: source,
+            reference: window.__rdAngleRefs[setId] || null,
+            payload: brief.payload,
+            runs: brief.runs,
+          },
+        });
+        const made = r.results.filter((x) => x.image);
+        const failed = r.results.filter((x) => !x.image);
+        if (!made.length) throw new Error(failed[0]?.error || "No angle finished.");
+        if (!window.__rdAngleRefs[setId]) window.__rdAngleRefs[setId] = made[0].image;
+
+        genPhase(66, "Saving the set");
+        /* Every angle is a child of one set, and every record carries the
+           camera it used, the room it was locked to and its disclosure. */
+        const kept = isRetry
+          ? ANGLE_STATE.results.filter((x) => !brief.runs.some((run) => run.id === x.runId))
+          : [];
+        const fresh = [];
+        let index = kept.length;
+        for (const res of r.results) {
+          const run = brief.runs.find((x) => x.id === res.id) || brief.runs[0];
+          const label = "Angle \u00b7 " + res.label;
+          let path = null;
+          if (res.image) {
+            window.__rdVersionExtras = angleMeta({
+              payload: brief.payload,
+              run,
+              index,
+              sourceVersion: studioSourcePath() || null,
+              model: r.model,
+            });
+            try {
+              path = await persistRender(res.image, label);
+            } catch (_) {
+              /* the angle is paid for and on screen even if the upload failed */
+            }
+            if (!lastRenderPath || index === kept.length) {
+              lastRender = res.image;
+              lastRenderPath = path;
+              cAfter.innerHTML = photo(res.image, res.label + ", same room");
+            }
+            addRenderVariant(res.image, label, path);
+            window.__rdVersionExtras = null;
+          }
+          fresh.push({
+            runId: res.id,
+            label: res.label,
+            image: res.image,
+            path,
+            error: res.error,
+            score: null,
+            issues: [],
+            order: index,
+            videoSelected: false,
+            preset: run.preset,
+            hotspots: [],
+          } as AngleResult);
+          index += 1;
+        }
+
+        ANGLE_STATE = {
+          results: kept.concat(fresh).map((x, i) => ({ ...x, order: i })),
+          payload: brief.payload,
+          source,
+        };
+        setAngleResults(ANGLE_STATE.results);
+        noteAngleSignal("seed");
+
+        setCanvasPhase("");
+        markStudioResult();
+        await finalizeGeneratedDesign(lastRenderPath);
+        window.__rdVersionExtras = null;
+        paintStudioSummary({
+          name: brief.payload.output_set_label,
+          scope: brief.runs.length + (brief.runs.length === 1 ? " angle" : " angles"),
+        });
+        window.dispatchEvent(new Event("rd:credits-changed"));
+        genPhase(100, "Done");
+        finish();
+        cRng.value = 100;
+        setC(100);
+
+        if (failed.length)
+          showAlert(
+            failed.length +
+              " of " +
+              r.results.length +
+              " angles did not finish, and those credits were refunded. " +
+              (failed[0]?.error || ""),
+          );
+
+        /* Free, honest cross-view scoring of every delivered angle. */
+        genPhase(92, "Checking consistency");
+        await scoreAngleSet(brief);
+      } catch (e) {
+        window.__rdVersionExtras = null;
+        setCanvasPhase("");
+        finish();
+        if (!creditGate(e))
+          showAlert("Could not render these angles. " + ((e && e.message) || "Try again in a moment."));
+      }
+    }
+
+    /** Scores each delivered angle against the source and reports honestly. */
+    async function scoreAngleSet(brief) {
+      const payload = brief.payload;
+      const scores = [];
+      for (const res of ANGLE_STATE.results) {
+        if (!res.image) continue;
+        const run =
+          brief.runs.find((x) => x.id === res.runId) ||
+          ({
+            id: res.runId,
+            preset: res.preset,
+            label: res.label,
+            directive: "Same room, different camera position.",
+            camera: null,
+            showsUnseen: true,
+          } as any);
+        if (res.score !== null) {
+          scores.push({ runId: res.runId, label: res.label, score: res.score, passed: res.score >= 70, issues: res.issues });
+          continue;
+        }
+        try {
+          const q = await scoreAngleView({
+            data: { source: ANGLE_STATE.source, render: res.image, payload, run },
+          });
+          res.score = q.score.score;
+          res.issues = q.score.issues;
+          scores.push(q.score);
+        } catch (_) {
+          /* scoring is advisory and never costs the user their images */
+        }
+      }
+      setAngleResults(ANGLE_STATE.results);
+      const report = summarizeConsistency(scores as any, payload.disclosure);
+      showAngleQa(report, {
+        onOpenSheet: () => openAngleSheet(report),
+        onRetryFailed: () => retryFailedAngles(brief),
+      });
+    }
+
+    function retryFailedAngles(brief) {
+      const bad = failedResults(ANGLE_STATE.results);
+      if (!bad.length) return;
+      const runs = bad
+        .map((b) => brief.runs.find((r) => r.id === b.runId))
+        .filter(Boolean);
+      if (!runs.length) return;
+      runAnglesFlow(runs);
+    }
+
+    function openAngleSheet(report) {
+      openAngleContactSheet(ANGLE_STATE.results, report, {
+        onChange: (list) => {
+          ANGLE_STATE.results = list;
+        },
+        onOpen: (r) => {
+          if (!r.image) return;
+          lastRender = r.image;
+          lastRenderPath = r.path;
+          cAfter.innerHTML = photo(r.image, r.label);
+        },
+        onReuseReference: (r) => {
+          if (!r.image || !ANGLE_STATE.payload) return;
+          window.__rdAngleRefs = window.__rdAngleRefs || {};
+          window.__rdAngleRefs[ANGLE_STATE.payload.set_id] = r.image;
+          try {
+            rdToast(r.label + " Is Now The Reference For This Set");
+          } catch (_) {}
+        },
+        onRegenerate: (r) => {
+          const run = {
+            id: r.runId,
+            preset: r.preset,
+            label: r.label,
+            directive: "",
+            camera: null,
+            showsUnseen: true,
+          };
+          const prior = ANGLE_STATE.payload;
+          const src = buildAngleBrief({
+            setId: prior ? prior.set_id : null,
+            sourceKind: prior ? prior.source_kind : "photograph",
+            hasSource: true,
+            selected: [r.preset],
+            customCameras: [],
+            outputSet: "single",
+            continuity: prior ? prior.continuity : null,
+            signals: prior ? prior.signals : [],
+          });
+          runAnglesFlow(src.runs.length ? src.runs : [run]);
+        },
+        onSendToVideo: (list) => {
+          const assets = list
+            .filter((x) => x.path)
+            .map((x) => ({
+              storagePath: x.path,
+              fileName: x.label,
+              roomName: currentRoomType() || null,
+              sourceType: "generated-version",
+            }));
+          if (!assets.length) {
+            showAlert("Those Angles Have Not Finished Saving Yet.");
+            return;
+          }
+          const out = startVideoBuilder({
+            origin: "studio",
+            propertyId: (STUDIO_CTX && STUDIO_CTX.propertyId) || null,
+            propertyAddress: (STUDIO_CTX && STUDIO_CTX.address) || null,
+            assets,
+          });
+          if (out && out.ok === false) showAlert(out.reason || "Those angles could not be sent to Video.");
+        },
+      });
+    }
+
+    /** Reopens a saved angle with its set, camera and continuity intact. */
+    window.rdRestoreAngles = (meta) => {
+      const st = restoreFromAngleMeta(meta);
+      if (!st) return false;
+      ensureAnglesPanel();
+      loadAngleState(st);
+      return true;
+    };
+
+
+
 
 
 
@@ -10283,7 +10683,7 @@ ${picks
       Declutter: () => runDeclutterFlow(),
       "Material Swap": () => runMaterialsFlow(),
       "Sketch To Render": () => runSketchFlow(),
-      "Multi Angle": () => runRoomToolFlow("angle", "Multi Angle", true),
+      "Multi Angle": () => runAnglesFlow(null),
     };
     const TOOL_COST = {
       Redesign: 1,
@@ -10412,6 +10812,12 @@ ${picks
             price = sketchCredits(readSketchResults());
           } catch (_) {}
         }
+        /* Angles prices every selected camera, not one flat render. */
+        if (tool === "Multi Angle") {
+          try {
+            price = angleCredits(readAngleResults());
+          } catch (_) {}
+        }
         cost.textContent = costLabel(price);
       }
       /* The staging controls belong to the Stage tool alone. */
@@ -10434,6 +10840,11 @@ ${picks
       try {
         ensureSketchPanel();
         setSketchPanelVisible(tool === "Sketch To Render");
+      } catch (_) {}
+      /* The camera and continuity controls belong to Angles alone. */
+      try {
+        ensureAnglesPanel();
+        setAnglesPanelVisible(tool === "Multi Angle");
       } catch (_) {}
       /* The confirm button always states what this exact click will do. */
       const CONFIRM_LABEL = {
