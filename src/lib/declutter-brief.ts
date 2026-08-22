@@ -755,6 +755,7 @@ export function restoreFromMeta(meta: unknown): {
       };
     }),
     mask: {
+      ...emptyMask(),
       strokes: strokes.map((raw) => {
         const s = (raw || {}) as Record<string, unknown>;
         return {

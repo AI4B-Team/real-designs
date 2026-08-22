@@ -86,7 +86,7 @@ export function declutterDetections(): Detection[] {
 }
 
 export function declutterMask(): MaskState {
-  return { strokes: state.mask.strokes.slice(), redo: state.mask.redo.slice() };
+  return { ...state.mask, strokes: state.mask.strokes.slice(), redo: state.mask.redo.slice() };
 }
 
 export function declutterRoomRead(): RoomRead | null {
