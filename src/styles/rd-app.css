@@ -4696,8 +4696,40 @@
 }
 
 /* ---------- Studio workflow shell (chooser + source setup) ---------- */
-.rd-app #v-studio.sts-choosing > *:not(#stChooser) {
+/* Only hide the rest of Studio once the chooser is actually on screen. If the
+   chooser failed to mount, hiding its siblings would leave a blank white area. */
+.rd-app #v-studio.sts-choosing > *:not(#stChooser):not(.st-recover) {
   display: none !important;
+}
+.rd-app #v-studio.sts-choosing:not(:has(#stChooser)) > * {
+  display: revert !important;
+}
+/* Recovery card shown when a Studio module throws. */
+.rd-app .st-recover {
+  max-width: 620px;
+  margin: 48px auto;
+  padding: 24px;
+  border: 1px solid var(--line, #e6e6e6);
+  border-radius: 16px;
+  background: var(--card, #fff);
+  text-align: center;
+}
+.rd-app .st-recover h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+.rd-app .st-recover p {
+  margin: 0 0 14px;
+  color: var(--muted, #666);
+}
+.rd-app .st-recover code {
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-size: 12px;
+}
+.rd-app .st-recover .st-recover-acts {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
 }
 .rd-app .stc {
   width: 100%;
