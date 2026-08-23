@@ -1537,6 +1537,10 @@ function renderDesignFlow(el) {
         model,
         address: S.address || "",
         ratioLabel: ratioLabel(S.outputRatio),
+        balance: typeof S.creditBalance === "number" ? S.creditBalance : null,
+        photoLabel,
+        photoFormat: (it) => ratioLabel(tileRatio(it)),
+        photoCustomCrop: (it) => isCustomCrop(it.crop) && tileRatio(it) !== "original",
         blockers: reviewBlockers({
           items,
           model,
@@ -1573,6 +1577,11 @@ function renderDesignFlow(el) {
     bindReviewStep(el, {
       onEditPhotos: () => goStep("review"),
       onEditDesign: () => goStep("design"),
+      onEditFormat: () => {
+        S.formatOpen = true;
+        S.focusFormat = true;
+        goStep("review");
+      },
       onGenerate: () => {
         persistDesign();
         goStep("review");
