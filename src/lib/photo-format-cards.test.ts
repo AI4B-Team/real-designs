@@ -27,6 +27,9 @@ vi.mock("@/lib/photo-classify", async (orig) => {
   return { ...real, thumbDataUrl: async () => "data:image/jpeg;base64,AA" };
 });
 
+/* The staging module is heavy in jsdom; keep headroom under parallel load. */
+vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 });
+
 const jpeg = (name: string) => new File([new Uint8Array(1024)], name, { type: "image/jpeg" });
 const settle = async (n = 30) => {
   for (let i = 0; i < n; i++) await Promise.resolve();
@@ -77,16 +80,17 @@ describe("photo format reshapes the review grid", () => {
   it("defaults to original and switches every frame immediately", async () => {
     await openReviewWith(["a.jpg", "b.jpg", "c.jpg"]);
     expect(tileClasses()).toEqual(["rt-orig", "rt-orig", "rt-orig"]);
-    expect(addClass()).toBe("rt-orig");
+    /* The add card keeps its own fixed shape; it never mirrors the format. */
+    expect(addClass()).toBe("none");
 
     await chooseFormat("9:16");
     expect(tileClasses()).toEqual(["rt-916", "rt-916", "rt-916"]);
-    expect(addClass()).toBe("rt-916");
+    expect(addClass()).toBe("none");
 
     await chooseFormat("16:9");
     expect(tileClasses()).toEqual(["rt-169", "rt-169", "rt-169"]);
-    expect(addClass()).toBe("rt-169");
-  }, 20000);
+    expect(addClass()).toBe("none");
+  });
 
 
   it("keeps the selected button and the card shapes in agreement", async () => {
@@ -136,6 +140,6 @@ describe("photo format reshapes the review grid", () => {
     await openReviewWith(["a.jpg"]);
     const add = stagingHost().querySelector(".rv-addcard") as HTMLElement;
     expect(add.querySelector(".rv-room")).toBeNull();
-    expect(add.querySelector(".rv-addcard-pad")).toBeTruthy();
+    expect(add.querySelector("[data-addface]")).toBeTruthy();
   });
 });

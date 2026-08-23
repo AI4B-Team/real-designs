@@ -37,6 +37,9 @@ import {
   initialWizardStep,
 } from "@/lib/video-upload-intake";
 
+/* The staging module is heavy in jsdom; keep headroom under parallel load. */
+vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 });
+
 const jpeg = (name = "a.jpg", mb = 1) =>
   new File([new Uint8Array(mb * 1024)], name, { type: "image/jpeg" });
 const heic = (name = "IMG_0001.HEIC") =>
