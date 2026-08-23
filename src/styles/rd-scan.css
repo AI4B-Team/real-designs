@@ -372,3 +372,25 @@
   padding: 10px 12px;
   border-top: 1px solid var(--line, #ececec);
 }
+
+/* Batch panel text stacking: force normal flow so the title, subtitle and
+   status line never collapse on top of each other. */
+.rd-batch-h > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.rd-batch-h b,
+.rd-batch-h span,
+.rd-batch-row b,
+.rd-batch-row em {
+  position: static;
+  line-height: 1.35;
+}
+.rd-batch-row > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
