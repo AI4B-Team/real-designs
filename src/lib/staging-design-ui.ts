@@ -313,6 +313,18 @@ export function bindDesignStep(root, ctx) {
       changed();
     };
   });
+  /* Notes save in place: repainting on every keystroke would steal focus. */
+  root.querySelectorAll("[data-photonote]").forEach((t) => {
+    t.oninput = () => {
+      const key = t.getAttribute("data-photonote");
+      if (!model.notesByPhoto) model.notesByPhoto = {};
+      const value = t.value.trim();
+      if (value) model.notesByPhoto[key] = t.value;
+      else delete model.notesByPhoto[key];
+      ctx.onNotes && ctx.onNotes(model);
+    };
+  });
+
   const bindRadioGroup = (attr, apply) => {
     const cards = [...root.querySelectorAll(`[data-${attr}]`)];
     cards.forEach((b, i) => {
