@@ -12209,33 +12209,39 @@ ${picks
       });
     }
     const $id = (x) => document.getElementById(x);
-    supabase.auth
-      .getUser()
-      .then(({ data }) => {
-        const u = data && data.user;
-        if (!u) return;
-        const m = u.user_metadata || {};
-        const name = m.full_name || m.name || u.email.split("@")[0];
-        const av = initials(name);
-        paintAvatars(av, u.email || name);
-        const head = document.querySelector(".acct-head b");
-        if (head) head.textContent = name;
-        const mail = document.querySelector(".acct-head div span");
-        if (mail) mail.textContent = u.email;
-        const n = $id("pfName");
-        if (n) n.value = name;
-        const ph = $id("pfPhone");
-        if (ph) ph.value = m.phone || "";
-        const em = $id("pfEmail");
-        if (em) em.value = u.email;
-        const co = $id("pfCompany");
-        if (co) co.value = m.company || "";
-        const ro = $id("pfRole");
-        if (ro && m.role) ro.value = m.role;
-        const se = $id("secEmail");
-        if (se) se.textContent = u.email;
-      })
-      .catch(() => {});
+    /* The Account pane markup can mount after this script runs, so filling the
+       profile once at startup can land on nodes that do not exist yet. Keep it
+       callable and re-run it whenever the Profile pane is opened. */
+    async function paintProfileFields() {
+      let u = null;
+      try {
+        const { data } = await supabase.auth.getUser();
+        u = data && data.user;
+      } catch (_) {}
+      if (!u) return;
+      const m = u.user_metadata || {};
+      const name = m.full_name || m.name || (u.email || "").split("@")[0];
+      paintAvatars(initials(name), u.email || name);
+      const head = document.querySelector(".acct-head b");
+      if (head) head.textContent = name;
+      const mail = document.querySelector(".acct-head div span");
+      if (mail) mail.textContent = u.email;
+      /* Never clobber something the member has typed but not saved. */
+      const set = (id, v) => {
+        const el = $id(id);
+        if (el && !el.value && v) el.value = v;
+      };
+      set("pfName", name);
+      set("pfPhone", m.phone || "");
+      set("pfEmail", u.email || "");
+      set("pfCompany", m.company || "");
+      if (m.role) set("pfRole", m.role);
+      const se = $id("secEmail");
+      if (se) se.textContent = u.email;
+    }
+    window.rdPaintProfileFields = paintProfileFields;
+    paintProfileFields();
+
 
     /* ---------- account side card + data & privacy ---------- */
     async function paintAcctSide() {
