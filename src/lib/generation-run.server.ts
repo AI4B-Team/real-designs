@@ -219,6 +219,9 @@ export type RunResult<T> = T & {
   stage: JobStage;
   credit_state: CreditState;
   idempotency_key: string;
+  credits_charged: number;
+  credits_balance: number;
+  credits_remaining_today: number | null;
   replayed?: boolean;
 };
 
@@ -247,6 +250,9 @@ export async function runGeneration<T extends object>(
         stage: "succeeded" as JobStage,
         credit_state: (existing.credit_state as CreditState) ?? "charged",
         idempotency_key: key,
+        credits_charged: existing.charged ?? 0,
+        credits_balance: 0,
+        credits_remaining_today: null,
         replayed: true,
       };
     }
@@ -267,6 +273,9 @@ export async function runGeneration<T extends object>(
             stage: "succeeded" as JobStage,
             credit_state: (row.credit_state as CreditState) ?? "charged",
             idempotency_key: key,
+            credits_charged: row.charged ?? 0,
+            credits_balance: 0,
+            credits_remaining_today: null,
             replayed: true,
           };
         }
@@ -345,6 +354,9 @@ export async function runGeneration<T extends object>(
       stage: "succeeded" as JobStage,
       credit_state: creditState,
       idempotency_key: key,
+      credits_charged: charged,
+      credits_balance: balance,
+      credits_remaining_today: remainingToday,
     };
   } catch (err) {
     /* One refund, ever, for this key: the record is marked before the key is
@@ -390,29 +402,15 @@ export async function runGenerationItem<T>(
     return {
       ok: true,
       value: out.value,
-      charged: out.credit_state === "charged" ? chargedOf(out) : 0,
-      balance: balanceOf(out),
-      remainingToday: remainingOf(out),
+      charged: out.credits_charged,
+      balance: out.credits_balance,
+      remainingToday: out.credits_remaining_today,
       jobId: out.job_id,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return { ok: false, blocked: isCreditRefusal(message), error: message };
   }
-}
-
-/* runGeneration hands the charge figures to the work callback; a batch caller
-   needs them back out, so the item wrapper reads them off the context copy the
-   callback stored. These stay small helpers rather than a wider shape change. */
-type Charged = { __charged?: number; __balance?: number; __remaining?: number | null };
-function chargedOf(o: object): number {
-  return (o as Charged).__charged ?? 0;
-}
-function balanceOf(o: object): number {
-  return (o as Charged).__balance ?? 0;
-}
-function remainingOf(o: object): number | null {
-  return (o as Charged).__remaining ?? null;
 }
 
 export function isCreditRefusal(message: string): boolean {
