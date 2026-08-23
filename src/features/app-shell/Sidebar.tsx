@@ -2,7 +2,7 @@ import { Fragment, memo } from "react";
 
 import { CreditSummary } from "./CreditSummary";
 import { ShellIcon } from "./ShellIcon";
-import { NAV_GROUPS } from "./nav-items";
+import { navigationFor } from "./navigation";
 
 /**
  * Left rail of the authenticated shell.
@@ -39,7 +39,7 @@ export const Sidebar = memo(function Sidebar() {
         </div>
       </div>
       <nav className="side-nav">
-        {NAV_GROUPS.map((group, gi) => (
+        {navigationFor().map((group, gi) => (
           <Fragment key={group.title || "primary"}>
             {group.title ? <div className="nav-group">{group.title}</div> : null}
             {group.items.map((item, i) => (
@@ -53,6 +53,7 @@ export const Sidebar = memo(function Sidebar() {
                   <ShellIcon name={item.icon} />
                 </span>
                 <span className="nav-t">{item.label}</span>
+                {item.badge ? <span className="nav-badge">{item.badge}</span> : null}
                 {item.countId ? (
                   <span className="cnt" id={item.countId}>
                     0

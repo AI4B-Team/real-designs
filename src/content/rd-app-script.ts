@@ -300,6 +300,7 @@ import {
   budgetsLive,
   openBudgetPopover,
 } from "@/lib/budget-coming-soon";
+import { resolveDirectRoute } from "@/features/registry/features";
 import {
   loadSampleWorkspace,
   removeSampleWorkspace,
@@ -747,11 +748,19 @@ export function initApp(): () => void {
       /* Project Budget is a roadmap feature: no navigation path, including a
      bookmarked hash, may reach the unfinished Budget view. Clicking it only
      explains what is coming. */
-      if (v === "scope" && !budgetsLive()) {
-        /* Budget has no entry point anywhere in the shell, so the only way to
-           arrive here is a stale bookmark: send it to the dashboard instead of
-           rendering an unfinished view. */
-        if (v !== "dash") go("dash", fromHash);
+      /* One registry decides this for every destination, before any view
+         markup is revealed, so a suppressed feature can never leak partial UI
+         through a bookmark, a typed hash or browser history. */
+      const routeVerdict = resolveDirectRoute(v);
+      if (routeVerdict.action !== "open") {
+        const to = routeVerdict.to || "dash";
+        if (routeVerdict.reason) {
+          try {
+            const t = (window as any).rdToast;
+            if (typeof t === "function") t(routeVerdict.reason);
+          } catch (_) {}
+        }
+        if (v !== to) go(to, fromHash);
         return;
       }
       /* A stale startup callback must never drop a live Canvas back on the

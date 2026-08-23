@@ -431,3 +431,71 @@ agreement, browser zoom at 80–125%, touch-versus-keyboard equivalence, and bot
 legacy adapters. Full suite: 1145 passing.
 
 No Canvas resizing, shell or CSS work was done in this phase.
+
+## Phase 1D — One feature and navigation registry (complete)
+
+Feature visibility used to live in at least five places: a small shell table
+(`feature-availability.ts`), a beta registry (`lib/beta/features.ts`), a
+hardcoded sidebar list, per-view runtime gates in the legacy script
+(`setNavAvailable`, `progressiveNav`, `applyBudgetGating`), and CSS/DOM removal
+that ran *after* paint. Anything decided after paint can flash, which is how an
+unfinished destination such as Budget could momentarily appear.
+
+### The registry
+
+`src/features/registry/features.ts` is the single policy. Each feature declares
+a canonical id, display name, availability state (`active`, `beta`,
+`admin_only`, `plan_gated`, `suppressed`, `coming_soon`, `retired`), required
+plan, required role, navigation visibility, direct-route behaviour
+(`open` / `redirect` / `unavailable_page`), server availability, badge,
+coming-soon behaviour, and an honest reason. It is static data with no network
+reads, so every answer exists before the first paint.
+
+`evaluateFeature(id, ctx)` resolves one feature against a context of
+`{ signedIn, plan, planStatus, role }`. `resolveDirectRoute(view, ctx)` answers
+what a bookmark or typed hash should do.
+
+### One navigation registry
+
+`src/features/app-shell/navigation.ts` holds every destination once — feature
+id, view key, one label, one icon, optional counter id — and
+`navigationFor(ctx)` filters it through the registry. The expanded rail and the
+collapsed rail render from that same list; the collapsed rail reuses the label
+as its tooltip, so an icon and a label cannot drift. Badges come from the
+registry verdict, never from duplicated markup. Empty groups drop their heading.
+`nav-items.ts` and `feature-availability.ts` remain as thin adapters so existing
+call sites keep working.
+
+### Suppression cannot be bypassed
+
+`go()` in the legacy router now asks `resolveDirectRoute` for every view before
+any markup is revealed, replacing the Budget-specific branch. A suppressed
+feature redirects to its approved destination with an honest message and shows
+no partial UI. Server functions keep their own authorization and entitlement
+checks — client visibility is not security, and the registry's `server` flag is
+policy, not a grant.
+
+### Failing closed without flashing
+
+Plan-gated features stay in the navigation while the subscription is loading or
+after it fails, so the sidebar never reflows under the pointer, but they are
+only *usable* once a plan has been proven sufficient: `planStatus` of `loading`
+or `error` denies. Suppressed features are never rendered in the first place.
+
+### Preserved decisions
+
+Budget remains suppressed. Contractor Scope, Checkout, and API/White Label
+remain suppressed. Video stays consolidated into Media with no navigation
+destination of its own. No removed links were reintroduced, no plan badges were
+added to unrelated items, and pricing, plans and entitlement rules are
+unchanged.
+
+### Coverage
+
+`src/features/registry/features.test.ts` (19 tests) covers signed-out, plan
+loading, plan failure, Free, Pro, Studio and admin contexts against expanded
+navigation, collapsed navigation, direct routes, refresh stability, suppressed
+features, plan-gated features, admin-only features, active features and public
+pages. Full suite: 1164 passing.
+
+No shell redesign was performed in this phase.
