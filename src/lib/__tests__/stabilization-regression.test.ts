@@ -124,8 +124,10 @@ describe("regression: authentication and protected routes", () => {
   });
 
   it("classifyLoad separates a missing design from an auth failure", () => {
-    expect(classifyLoad({ ok: false, status: 401 } as never)).toBe("unauthorized");
-    expect(classifyLoad({ ok: false, status: 404 } as never)).toBe("missing");
+    expect(classifyLoad({ error: { status: 401 } })).toBe("unauthorized");
+    expect(classifyLoad({ error: { status: 404 } })).toBe("missing");
+    expect(classifyLoad({ error: { status: 500 } })).toBe("network-error");
+    expect(classifyLoad({ record: {} })).toBe("loaded");
   });
 
   it("refresh restoration keeps the caller's return destination", () => {
