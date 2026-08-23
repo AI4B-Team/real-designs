@@ -11,6 +11,9 @@ import { createIcons, icons } from "lucide";
 import { openStyleBrowser } from "@/lib/canvas-style-ui";
 import {
   DESIGN_DIRECTIONS,
+  categoryStatus,
+  clearCategoryStyle,
+  designBlockerSummary,
   FINISH_GRADES,
   compatibleStyles,
   creditCost,
@@ -232,6 +235,14 @@ export function bindDesignStep(root, ctx) {
   root.querySelectorAll("[data-style]").forEach((b) => {
     b.onclick = () => {
       model.styleBySpace[b.getAttribute("data-scope")] = b.getAttribute("data-style");
+      changed();
+    };
+  });
+  root.querySelectorAll("[data-clear]").forEach((b) => {
+    b.onclick = () => {
+      /* Scope-bound: only this category loses its style. */
+      const next = clearCategoryStyle(model, b.getAttribute("data-clear"));
+      model.styleBySpace = next.styleBySpace;
       changed();
     };
   });
