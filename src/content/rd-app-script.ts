@@ -1334,7 +1334,7 @@ export function initApp(): () => void {
           });
         });
       });
-      (typeof PRES_ROWS !== "undefined" ? PRES_ROWS : []).forEach((pr) => {
+      (typeof presRows === "function" ? presRows() : []).forEach((pr) => {
         out.push({
           kind: "Presentations",
           ic: "presentation",
@@ -1436,7 +1436,7 @@ export function initApp(): () => void {
       set("Properties", PROP_TREE.length);
       set("Rooms", rooms);
       set("Designs", designs);
-      set("Presentations", (typeof PRES_ROWS !== "undefined" ? PRES_ROWS : []).length);
+      set("Presentations", (typeof presRows === "function" ? presRows() : []).length);
       set("Budgets", budgetsLive() ? SAVED_EST.length : 0);
       set("Products", SAVED_EST.length);
       const recents = searchIndex()
@@ -9156,243 +9156,21 @@ ${picks
       })
       .catch(() => {});
 
-    const PRES_STATUS = {
-      sent: ["p-gray", "Sent"],
-      viewed: ["p-blue", "Opened"],
-      approved: ["p-ok", "Approved"],
-      changes: ["p-amb", "Changes Requested"],
-    };
+    /* The list surface lives in @/features/presentations. This runtime keeps
+       only the handle, so there is one owner of rows and of the DOM region. */
     /* `var` on purpose: search metadata reads this through a `typeof` guard
        long before this line runs, and a `let` would throw in its TDZ. */
-    var PRES_ROWS = [];
-
-
-    function presAgo(iso) {
-      if (!iso) return "never";
-      const d = (Date.now() - new Date(iso).getTime()) / 1000;
-      if (d < 60) return "just now";
-      if (d < 3600) return Math.floor(d / 60) + "m ago";
-      if (d < 86400) return Math.floor(d / 3600) + "h ago";
-      return Math.floor(d / 86400) + "d ago";
+    var PRES_LIST = null;
+    function presRows() {
+      return PRES_LIST ? PRES_LIST.rows() : [];
     }
-
-    function presLink(token) {
-      return location.origin + "/p/" + token;
-    }
-
-    let PRES_FILTER = "all";
-    const PRES_TABS = [
-      ["all", "All"],
-      ["due", "Follow Up"],
-      ["sent", "Awaiting"],
-      ["viewed", "Opened"],
-      ["approved", "Approved"],
-      ["changes", "Changes"],
-    ];
-
-    /* A link needs a nudge once it has been out for three days with no decision,
-   and again three days after the last reminder. Approved links never nag. */
-    const PRES_NUDGE_MS = 3 * 86400000;
-    function presDue(r) {
-      const st = r.status || "sent";
-      if (st === "approved") return false;
-      const since = new Date(r.reminded_at || r.created_at || Date.now()).getTime();
-      return Date.now() - since > PRES_NUDGE_MS;
-    }
-
-    function presMatch(r) {
-      if (PRES_FILTER === "all") return true;
-      if (PRES_FILTER === "due") return presDue(r);
-      return (r.status || "sent") === PRES_FILTER;
-    }
-
-    function renderPresRows() {
-      const el = document.getElementById("linkList");
-      if (!el) return;
-      const counts = PRES_TABS.map(([k]) =>
-        k === "all"
-          ? PRES_ROWS.length
-          : k === "due"
-            ? PRES_ROWS.filter(presDue).length
-            : PRES_ROWS.filter((r) => (r.status || "sent") === k).length,
-      );
-      const tabs =
-        `<div class=\"notif-tabs\" id=\"presTabs\" style=\"margin:0 0 10px\">` +
-        PRES_TABS.map(
-          ([k, l], i) =>
-            `<button class=\"notif-tab${PRES_FILTER === k ? " on" : ""}\" data-pf=\"${k}\">${l} ${counts[i]}</button>`,
-        ).join("") +
-        `</div>`;
-      const rows = PRES_ROWS.filter(presMatch);
-      const body = rows.length
-        ? rows
-            .map((r) => {
-              const [cls, lab] = PRES_STATUS[r.status] || PRES_STATUS.sent;
-              const who = r.client_name ? "Sent to " + esc(r.client_name) : "No recipient named";
-              const seen = r.view_count
-                ? r.view_count === 1
-                  ? "opened once"
-                  : "opened " + r.view_count + " times"
-                : "not opened";
-              const ctx = [r.address, r.room_name].filter(Boolean).map(esc).join(" &middot; ");
-              const dropped =
-                r.excluded_count || 0
-                  ? `<span class="pill warn" style="margin-left:6px">${r.excluded_count} Line${r.excluded_count === 1 ? "" : "s"} Removed</span>`
-                  : "";
-              const notesPill =
-                r.note_count || 0
-                  ? `<span class="pill" style="margin-left:6px">${r.note_count} Line Comment${r.note_count === 1 ? "" : "s"}</span>`
-                  : "";
-              const duePill = presDue(r) ? `<span class="pill warn">Follow Up Due</span>` : "";
-              const remind =
-                r.reminder_count || 0
-                  ? ` &middot; ${r.reminder_count} reminder${r.reminder_count === 1 ? "" : "s"} sent`
-                  : "";
-              const lineNotes =
-                r.note_count || 0
-                  ? Object.values(r.line_notes || {})
-                      .slice(0, 3)
-                      .map(
-                        (t: any) =>
-                          `<div class=\"rowi\" style=\"border-top:0;padding-top:0\"><div class=\"rowt\" style=\"padding-left:2px\"><span style=\"color:var(--mute-2)\"><i>&ldquo;${esc(String(t))}&rdquo;</i></span></div></div>`,
-                      )
-                      .join("")
-                  : "";
-              const note =
-                r.decision_note || r.excluded_count || r.note_count
-                  ? `<div class=\"rowi\" style=\"border-top:0;padding-top:0\"><div class=\"rowt\" style=\"padding-left:2px\"><span style=\"color:var(--mute-2)\">${r.decision_note ? `<i>&ldquo;${esc(r.decision_note)}&rdquo;</i> &mdash; ${esc(r.client_name || "client")}` : r.excluded_count ? `${esc(r.client_name || "The client")} trimmed the scope` : `${esc(r.client_name || "The client")} left notes on the scope`}</span>${dropped}${notesPill}</div></div>` +
-                    lineNotes
-                  : "";
-              return `<div class=\"rowi\" data-pid=\"${r.id}\" data-tok=\"${r.token}\">
-      <div class="rowt"><b>${esc(r.title)}</b><span>${ctx ? ctx + " &middot; " : ""}${who} &middot; ${seen} &middot; ${presAgo(r.last_viewed_at || r.created_at)}${remind}</span></div>
-      ${duePill}
-      <span class="pill ${cls}">${lab}</span>
-      <button class="icon-btn" data-hist title="Activity History"><i data-lucide="history"></i></button>
-      <button class="icon-btn" data-remind title="Send Approval Reminder"><i data-lucide="bell-ring"></i></button>
-      <button class="icon-btn" data-send title="Send to Client"><i data-lucide="send"></i></button>
-      <button class="icon-btn" data-copy title="Copy Link"><i data-lucide="copy"></i></button>
-      <button class="icon-btn" data-pdf title="Branded PDF"><i data-lucide="file-text"></i></button>
-      <button class="icon-btn" data-board title="Product Board"><i data-lucide="shopping-bag"></i></button>
-      <button class="icon-btn" data-reel title="Social Reel, 9x16"><i data-lucide="clapperboard"></i></button>
-      <button class="icon-btn" data-del title="Delete Link"><i data-lucide="trash-2"></i></button></div>${note}<div class="pres-hist" data-hist-for="${r.id}" hidden></div>`;
-            })
-            .join("")
-        : '<p style="font-size:.79rem;color:var(--mute-2)">No Links With That Status Yet.</p>';
-
-      el.innerHTML = tabs + body;
-      lucide.createIcons();
-    }
-
     async function paintPresentations() {
-      const el = document.getElementById("linkList");
-      if (!el) return;
-      if (!el.innerHTML.trim()) el.innerHTML = skList(3);
-      try {
-        PRES_ROWS = await listPresentations();
-      } catch (e) {
-        PRES_ROWS = [];
-      }
-      updateSearchMeta();
-      if (!PRES_ROWS.length) {
-        el.innerHTML =
-          '<p style="font-size:.79rem;color:var(--mute-2)">No Client Links Yet. Save a design in Studio, then use New Link to share it for approval.</p><div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-primary btn-sm" data-goto="studio"><i data-lucide="wand-2"></i>Open Studio</button><button class="btn btn-ghost btn-sm" id="emptyNewLink"><i data-lucide="link"></i>New Link</button></div>';
-        el.querySelectorAll("[data-goto]").forEach((b) =>
-          b.addEventListener("click", () => go(b.dataset.goto)),
-        );
-        const enl = el.querySelector("#emptyNewLink");
-        if (enl) enl.addEventListener("click", presModal);
-        lucide.createIcons();
-        return;
-      }
-      renderPresRows();
-    }
-
-    const HIST_META = {
-      created: ["plus-circle", "Link Created"],
-      viewed: ["eye", "Opened"],
-      approved: ["check-circle-2", "Approved"],
-      changes: ["refresh-cw", "Changes Requested"],
-      reminded: ["bell-ring", "Reminder Sent"],
-      comments: ["message-square", "Line Comments"],
-    };
-
-    function presHistWhen(iso) {
-      try {
-        return new Date(iso).toLocaleString("en-US", {
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-        });
-      } catch (_) {
-        return "";
-      }
-    }
-
-    async function togglePresHistory(pid) {
-      const box = document.querySelector('[data-hist-for="' + pid + '"]');
-      if (!box) return;
-      if (!box.hidden) {
-        box.hidden = true;
-        return;
-      }
-      box.hidden = false;
-      box.innerHTML = '<div class="pres-hist-i">' + skLines(2) + "</div>";
-      let rows = [];
-      try {
-        rows = await listPresentationActivity({ data: { id: pid } });
-      } catch (_) {
-        rows = [];
-      }
-      const meta = PRES_ROWS.find((x) => x.id === pid);
-      if (meta && meta.created_at)
-        rows = rows.concat([
-          {
-            id: "created",
-            kind: "created",
-            detail: "Share link created",
-            note: null,
-            excluded_count: 0,
-            note_count: 0,
-            created_at: meta.created_at,
-          },
-        ]);
-      if (!rows.length) {
-        box.innerHTML =
-          '<div class="pres-hist-i"><span>No Activity Yet. The timeline fills in once the client opens the link.</span></div>';
-        return;
-      }
-      box.innerHTML = rows
-        .map((ev) => {
-          const m = HIST_META[ev.kind] || HIST_META.viewed;
-          const extras = [];
-          if (ev.excluded_count)
-            extras.push(
-              ev.excluded_count + " line" + (ev.excluded_count === 1 ? "" : "s") + " removed",
-            );
-          if (ev.note_count)
-            extras.push(ev.note_count + " line comment" + (ev.note_count === 1 ? "" : "s"));
-          const quote = ev.note ? `<em>&ldquo;${esc(ev.note)}&rdquo;</em>` : "";
-          return `<div class="pres-hist-i"><i data-lucide="${m[0]}"></i><div><b>${m[1]}</b><span>${esc(ev.detail || "")}${extras.length ? " &middot; " + extras.join(" &middot; ") : ""}</span>${quote}</div><span class="tm">${presHistWhen(ev.created_at)}</span></div>`;
-        })
-        .join("");
-      lucide.createIcons();
+      if (PRES_LIST) await PRES_LIST.refresh();
     }
 
     /* jump to one client link from the dashboard attention list */
     async function focusPresentation(pid) {
-      if (!PRES_ROWS.length) await paintPresentations();
-      if (PRES_FILTER !== "all") {
-        PRES_FILTER = "all";
-        renderPresRows();
-      }
-      const row = document.querySelector('#linkList [data-pid="' + pid + '"]');
-      if (!row) return;
-      row.scrollIntoView({ block: "center", behavior: "smooth" });
-      row.classList.remove("rd-flash");
-      void row.offsetWidth;
-      row.classList.add("rd-flash");
-      setTimeout(() => row.classList.remove("rd-flash"), 2400);
+      if (PRES_LIST) await PRES_LIST.focus(pid);
     }
 
     /* A function declaration, not a const: Studio renders while initApp is still
@@ -9614,72 +9392,12 @@ ${picks
       }
     }
 
-    const linkList = document.getElementById("linkList");
-    if (linkList)
-      linkList.addEventListener("click", async (e) => {
-        const tab = e.target.closest("[data-pf]");
-        if (tab) {
-          PRES_FILTER = tab.getAttribute("data-pf");
-          renderPresRows();
-          return;
-        }
-        const row = e.target.closest("[data-pid]");
-        if (!row) return;
-        if (e.target.closest("[data-hist]")) {
-          togglePresHistory(row.dataset.pid);
-          return;
-        }
-        if (e.target.closest("[data-remind]")) {
-          presSendModal(
-            PRES_ROWS.find((x) => x.id === row.dataset.pid),
-            true,
-          );
-          return;
-        }
-        if (e.target.closest("[data-send]")) {
-          presSendModal(PRES_ROWS.find((x) => x.id === row.dataset.pid));
-          return;
-        }
-
-        if (e.target.closest("[data-copy]")) {
-          const url = presLink(row.dataset.tok);
-          try {
-            await navigator.clipboard.writeText(url);
-          } catch (_) {}
-          const pill = row.querySelector(".pill");
-          const old = pill.textContent;
-          pill.textContent = "Link Copied";
-          setTimeout(() => {
-            pill.textContent = old;
-          }, 1400);
-          return;
-        }
-        if (e.target.closest("[data-pdf]")) {
-          exportPresentationPdf(row.dataset.pid, e.target.closest("[data-pdf]"));
-          return;
-        }
-        if (e.target.closest("[data-board]")) {
-          exportPresentationBoard(row.dataset.pid, e.target.closest("[data-board]"));
-          return;
-        }
-        if (e.target.closest("[data-reel]")) {
-          exportSocialReel(row.dataset.pid, e.target.closest("[data-reel]"));
-          return;
-        }
-        if (e.target.closest("[data-del]")) {
-          try {
-            await deletePresentation({ data: { id: row.dataset.pid } });
-          } catch (_) {}
-          paintPresentations();
-        }
-      });
-
     /* ---------- send a client link ----------
    No mail server is wired up, so we hand the pro a finished message they can
    send from their own inbox. Wording changes with the status of the link so a
    follow up never reads like the first email. */
     function presMessage(r, reminder) {
-      const url = presLink(r.token);
+      const url = presentationLink(r.token);
       const who = r.client_name || "there";
       const what = r.title || "your design";
       const place = [r.address, r.room_name].filter(Boolean).join(", ");
@@ -9778,7 +9496,7 @@ ${picks
         "<p>" +
         (reminder
           ? "This link has been out since " +
-            presHistWhen(r.reminded_at || r.created_at) +
+            presentationHistoryWhen(r.reminded_at || r.created_at) +
             (sent
               ? " and " +
                 sent +
@@ -9966,7 +9684,7 @@ ${picks
             err.textContent = "Give the approval link a title your client will recognise.";
             return;
           }
-          const existing = (PRES_ROWS || []).find(
+          const existing = presRows().find(
             (r) => r.version_id === v.id && r.status !== "revoked",
           );
           if (existing && !window.confirm(EXISTING_LINK_MESSAGE + "\n\nCreate a new link anyway?"))
@@ -9992,7 +9710,7 @@ ${picks
                 brand_accent: brand.accent,
               },
             });
-            PL_STATE = { phase: "created", url: presLink(res.token), token: res.token };
+            PL_STATE = { phase: "created", url: presentationLink(res.token), token: res.token };
             renderPlState();
             paintPresentations();
           } catch (e) {
@@ -10014,11 +9732,11 @@ ${picks
           if (PL_STATE.url) window.open(PL_STATE.url, "_blank", "noopener");
         });
         m.querySelector("#plSend").addEventListener("click", () => {
-          const r = (PRES_ROWS || []).find((x) => x.token === PL_STATE.token);
+          const r = presRows().find((x) => x.token === PL_STATE.token);
           if (r) presSendModal(r, false);
         });
         m.querySelector("#plRevoke").addEventListener("click", async () => {
-          const r = (PRES_ROWS || []).find((x) => x.token === PL_STATE.token);
+          const r = presRows().find((x) => x.token === PL_STATE.token);
           if (!r) return;
           try {
             await deletePresentation({ data: { id: r.id } });
