@@ -116,7 +116,7 @@ export function sectionHeader(
     esc(CLEAR_LABEL) +
     "</button>";
   const inline = layout.inline
-    .map((a) => {
+    .map((a: HeaderAction) => {
       if (a.id === "clear") return clearBtn("");
       if (a.id === "browse")
         return '<button type="button" class="fb-link cs-browse">' + esc(a.label) + "</button>";
