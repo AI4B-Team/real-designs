@@ -19,13 +19,11 @@ import {
 
 const ctx: DirectionContext = {
   need: "design",
-  tool: "design",
-  projectType: "interior",
-  room: "kitchen",
   draftId: "d1",
   photoKey: "p1",
   propertyId: "prop1",
 };
+
 
 describe("design style header actions", () => {
   it("hides Clear until a style is selected", () => {
