@@ -1964,10 +1964,12 @@ export function initApp(): () => void {
       const rl = document.getElementById("recentList"),
         al = document.getElementById("attnList"),
         bt = document.getElementById("budgetTable");
-      if (!rl || !al || !bt) return;
+      /* The budget table is stripped at render time while budgets are hidden,
+         so its absence must never stop the dashboard from painting. */
+      if (!rl || !al) return;
       rl.innerHTML = skList(3);
       al.innerHTML = skList(2);
-      bt.innerHTML = skRows(6, 3);
+      if (bt) bt.innerHTML = skRows(6, 3);
       let s;
       try {
         s = await Promise.race([
