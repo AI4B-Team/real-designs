@@ -1119,6 +1119,12 @@ function tileRatioClass(it) {
  * reference — a signed URL is only ever a cached hint — so every frame stays
  * bound to a path and can re-sign itself instead of going gray.
  */
+/** The card image previews the exact framing generation will use. */
+function cropAttr(it) {
+  if (!it || !isCustomCrop(it.crop) || tileRatio(it) === "original") return "";
+  return ` style="${cropStyle(it.crop)}"`;
+}
+
 function imgAttrs(it) {
   const bind = it.resultUrl || it.resultPath ? it.resultPath || it.path || "" : it.path || "";
   const url = it.resultUrl || it.signed || it.previewUrl || "";
@@ -1171,7 +1177,7 @@ function cardHtml(it, seq) {
   return `<div class="rv-tile ${rc} ${it.selected ? "on" : ""}${ws ? " ws-" + ws.cls : ""}${failed ? " rd-fail" : ""}" data-k="${it.key}">
     <div class="rv-tile-th${failed ? " rd-img-fail" : ""}"${failed ? ' data-photo-fail="upload"' : ""} data-open="${it.key}" role="button" tabindex="0" aria-label="Photo ${n}: open ${esc(it.name)} in the design canvas">
 
-      <img${imgAttrs(it)} data-rot="${normalizeRotation(it.rotation)}" alt="${esc(it.name)}" loading="lazy">
+      <img${imgAttrs(it)}${cropAttr(it)} data-rot="${normalizeRotation(it.rotation)}" alt="${esc(it.name)}" loading="lazy">
       <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Design ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
       ${sceneNumberHtml(n)}
       ${cardStatusHtml({ flow: "photo", key: it.key, noun: "design settings", features: designFeatures(it) })}
@@ -1801,6 +1807,7 @@ async function setProjectRatio(next) {
   S.outputRatio = ratio;
   saveDraft();
   applyRatiosLive();
+  renderFormatSection(host());
 }
 
 /**
@@ -1821,6 +1828,11 @@ function applyRatiosLive() {
     if (!it) return;
     const want = tileRatioClass(it);
     RATIO_CLASSES.forEach((c) => tile.classList.toggle(c, c === want));
+    const im = tile.querySelector(".rv-tile-th img");
+    if (im) {
+      if (isCustomCrop(it.crop) && tileRatio(it) !== "original") im.setAttribute("style", cropStyle(it.crop));
+      else im.removeAttribute("style");
+    }
     /* The badge only exists while the photo genuinely overrides the project. */
     const frame = tile.querySelector(".rv-tile-th");
     const badge = tile.querySelector(".rv-tile-fmt");
