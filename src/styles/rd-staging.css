@@ -1777,6 +1777,91 @@
   cursor: not-allowed;
 }
 
+/* ---- "More Ratios" modal — proper header / scrollable body / footer ----
+   The grid reuses the rdof-card components so the nine ratio options sit in a
+   responsive 3-column grid that never overflows the modal boundary.
+   Use .bx-cdlg-in.rdmr-dlg for specificity so the base .bx-cdlg-in width and
+   padding (which lack box-sizing:border-box) are overridden. */
+.bx-cdlg-in.rdmr-dlg {
+  box-sizing: border-box;
+  width: min(560px, calc(100vw - 32px));
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 64px);
+  padding: 0;
+  overflow: hidden;
+}
+.rdmr-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 22px 8px;
+  flex-shrink: 0;
+}
+.rdmr-head-txt {
+  min-width: 0;
+}
+.rdmr-head h3 {
+  margin: 0 0 4px;
+  font: 700 18px/1.25 "DM Sans", system-ui, sans-serif;
+}
+.rdmr-head p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #4a4a52;
+}
+.rdmr-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 999px;
+  border: none;
+  background: none;
+  color: #4b5563;
+  cursor: pointer;
+}
+.rdmr-x:hover {
+  background: rgba(17, 17, 17, 0.06);
+}
+.rdmr-x svg {
+  width: 18px;
+  height: 18px;
+}
+.rdmr-body {
+  padding: 4px 22px 4px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.rdmr-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 8px 0 12px;
+}
+@media (max-width: 560px) {
+  .rdmr-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 380px) {
+  .rdmr-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.bx-cdlg-in.rdmr-dlg .rdm-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 22px 20px;
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
 /* ---- Override Photo Format modal (per-photo) ---- */
 .rdof-dlg {
   width: min(600px, calc(100vw - 32px));
