@@ -19,6 +19,7 @@
  * final Generate action, which submits a versioned snapshot, does that.
  */
 
+import { type CropModel, normalizeCropModel } from "@/lib/crop-model";
 import { styleById } from "@/lib/style-catalog";
 import { reportError } from "@/lib/errors/report";
 
@@ -57,7 +58,7 @@ export type DraftPhoto = {
   /** Output-format override; null follows the project format. */
   ratio: string | null;
   /** Placement inside a fixed format frame; null is the centred default. */
-  crop: Record<string, unknown> | null;
+  crop: CropModel | null;
   rotation: number;
   /** Per-photo style override; null follows the shared style. */
   styleId: string | null;
@@ -166,7 +167,8 @@ function normPhoto(raw: any): DraftPhoto | null {
     confidence: Number(raw.confidence) || 0,
     selected: raw.selected !== false,
     ratio: raw.ratio ? String(raw.ratio) : null,
-    crop: raw.crop && typeof raw.crop === "object" ? { ...raw.crop } : null,
+    /* One canonical, normalized crop — never a loose bag of pixel values. */
+    crop: raw.crop && typeof raw.crop === "object" ? normalizeCropModel(raw.crop) : null,
     rotation: Number(raw.rotation) || 0,
     styleId: raw.styleId && styleById(raw.styleId) ? String(raw.styleId) : null,
     instructions: str(raw.instructions, ""),
@@ -532,10 +534,15 @@ export function removeDraftPhoto(key: string): StudioDraft {
   });
 }
 
-export function updateDraftPhoto(key: string, patch: Partial<DraftPhoto>): StudioDraft {
+export function updateDraftPhoto(
+  key: string,
+  patch: Partial<Omit<DraftPhoto, "crop">> & { crop?: Partial<CropModel> | null },
+): StudioDraft {
   const cur = ensureDraft();
   return patchDraft({
-    photos: cur.photos.map((p) => (p.key === key ? (makePhoto({ ...p, ...patch, key }) as DraftPhoto) : p)),
+    photos: cur.photos.map((p) =>
+      p.key === key ? (makePhoto({ ...p, ...patch, key } as never) as DraftPhoto) : p,
+    ),
   });
 }
 

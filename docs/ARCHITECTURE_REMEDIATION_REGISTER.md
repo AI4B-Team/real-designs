@@ -369,3 +369,65 @@ suite: 1124 passing.
 
 Not done in this phase (deliberate): merging `photo_edits` and the legacy
 `versions` table into `property_media_versions`, and crop consolidation.
+
+## Phase 1C — One canonical crop model (complete)
+
+Three crop models competed: a pixel-space frame/offset/scale state in the photo
+editor (`crop-frame.ts`), a focal/scale model in the Photos step
+(`photo-crop.ts`), and a loose `Record<string, unknown>` stored on the draft.
+Each clamped differently, so a framing made in one surface could not be trusted
+by another, and the generated pixels were computed by a third piece of maths.
+
+### The model
+
+`src/lib/crop-model.ts` is the one crop value, entirely in normalized image
+space: `ratio`, `focalX`, `focalY`, `zoom`, `rotation` (quarter turns),
+`flipX`, `flipY`, `straighten`, `perspectiveV`/`perspectiveH`, source natural
+width/height, and `rev`. Nothing is measured in rendered pixels, so a crop is
+unchanged by a window resize, a device pixel ratio, or a browser zoom of 80%,
+90%, 100%, 110% or 125%.
+
+One geometry serves every surface: the visible slice at zoom `z` is
+`(a > f ? f/a : 1)/z` wide and `(a > f ? 1 : a/f)/z` tall, and the focal point
+may travel exactly `±(1 - slice)/2`. That is why the frame is always covered and
+empty space inside the frame is impossible by construction.
+
+### Ownership
+
+- `photo-crop.ts` is now a thin adapter (same exports, canonical maths) and
+  reads the legacy `{x, y, scale}` shape.
+- `crop-frame.ts` keeps its pixel helpers for the editor's free-crop handles but
+  converts through `toCropModel` / `fromCropModel`, and its wheel curve is the
+  model's curve.
+- `studio-draft.ts` stores the normalized model on each photo, so refresh
+  restores the exact framing, and Review and the generation snapshot read the
+  same value.
+- `staging-bulk.ts` bakes generation pixels with `cropPixels` — the rectangle
+  the preview showed, not a parallel calculation.
+- Original stays the default for new drafts, a global ratio applies to photos
+  without an override, and a per-photo override affects only that photo
+  (`effectiveRatio`).
+
+### Reposition dialog
+
+Frame fixed, photograph moves beneath it, pan clamped. Continuous zoom slider
+plus `+` / `−` controls with the current percentage visible, bounded and
+magnitude-aware wheel/trackpad zoom (`deltaMode` normalized, `preventDefault`
+on a non-passive listener), and Reset returning to the calculated cover
+position. Dragging uses pointer capture with `grab`/`grabbing` cursors and
+`touch-action: none`, so a finger drag never scrolls the page; arrow keys pan,
+`+`/`−` zoom and `0` resets. Previous/Next appear only when more than one photo
+is open, Cancel discards the working copy, and Done commits one crop revision
+per photo. The dialog is bounded to `min(92vh, 900px)` so its actions can't be
+pushed off a short viewport.
+
+### Coverage
+
+`src/lib/__tests__/crop-model.test.ts` (21 tests): every supported ratio,
+Original default, global ratio, per-photo override, wide-into-portrait,
+tall-into-landscape, square source, extreme zoom, pan boundaries, reset,
+revision counting on apply, refresh round-trip, preview/generation payload
+agreement, browser zoom at 80–125%, touch-versus-keyboard equivalence, and both
+legacy adapters. Full suite: 1145 passing.
+
+No Canvas resizing, shell or CSS work was done in this phase.

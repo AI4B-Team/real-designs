@@ -163,14 +163,17 @@ describe("canonical studio draft", () => {
     startDraft("studio");
     addDraftPhotos([photo()]);
     updateDraftPhoto("p1", {
-      crop: { x: 0.2, y: 0.4 },
+      crop: { focalX: 0.2, focalY: 0.4 },
       ratio: "1:1",
       rotation: 90,
       styleId: OTHER.id,
       instructions: "Leave the window bare.",
     });
     const p = getDraft()!.photos[0]!;
-    expect(p.crop).toEqual({ x: 0.2, y: 0.4 });
+    /* Stored as the canonical normalized model, not a loose object. */
+    expect(p.crop?.focalX).toBeCloseTo(0.2);
+    expect(p.crop?.focalY).toBeCloseTo(0.4);
+    expect(p.crop?.zoom).toBe(1);
     expect(p.ratio).toBe("1:1");
     expect(p.rotation).toBe(90);
     expect(styleForPhoto("p1")).toBe(OTHER.id);
