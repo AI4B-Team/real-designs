@@ -1448,7 +1448,7 @@ function renderDesignFlow(el) {
       review ? "Review and Generate" : "Choose a Design Style",
       review
         ? "Confirm the photos, styles and credit cost before anything is generated."
-        : "Pick one style for everything, or a different style per space.",
+        : "Choose one style for each space category, then customize individual photos if needed.",
     )}
     <div class="rv-layout rv-railed">
       ${stepRailHtml(review ? "final" : "design")}
