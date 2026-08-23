@@ -316,8 +316,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      {/* A render throw inside any route now yields a recoverable screen with a
+          correlation reference instead of a blank page. */}
+      <RouteErrorBoundary area="root">
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </RouteErrorBoundary>
     </QueryClientProvider>
   );
 }
