@@ -1061,10 +1061,14 @@
   border-radius: 12px;
   overflow: hidden;
 }
+.rd-app .xp-recimg {
+  position: relative;
+}
 .rd-app .xp-reccard img {
   width: 100%;
   aspect-ratio: 4/3;
   object-fit: cover;
+  display: block;
 }
 .rd-app .xp-reccard > div {
   padding: 10px 12px 12px;
