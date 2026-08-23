@@ -597,3 +597,21 @@ Roughly 240 lines of imperative rendering and event delegation left the
 monolith. 29 new tests (1250 passing).
 
 Stopping here. Further regions will not be extracted without separate approval.
+
+## Verification cycle 1 — stabilization regression suite
+
+**Status: complete. Pass with observations.**
+
+`src/lib/__tests__/stabilization-regression.test.ts` adds 62 behavioural tests
+across the twelve specified workflow areas (auth, intake, Explore handoff,
+design workflow, generation, canvas identity, photo editor, media,
+presentations, feature suppression, security, duplicate entry). Full suite:
+1312 passing, 5 skipped, 0 failing; typecheck clean. A four-viewport Chromium
+pass over the public routes and the signed-in shell found no horizontal
+scroll, unique per-route metadata and no suppressed Budget markup.
+
+Open observations are recorded in `docs/STABILIZATION_VERIFICATION_REPORT.md`:
+a React unmount warning at the Phase 3 strangler boundary, thin SSR output on
+`/app`, and the still-partial listener cleanup registry.
+
+Stopping here pending approval for the next extraction.
