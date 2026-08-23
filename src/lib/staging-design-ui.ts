@@ -25,6 +25,9 @@ import {
   effectiveStyleId,
   gradeLabel,
   hasOverride,
+  hasCustomization,
+  photoNote,
+
   spaceOf,
   styleName,
 } from "@/lib/staging-design";
@@ -168,18 +171,23 @@ function overridesHtml(model, cats) {
     cat.items.forEach((it) => {
       const own = hasOverride(model, it);
       const id = effectiveStyleId(model, it);
+      const note = photoNote(model, it);
       const state = own
         ? `Custom Style: ${styleName(id) || "Not chosen"}`
         : id
           ? `Uses ${cat.label} Style: ${styleName(id)}`
           : `No ${cat.label} style chosen yet`;
-      rows.push(`<div class="rdd-photo${own ? " own" : ""}">
+      rows.push(`<div class="rdd-photo${own || note ? " own" : ""}">
         <span class="rdd-photo-th"><img src="${esc(it.signed || it.previewUrl || "")}" alt="${esc(it.room || "Photo")}" loading="lazy"></span>
         <span class="rdd-photo-m"><b>${esc(it.room || "Room Type Needed")}</b><em>${esc(state)}</em></span>
         <span class="rdd-photo-a">
           <button type="button" class="fb-link" data-photostyle="${esc(it.key)}">Customize</button>
           ${own ? `<button type="button" class="fb-link" data-photoreset="${esc(it.key)}">Use Group Style</button>` : ""}
         </span>
+        <label class="rdd-photo-note">
+          <span>Instructions For This Photo</span>
+          <textarea rows="2" data-photonote="${esc(it.key)}" placeholder="Example: Leave the fireplace exactly as it is.">${esc(note)}</textarea>
+        </label>
       </div>`);
     });
   });
@@ -189,6 +197,7 @@ function overridesHtml(model, cats) {
     <div class="rdd-photos">${rows.join("")}</div>
   </details>`;
 }
+
 
 /** The full Design page body. */
 export function designStepHtml(ctx) {
@@ -304,6 +313,18 @@ export function bindDesignStep(root, ctx) {
       changed();
     };
   });
+  /* Notes save in place: repainting on every keystroke would steal focus. */
+  root.querySelectorAll("[data-photonote]").forEach((t) => {
+    t.oninput = () => {
+      const key = t.getAttribute("data-photonote");
+      if (!model.notesByPhoto) model.notesByPhoto = {};
+      const value = t.value.trim();
+      if (value) model.notesByPhoto[key] = t.value;
+      else delete model.notesByPhoto[key];
+      ctx.onNotes && ctx.onNotes(model);
+    };
+  });
+
   const bindRadioGroup = (attr, apply) => {
     const cards = [...root.querySelectorAll(`[data-${attr}]`)];
     cards.forEach((b, i) => {
@@ -362,12 +383,15 @@ function reviewGroupHtml(ctx, model, group) {
         const label = (ctx.photoLabel && ctx.photoLabel(it, n)) || `${it.room || "Photo"} · Photo ${n}`;
         const fmt = (ctx.photoFormat && ctx.photoFormat(it)) || "";
         const custom = ctx.photoCustomCrop && ctx.photoCustomCrop(it);
+        const note = photoNote(model, it);
         return `<div class="rdd-rrow">
           <span class="rdd-rn">${n}</span>
           <span class="rdd-photo-th"><img src="${esc(it.signed || it.previewUrl || "")}" alt="${esc(label)}" loading="lazy"></span>
           <span class="rdd-photo-m"><b>${esc(label)}</b>
-            <em>${esc(styleName(id) || "No style")}${own ? " · Own Style" : ""}${fmt ? " · " + esc(fmt) : ""}${custom ? " · Custom Position" : ""}</em></span>
+            <em>${esc(styleName(id) || "No style")}${own ? " · Own Style" : ""}${fmt ? " · " + esc(fmt) : ""}${custom ? " · Custom Position" : ""}</em>
+            ${note ? `<em class="rdd-rnote"><b>Photo Instructions</b> ${esc(note)}</em>` : ""}</span>
         </div>`;
+
       })
       .join("")}</div>
   </section>`;
@@ -386,7 +410,7 @@ export function reviewStepHtml(ctx) {
   const cost = creditCost(items);
   const blockers = ctx.blockers || [];
   const groups = designGroups(items);
-  const overrides = items.filter((it) => hasOverride(model, it)).length;
+  const overrides = items.filter((it) => hasCustomization(model, it)).length;
   const balance = typeof ctx.balance === "number" ? ctx.balance : null;
   const freePlan = ctx.plan === "free";
   const remainingToday = typeof ctx.remainingToday === "number" ? ctx.remainingToday : null;

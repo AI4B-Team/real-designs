@@ -2438,9 +2438,48 @@
   border: 1px solid var(--line);
   border-radius: 10px;
 }
+.rdd-photo {
+  flex-wrap: wrap;
+}
 .rdd-photo.own {
   border-color: var(--brand);
 }
+/* The per-photo instruction sits on its own row so it never squeezes the meta. */
+.rdd-photo-note {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 0 100%;
+  min-width: 0;
+}
+.rdd-photo-note > span {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.rdd-photo-note textarea {
+  width: 100%;
+  min-height: 52px;
+  resize: vertical;
+  font: inherit;
+  font-size: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface, transparent);
+  color: inherit;
+}
+.rdd-rnote {
+  margin-top: 2px;
+  white-space: normal;
+}
+.rdd-rnote b {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .rdd-photo-th {
   width: 72px;
   height: 48px;
