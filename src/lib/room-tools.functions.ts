@@ -10,6 +10,8 @@ const Input = z.object({
   style_id: z.string().max(80).nullable().optional(),
   grade: z.string().max(40).default("Retail Grade"),
   notes: z.string().max(600).nullable().optional(),
+  /* Stable identity of one user click; reused by retries of that click. */
+  request_id: z.string().max(80).nullable().optional(),
 });
 
 /** One-credit Studio room tools: stage, declutter, material swap, sketch, extra angle. */

@@ -84,6 +84,8 @@ const RenderInput = z.object({
   reference: z.string().min(16).nullable().default(null),
   payload: PayloadShape,
   runs: z.array(RunShape).min(1).max(8),
+  /* Stable identity of one user click; reused by retries of that click. */
+  request_id: z.string().max(80).nullable().optional(),
 });
 
 /**

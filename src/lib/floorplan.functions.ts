@@ -131,6 +131,8 @@ const RenderInput = z.object({
     )
     .min(1)
     .max(8),
+  /* Stable identity of one user click; reused by retries of that click. */
+  request_id: z.string().max(80).nullable().optional(),
 });
 
 /**

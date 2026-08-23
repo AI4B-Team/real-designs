@@ -19,6 +19,8 @@ const StartInput = z.object({
   image: z.string().min(16), // data URL of the render to animate
   room_type: z.string().max(60).default("living room"),
   direction: z.string().max(60).default("Warm Minimal"),
+  /* Stable identity of one user click; reused by retries of that click. */
+  request_id: z.string().max(80).nullable().optional(),
 });
 
 const PollInput = z.object({ id: z.string().min(3).max(120) });

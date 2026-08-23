@@ -68,6 +68,8 @@ const RenderInput = z.object({
   /** The full-resolution binary mask: white is editable, black is protected. */
   mask: z.string().min(16).nullable().default(null),
   payload: PayloadShape,
+  /* Stable identity of one user click; reused by retries of that click. */
+  request_id: z.string().max(80).nullable().optional(),
 });
 
 /**

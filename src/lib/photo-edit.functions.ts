@@ -64,6 +64,8 @@ const Input = z.object({
   room: z.string().max(60).default("Living Room"),
   direction: z.string().max(60).default("Warm Minimal"),
   instruction: z.string().max(600).nullable().optional(),
+  /* Stable identity of one user click; reused by retries of that click. */
+  request_id: z.string().max(80).nullable().optional(),
 });
 
 function prompt(d: z.infer<typeof Input>, label: string): string {

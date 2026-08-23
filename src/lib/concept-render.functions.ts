@@ -27,6 +27,8 @@ const Input = z.object({
   images: z.array(z.string().min(16).max(9_000_000)).max(3).nullable().optional(),
   /** Output framing for the concept. */
   aspect_ratio: z.string().max(8).nullable().optional(),
+  /* Stable identity of one user click; reused by retries of that click. */
+  request_id: z.string().max(80).nullable().optional(),
 });
 
 
