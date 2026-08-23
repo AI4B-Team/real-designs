@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { toPlainText } from "@/lib/safe-html";
+
 
 export const pkgIdSchema = z.object({ id: z.string().uuid() });
 
