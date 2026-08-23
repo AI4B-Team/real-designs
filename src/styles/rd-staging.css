@@ -2839,3 +2839,41 @@
 .design-option-card.on .doc-ck {
   display: grid;
 }
+
+/* Structure Protection reuses the option card so the whole Shared section
+   reads as one family of controls. */
+.design-toggle-card {
+  max-width: 640px;
+  min-height: 0;
+  padding-left: 44px;
+}
+.design-toggle-card.on {
+  padding-left: 43px;
+}
+.design-toggle-card input {
+  position: absolute;
+  left: 16px;
+  top: 17px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand);
+  margin: 0;
+}
+.design-toggle-card .doc-h {
+  padding-right: 0;
+}
+.rdd-shared textarea {
+  width: 100%;
+  border: 1px solid var(--line, #dcdcdc);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 13px;
+  background: #fff;
+  resize: vertical;
+}
+.rdd-shared textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.18);
+}
