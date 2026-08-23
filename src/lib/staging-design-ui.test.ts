@@ -5,6 +5,7 @@
  * selected. Selection state is asserted from the rendered markup, so visual
  * state and model state can never drift apart again.
  */
+import { assertDesignState, readDesignSelection } from "@/lib/staging-design";
 import { describe, expect, it } from "vitest";
 /* The staging model is plain JS by design; tests treat it structurally. */
 import { designStepHtml, quickCards } from "@/lib/staging-design-ui";
@@ -204,5 +205,37 @@ describe("next: review gating", () => {
     const model = model0();
     model.styleBySpace.interior = interiorId();
     expect(designStepHtml({ items, model })).not.toMatch(/budget/i);
+  });
+});
+
+describe("design option cards", () => {
+  const model = { direction: "makeover", grade: "standard", styleBySpace: {}, overrides: {} };
+  const html = () =>
+    designStepHtml({ items: [{ key: "a", room: "Kitchen", selected: true }], model });
+
+  it("renders every direction and grade as a selectable card", () => {
+    const h = html();
+    expect((h.match(/design-option-card/g) || []).length).toBeGreaterThanOrEqual(8);
+    expect(h).toContain('role="radio"');
+    expect(h).toContain("Recommended");
+    expect(h).toContain("Most Popular");
+  });
+
+  it("marks exactly one card per group as checked", () => {
+    const doc = document.createElement("div");
+    doc.innerHTML = html();
+    const on = (sel: string) => doc.querySelectorAll(`${sel}[aria-checked="true"]`).length;
+    expect(on("[data-dir]")).toBe(1);
+    expect(on("[data-grade]")).toBe(1);
+    expect(doc.querySelector('[data-dir][aria-checked="true"]')!.getAttribute("data-dir")).toBe(
+      "makeover",
+    );
+  });
+
+  it("reads the rendered selection back as the canonical draft values", () => {
+    const doc = document.createElement("div");
+    doc.innerHTML = html();
+    expect(readDesignSelection(doc)).toMatchObject({ direction: "makeover", grade: "standard" });
+    expect(assertDesignState("test", model, readDesignSelection(doc))).toBe(true);
   });
 });
