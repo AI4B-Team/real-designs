@@ -136,6 +136,7 @@ export async function recordDerivedVersion(db: DB, input: DeriveInput): Promise<
       storage_path: input.outputPath,
       ops: withLineage(input.settings ?? {}, lineage),
       approved: input.approve === true,
+      archived: false,
     } as any)
     .select("*")
     .single();
@@ -284,7 +285,14 @@ export async function buildReferenceIndex(
   if (fe) incomplete.push("motion_clip_jobs:failed");
   for (const row of (failed ?? []) as unknown as Array<Record<string, unknown>>) {
     const p = row["output_path"];
-    if (isStoragePath(p) && !byPath.has(p)) failedPaths.add(p);
+    if (!isStoragePath(p)) continue;
+    /* The failed job row itself is not a reason to keep the bytes: only a
+       reference from somewhere else counts. */
+    const others = (byPath.get(p) ?? []).filter((r) => r.kind !== "job");
+    if (others.length) continue;
+    byPath.delete(p);
+    paths.delete(p);
+    failedPaths.add(p);
   }
 
   return { paths, byPath, failedPaths, incomplete };
