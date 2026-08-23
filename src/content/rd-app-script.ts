@@ -12380,7 +12380,14 @@ ${picks
         }
         if (!error) {
           const av = initials(name);
-          paintAvatars(av, u.email || name);
+          /* The saved user is not in scope here, so read the current email
+             straight from the session instead of a stale outer binding. */
+          let email = "";
+          try {
+            const { data } = await supabase.auth.getUser();
+            email = (data && data.user && data.user.email) || "";
+          } catch (_) {}
+          paintAvatars(av, email || name);
           const head = document.querySelector(".acct-head b");
           if (head) head.textContent = name;
           paintAcctSide();
