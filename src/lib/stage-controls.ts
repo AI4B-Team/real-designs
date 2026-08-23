@@ -552,7 +552,7 @@ function paintDetection() {
             (state.rejectedFeatures.has(f) ? " off" : "") +
             '" data-feature="' +
             f +
-            '" title="Tap if this is wrong">' +
+            '" title="Tap If This Is Wrong">' +
             esc(FEATURE_LABEL[f]) +
             "</button>",
         )

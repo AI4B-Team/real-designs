@@ -274,8 +274,8 @@ function headHtml() {
       <div class="rp-exp">
         <button class="btn btn-dark btn-xs" data-a="expmenu"><i data-lucide="download"></i>Export Report<i data-lucide="chevron-down"></i></button>
         <div class="rp-menu${S.menu ? " on" : ""}" id="rpExpMenu">
-          <button data-a="csv"${canExport ? "" : ' disabled title="No records match the current filters"'}><i data-lucide="table"></i>Export CSV</button>
-          <button data-a="pdf"${canExport ? "" : ' disabled title="No records match the current filters"'}><i data-lucide="file-text"></i>Download PDF</button>
+          <button data-a="csv"${canExport ? "" : ' disabled title="No Records Match the Current Filters"'}><i data-lucide="table"></i>Export CSV</button>
+          <button data-a="pdf"${canExport ? "" : ' disabled title="No Records Match the Current Filters"'}><i data-lucide="file-text"></i>Download PDF</button>
         </div>
       </div>
     </div>

@@ -737,7 +737,7 @@ function paintGeometry() {
             (e.origin === "detected" && e.confidence < 0.55 ? " low" : "") +
             '"><button type="button" data-georen="' +
             esc(e.id) +
-            '" title="Rename or correct this element"><b>' +
+            '" title="Rename or Correct This Element"><b>' +
             esc(e.label) +
             "</b>" +
             (e.dimension ? '<em class="dim">' + esc(e.dimension) + "</em>" : "") +

@@ -9185,14 +9185,14 @@ ${picks
       <div class="rowt"><b>${esc(r.title)}</b><span>${ctx ? ctx + " &middot; " : ""}${who} &middot; ${seen} &middot; ${presAgo(r.last_viewed_at || r.created_at)}${remind}</span></div>
       ${duePill}
       <span class="pill ${cls}">${lab}</span>
-      <button class="icon-btn" data-hist title="Activity history"><i data-lucide="history"></i></button>
-      <button class="icon-btn" data-remind title="Send approval reminder"><i data-lucide="bell-ring"></i></button>
-      <button class="icon-btn" data-send title="Send to client"><i data-lucide="send"></i></button>
-      <button class="icon-btn" data-copy title="Copy link"><i data-lucide="copy"></i></button>
+      <button class="icon-btn" data-hist title="Activity History"><i data-lucide="history"></i></button>
+      <button class="icon-btn" data-remind title="Send Approval Reminder"><i data-lucide="bell-ring"></i></button>
+      <button class="icon-btn" data-send title="Send to Client"><i data-lucide="send"></i></button>
+      <button class="icon-btn" data-copy title="Copy Link"><i data-lucide="copy"></i></button>
       <button class="icon-btn" data-pdf title="Branded PDF"><i data-lucide="file-text"></i></button>
-      <button class="icon-btn" data-board title="Product board"><i data-lucide="shopping-bag"></i></button>
-      <button class="icon-btn" data-reel title="Social reel, 9x16"><i data-lucide="clapperboard"></i></button>
-      <button class="icon-btn" data-del title="Delete link"><i data-lucide="trash-2"></i></button></div>${note}<div class="pres-hist" data-hist-for="${r.id}" hidden></div>`;
+      <button class="icon-btn" data-board title="Product Board"><i data-lucide="shopping-bag"></i></button>
+      <button class="icon-btn" data-reel title="Social Reel, 9x16"><i data-lucide="clapperboard"></i></button>
+      <button class="icon-btn" data-del title="Delete Link"><i data-lucide="trash-2"></i></button></div>${note}<div class="pres-hist" data-hist-for="${r.id}" hidden></div>`;
             })
             .join("")
         : '<p style="font-size:.79rem;color:var(--mute-2)">No Links With That Status Yet.</p>';

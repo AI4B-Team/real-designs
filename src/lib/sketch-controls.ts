@@ -683,7 +683,7 @@ function paintGeometry() {
             (i.origin === "detected" && i.confidence < 0.55 ? " low" : "") +
             '" data-geodel="' +
             esc(i.id) +
-            '" title="Tap to remove or restore this element">' +
+            '" title="Tap to Remove or Restore This Element">' +
             "<b>" +
             esc(i.label) +
             "</b>" +

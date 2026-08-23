@@ -1361,7 +1361,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       thumbSpan(d, "spd-th") +
       '<button type="button" class="spd-eye" data-sp-preview="' +
       esc(d.id) +
-      '" title="View details" aria-label="' +
+      '" title="View Details" aria-label="' +
       esc("View details: " + mediaTitle(d)) +
       '"><i data-lucide="eye"></i></button>' +
       checkMark(on, i) +

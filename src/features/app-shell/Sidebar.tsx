@@ -21,7 +21,7 @@ export const Sidebar = memo(function Sidebar() {
           className="side-toggle"
           id="sideToggle"
           aria-label="Collapse menu"
-          title="Collapse menu"
+          title="Collapse Menu"
         >
           {/* Both glyphs are rendered once and swapped by CSS on `.sidemin`.
               The legacy rail controller must never rewrite this button's

@@ -367,7 +367,7 @@ function paintKinds() {
       ' data-anim-kind="' +
       k.id +
       '" title="' +
-      esc(blocked ? k.requires || "Not available yet" : k.blurb) +
+      esc(blocked ? k.requires ||"Not available yet" : k.blurb) +
       '"><b>' +
       esc(k.label) +
       "</b><span>" +
