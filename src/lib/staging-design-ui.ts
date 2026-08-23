@@ -183,32 +183,39 @@ export function designStepHtml(ctx) {
     <div class="rdd-groups">${cats.map((c) => groupHtml(model, c)).join("")}</div>
     ${overridesHtml(model, cats)}
 
-
     <section class="rdd-shared">
-      <h3>Design Direction</h3>
-      <div class="rdd-opts" role="radiogroup" aria-label="Design direction">
-        ${DESIGN_DIRECTIONS.map(
-          (d) => `<button type="button" class="rdd-opt${model.direction === d.id ? " on" : ""}" role="radio"
-            aria-checked="${model.direction === d.id ? "true" : "false"}" data-dir="${esc(d.id)}">
-            <b>${esc(d.label)}</b><em>${esc(d.note)}</em></button>`,
-        ).join("")}
+      <div class="rdd-block-s">
+        <h3>Design Direction</h3>
+        <div class="rdd-opts" role="radiogroup" aria-label="Design direction">
+          ${DESIGN_DIRECTIONS.map(
+            (d) => `<button type="button" class="rdd-opt${model.direction === d.id ? " on" : ""}" role="radio"
+              aria-checked="${model.direction === d.id ? "true" : "false"}" data-dir="${esc(d.id)}">
+              <b>${esc(d.label)}</b><em>${esc(d.note)}</em></button>`,
+          ).join("")}
+        </div>
       </div>
 
-      <h3>Structure Protection</h3>
-      <label class="rdd-chk"><input type="checkbox" id="rddPreserve"${model.preserve !== false ? " checked" : ""}>
-        <span>Keep walls, windows, doors, and layout unchanged</span></label>
-
-      <h3>Finish Grade</h3>
-      <div class="rdd-opts grade" role="radiogroup" aria-label="Finish grade">
-        ${FINISH_GRADES.map(
-          (g) => `<button type="button" class="rdd-opt${model.grade === g.id ? " on" : ""}" role="radio"
-            aria-checked="${model.grade === g.id ? "true" : "false"}" data-grade="${esc(g.id)}">
-            <b>${esc(g.label)}</b><em>${esc(g.note)}</em></button>`,
-        ).join("")}
+      <div class="rdd-block-s">
+        <h3>Structure Protection</h3>
+        <label class="rdd-chk"><input type="checkbox" id="rddPreserve"${model.preserve !== false ? " checked" : ""}>
+          <span>Keep Walls, Windows, Doors and Layout Unchanged</span></label>
       </div>
 
-      <h3>Shared Instructions <em class="rdd-optional">Optional</em></h3>
-      <textarea id="rddNotes" rows="3" placeholder="Example: Warm oak floors, neutral colors, matte black fixtures.">${esc(model.notes || "")}</textarea>
+      <div class="rdd-block-s">
+        <h3>Finish Grade</h3>
+        <div class="rdd-opts grade" role="radiogroup" aria-label="Finish grade">
+          ${FINISH_GRADES.map(
+            (g) => `<button type="button" class="rdd-opt${model.grade === g.id ? " on" : ""}" role="radio"
+              aria-checked="${model.grade === g.id ? "true" : "false"}" data-grade="${esc(g.id)}">
+              <b>${esc(g.label)}</b><em>${esc(g.note)}</em></button>`,
+          ).join("")}
+        </div>
+      </div>
+
+      <div class="rdd-block-s">
+        <h3>Shared Instructions <em class="rdd-optional">Optional</em></h3>
+        <textarea id="rddNotes" rows="3" placeholder="Example: Warm oak floors, neutral colors, matte black fixtures.">${esc(model.notes || "")}</textarea>
+      </div>
     </section>
     </div>
 
