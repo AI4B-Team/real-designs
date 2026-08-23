@@ -54,9 +54,18 @@ export async function charge(
   return data as unknown as ChargeResult;
 }
 
-/** Give credits back when the metered work failed after being charged. */
+/** Give credits back when the metered work failed after being charged.
+ *  A zero amount means the charge came out of the free daily allowance
+ *  (free plan designs cost 0 credits), so restore that day's usage instead. */
 export async function refund(userId: string, amount: number, note?: string): Promise<void> {
-  if (amount <= 0) return;
+  if (amount < 0) return;
+  if (amount === 0) {
+    await supabaseAdmin.rpc("restore_free_design", {
+      _user_id: userId,
+      ...(note ? { _note: note } : {}),
+    });
+    return;
+  }
   await supabaseAdmin.rpc("grant_credits", {
     _user_id: userId,
     _amount: amount,
@@ -64,6 +73,7 @@ export async function refund(userId: string, amount: number, note?: string): Pro
     ...(note ? { _note: note } : {}),
   });
 }
+
 
 export type CreditAccount = {
   user_id: string;
