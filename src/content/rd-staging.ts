@@ -50,7 +50,7 @@ import {
 } from "@/lib/staging-rooms";
 import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
 import { runBulkDesign, styleFitsSpace } from "@/lib/staging-bulk";
-import { claimDraftStyle, setDraftStep, draftStyle } from "@/lib/design-draft";
+import { claimDraftStyle, setDraftStep, draftStyle, patchDraft } from "@/lib/design-draft";
 import {
   createBatch,
   completeJob,
@@ -2473,6 +2473,11 @@ function runBatch(batch, direction, opts = {}) {
       thumb: it.previewUrl || null,
     })),
   );
+  /* The draft records the one batch it produced, so a remount reattaches to
+     it instead of ever creating a second charged batch. */
+  try {
+    patchDraft({ generationBatchId: rec.id, step: "generating" });
+  } catch (_) {}
   const jobIdOf = (it) => `${rec.id}:${it.key}`;
   const panel = mountBatchPanel(rec, {
     onRetry: (jobId) => {
