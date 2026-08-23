@@ -289,11 +289,16 @@
 /* -------------------------------------------------------- batch progress */
 
 .rd-batch {
+  /* Local copies so the panel stays readable even when it is mounted outside
+     the .rd-app token scope (the global --muted is a surface colour). */
+  --muted: #6b6b6b;
+  --line: #e5e5e5;
   position: fixed;
   right: 18px;
   bottom: 18px;
   z-index: 60;
   width: 340px;
+
   max-height: 62vh;
   display: flex;
   flex-direction: column;
