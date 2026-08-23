@@ -239,3 +239,64 @@ Fixed. Bulk conversion of the remaining ~500 legacy empty catches inside
 `rd-app-script.ts` / `rd-staging.ts` is deliberately deferred: those files are
 scheduled for decomposition in Phase 1, and rewriting their catch blocks now
 would be thrown away with them.
+
+## Phase 1A — One canonical Studio draft (complete)
+
+The Studio workflow had two overlapping models: a narrow `design-draft`
+(origin, step, Explore style) and the imperative staging session, whose photos,
+order, rooms, formats, crops, styles and instructions lived in a live JS object,
+DOM controls and the `rd_style_choice` handoff key. Review reconstructed values
+from those controls, and a stale key could carry an Explore style into an
+unrelated later project.
+
+### What now exists
+
+- `src/lib/studio-draft.ts` is the one canonical record. It owns draft id,
+  revision, owner key, origin, step, source ids, photos (path, name, room and
+  room source, confidence, selection, per-photo format, crop, rotation, style
+  override, instructions), photo order, property/project association, output
+  format plus the explicit flag, shared style, Design Direction, Finish Grade,
+  Structure Protection, shared instructions, generation batch id, reviewed
+  revision and timestamps.
+- One step model: `source → photos → design → review → generating → complete`.
+  A one-photo project and a multi-photo project use exactly this flow; the
+  separate single-photo Source → Details → Review model is gone as an
+  architecture — its entry points route through the canonical draft.
+- `src/lib/design-draft.ts` is now a thin compatibility facade over the
+  canonical record, so existing callers keep working while one record persists.
+- `studio-style.ts` no longer owns a storage key. The Explore handoff is
+  draft-scoped: `Try This Style` starts a fresh draft carrying the style, opens
+  source selection, never generates and never charges, and a new draft never
+  inherits the previous style.
+- Concurrency: every accepted write bumps `rev`; `commitDraft(patch, {
+  expectedRev })` refuses a stale write instead of silently overwriting another
+  tab. Identical writes are no-ops, so rerenders never burn revisions.
+- Review opens a versioned snapshot (`openReview`) and records the revision it
+  rendered; the final Generate submits that snapshot (`snapshotForGeneration`),
+  and a draft that changed afterwards forces Review to refresh before anything
+  is charged. `rd-staging.ts` mirrors the live session into the canonical draft
+  on every save and step change, and records the batch against the reviewed
+  revision.
+
+### Migration safety
+
+Legacy `rd_design_draft_v1` records and the `rd_style_choice` handoff key are
+adapted once on first read, then consumed. Unmapped legacy fields are preserved
+in `legacyExtras` rather than discarded, and every adaptation is logged through
+the Phase 0D reporter (`studio-draft.legacy`) so remaining usage can be
+measured and the adapter retired. There are no permanent dual writes.
+
+### Coverage
+
+`src/lib/__tests__/studio-draft.test.ts` — 17 tests: one-photo draft,
+multi-photo draft, Explore/property/media origins, refresh on every step,
+back/forward on every step, two-tab conflict, legacy-draft recovery with
+unmapped fields, legacy handoff-key consumption, style persistence and
+single-claim handoff, crop/rotation/override persistence, photo-order
+persistence, Review accuracy, generate-exact-reviewed-snapshot with the stale
+path, and starting an unrelated draft with no stale values.
+
+Suite: **1103 passing / 5 skipped, 96 files** (was 1086).
+
+**Status:** Fixed. Asset lineage and crop architecture are untouched and remain
+open for the next phase. No visual redesign was made.
