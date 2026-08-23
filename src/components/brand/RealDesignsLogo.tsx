@@ -20,7 +20,7 @@ export function RealDesignsLogo({
 }: {
   variant?: RealDesignsLogoVariant;
   className?: string;
-  href?: string;
+  href?: string | undefined;
   alt?: string;
 }) {
   const mark = (
@@ -46,7 +46,7 @@ export function RealDesignsLogo({
 }
 
 /** Responsive pair: full mark on desktop, compact mark on small screens. */
-export function RealDesignsLogoResponsive({ href }: { href?: string }) {
+export function RealDesignsLogoResponsive({ href }: { href?: string | undefined }) {
   return (
     <span className="rdl-pair">
       <span className="rdl-only-wide">
