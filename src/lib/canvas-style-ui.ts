@@ -656,19 +656,29 @@ export function mountCanvasStyle(
       if (need) pick(propertyDirection(store, ctxFor(need, getContext())), false);
       return;
     }
+    if (t.closest(".cs-ovf-b")) {
+      e.preventDefault();
+      const btn = t.closest(".cs-ovf-b") as HTMLElement;
+      const menu = btn.parentElement?.querySelector(".cs-ovf-m") as HTMLElement | null;
+      if (menu) {
+        const open = menu.hidden;
+        menu.hidden = !open;
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+      return;
+    }
     if (t.closest(".cs-clear")) {
       e.preventDefault();
-      const need = needNow();
-      if (!need) return;
-      const dctx = ctxFor(need, getContext());
-      store = clearDirection(store, "photo", dctx);
-      store = clearDirection(store, "project", dctx);
-      saveDirections(store);
-      expanded = true;
-      paint();
+      clearStyle();
+      return;
+    }
+    if (t.closest(".cs-undo")) {
+      e.preventDefault();
+      undoLast();
     }
   });
 
   paint();
-  return { refresh: paint, selection, need: needNow, open };
+  return { refresh: paint, selection, need: needNow, open, clear: clearStyle, undo: undoLast };
 }
+
