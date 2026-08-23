@@ -1,4 +1,5 @@
 /* Social Caption Studio — AI captions and hashtags for any photo, design or video. */
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { generateSocialCopy } from "@/lib/social-copy.functions";
 import { rdToast } from "@/lib/rd-toast";
@@ -18,12 +19,6 @@ const TONES: [string, string][] = [
   ["punchy", "Punchy"],
 ];
 
-function esc(s: unknown) {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 export type SocialCopyInput = {
   title?: string | null;

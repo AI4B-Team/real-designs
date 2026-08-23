@@ -10,6 +10,7 @@
  * overwritten. Adjustments, crop, rotation and applied AI operations are held
  * as state, rendered on demand, and persisted through `photo_edits`.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import { createIcons, icons } from "lucide";
 import { openDisclosureExport } from "@/lib/disclosure-export";
@@ -284,13 +285,6 @@ function blankState(): PhotoState {
   };
 }
 
-function esc(s: unknown): string {
-  return String(s ?? "").replace(
-    /[&<>"']/g,
-    (c) =>
-      (({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }) as any)[c] as string,
-  );
-}
 
 function n(v: unknown, d = 0): number {
   const x = Number(v);

@@ -7,17 +7,13 @@
  */
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import { createIcons, icons } from "lucide";
 import { clampCrop, normalizeCrop, ratioValue, DEFAULT_CROP, MAX_CROP_SCALE } from "@/lib/photo-crop";
 import { ratioLabel } from "@/lib/output-ratio";
 import { modalFooterHtml } from "@/lib/modal-footer";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 
 /**
  * photos: [{ key, name, url, ratio, crop }]

@@ -8,6 +8,7 @@
  */
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { animateOption, animatePrompt, ANIMATE_CREDITS_PER_CLIP } from "@/lib/scene-enhancement";
+import { safeFetch } from "@/lib/safe-fetch.server";
 
 const GATEWAY = "https://ai.gateway.lovable.dev/v1/videos";
 export const CLIP_MODEL = "google/veo-3.1-lite";
@@ -62,11 +63,16 @@ export function clipPrice(): number {
 export async function sourceDataUrl(path: string): Promise<string> {
   if (/^data:image\//.test(path)) return path;
   if (/^https?:/.test(path)) {
-    const res = await fetch(path);
+    // `source_path` is DB-stored but originates from client input on some
+    // paths, so a remote read is treated as untrusted and policy-checked.
+    const res = await safeFetch(path, {
+      maxBytes: 25 * 1024 * 1024,
+      timeoutMs: 20_000,
+      allowContentTypes: ["image/"],
+    });
     if (!res.ok) throw new Error("That photo could not be read.");
-    const type = res.headers.get("content-type") || "image/jpeg";
-    const b64 = Buffer.from(await res.arrayBuffer()).toString("base64");
-    return `data:${type};base64,${b64}`;
+    const b64 = Buffer.from(res.bytes).toString("base64");
+    return `data:${res.contentType || "image/jpeg"};base64,${b64}`;
   }
   const dl = await supabaseAdmin.storage.from(SOURCE_BUCKET).download(path);
   if (dl.error || !dl.data) throw new Error("That photo could not be read from storage.");

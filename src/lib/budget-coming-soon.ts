@@ -3,6 +3,7 @@
  * everywhere: budgets are coming, no numbers are invented in the meantime, and
  * you can tell us which market to price first.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import {
   BUDGET_TITLE,
@@ -46,12 +47,6 @@ export async function budgetAvailability() {
   return cached!;
 }
 
-function esc(s: any) {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 function toast(msg: string) {
   try {

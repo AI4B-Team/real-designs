@@ -7,6 +7,7 @@
  */
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { openStyleBrowser } from "@/lib/canvas-style-ui";
 import {
@@ -33,11 +34,6 @@ import {
 } from "@/lib/staging-design";
 import { styleById } from "@/lib/style-catalog";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 
 /**
  * One card shape for every Design Direction and Finish Grade option.

@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons as lucideIcons } from "lucide";
 /**
  * Canvas style selection UI: the Setup panel section plus the Browse Styles
@@ -74,17 +75,6 @@ export type CanvasStyleApi = {
 };
 
 
-const esc = (s: unknown): string =>
-  String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) =>
-      (
-        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }) as Record<
-          string,
-          string
-        >
-      )[c] as string,
-  );
 
 function icons(root?: Element | null) {
   try {

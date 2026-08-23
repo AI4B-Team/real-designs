@@ -3,15 +3,11 @@
 // ledger and client presentation activity.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { getWorkspaceReport } from "@/lib/reports.functions";
 import { budgetAvailability, budgetsLive } from "@/lib/budget-coming-soon";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 const money = (n) => "$" + Math.round(Number(n) || 0).toLocaleString("en-US");
 const paint = () => {
   try {

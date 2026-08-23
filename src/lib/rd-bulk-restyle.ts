@@ -8,6 +8,7 @@
  */
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { resolvePhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
 import { renderDesign } from "@/lib/design-render.functions";
@@ -24,11 +25,6 @@ const PROJECT_TYPE: Record<string, string> = {
   landscape: "garden",
 };
 
-const esc = (s: any) =>
-  String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
 
 const INTENSITIES = ["Refresh", "Makeover", "Full Remodel"];
 const GRADES = ["Builder Grade", "Retail Grade", "Designer Grade"];

@@ -1,3 +1,4 @@
+import { safeUrlAttr } from "@/lib/safe-html";
 /**
  * First-use experience, adaptive post-login routing and the Studio workflow
  * chooser.
@@ -312,7 +313,7 @@ export function mountFirstUse(ctx: Ctx) {
     else {
       const before = document.getElementById("cBefore");
       if (before) {
-        before.innerHTML = `<img src="${src}" alt="${esc(alt)}" style="width:100%;height:100%;object-fit:cover;display:block">`;
+        before.innerHTML = `<img src="${safeUrlAttr(src)}" alt="${esc(alt)}" style="width:100%;height:100%;object-fit:cover;display:block">`;
       }
     }
     state.thumb = src;

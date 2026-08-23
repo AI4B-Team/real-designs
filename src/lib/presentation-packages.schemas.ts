@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { toPlainText } from "@/lib/safe-html";
+
 
 export const pkgIdSchema = z.object({ id: z.string().uuid() });
 
@@ -57,14 +59,27 @@ export const pkgShareTokenSchema = z.object({
   code: z.string().trim().max(40).optional(),
 });
 
+/**
+ * Recipient-supplied text is stored as plain text: markup is stripped and
+ * control characters removed before it is persisted, so no later surface —
+ * React, PDF, email or the prototype runtime's template strings — can be the
+ * one place that forgets to escape it.
+ */
+const publicText = (max: number) =>
+  z
+    .string()
+    .max(max * 2)
+    .transform((v) => toPlainText(v, max));
+
 export const pkgCommentSchema = pkgShareTokenSchema.extend({
   section: z.string().trim().max(40).optional(),
-  name: z.string().trim().max(120).optional(),
-  body: z.string().trim().min(1).max(1000),
+  name: publicText(120).optional(),
+  body: publicText(1000).refine((v) => v.length > 0, "Write a comment before sending."),
 });
 
 export const pkgDecisionSchema = pkgShareTokenSchema.extend({
   decision: z.enum(["approved", "changes"]),
-  name: z.string().trim().max(120).optional(),
-  note: z.string().trim().max(1000).optional(),
+  name: publicText(120).optional(),
+  note: publicText(1000).optional(),
 });
+

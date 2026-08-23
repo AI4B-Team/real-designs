@@ -7,6 +7,7 @@
  * the audit trail. Re-exporting with different wording never re-runs AI and
  * never costs credits.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import { formDialog } from "@/lib/photo-editor-dialogs";
 import { rdToast } from "@/lib/rd-toast";
@@ -37,10 +38,6 @@ import {
   type ExportScope,
 } from "@/lib/disclosure";
 
-const esc = (v: unknown): string =>
-  String(v ?? "").replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
-  );
 
 const SIZES: { id: string; label: string; maxEdge: number; quality: number }[] = [
   { id: "mls", label: "MLS Standard — 1024px", maxEdge: 1024, quality: 0.85 },

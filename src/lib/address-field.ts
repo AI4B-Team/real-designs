@@ -3,6 +3,7 @@
    details. Suggestions come from the workspace's own properties; there is no
    third-party autocomplete provider configured, so manual typing always works
    and nothing is ever marked verified that was not. */
+import { escapeHtml as esc } from "@/lib/safe-html";
 import {
   addressesMatch,
   buildAddress,
@@ -21,11 +22,6 @@ export type AddressState = {
   addressSaveState?: "" | "saving" | "saved" | "error";
 };
 
-const esc = (s: unknown) =>
-  String(s ?? "").replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
-  );
 
 export function addressListHtml(id: string, properties: Array<{ address?: string | null }>) {
   const seen = new Set<string>();

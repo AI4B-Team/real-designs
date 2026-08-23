@@ -5,6 +5,7 @@
  * Every control here is wired to real state read by the generation handler —
  * nothing is decorative.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import { createIcons, icons as lucideIcons } from "lucide";
 import {
@@ -178,9 +179,6 @@ export function mountItemTextEntry(
 
 /* ------------------------------------------------------------ the brief */
 
-function esc(s: string): string {
-  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string);
-}
 
 export type BriefReviewResult = "confirm" | "cancel";
 

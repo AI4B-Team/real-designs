@@ -8,6 +8,7 @@
  *
  * Nothing here prices or prompts anything: @/lib/animate-brief owns that.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import { createIcons, icons as lucideIcons } from "lucide";
 import {
@@ -43,12 +44,6 @@ function icons() {
   }
 }
 
-function esc(s: unknown): string {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 /* -------------------------------------------------------------- state */
 

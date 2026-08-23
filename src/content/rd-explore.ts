@@ -3,6 +3,7 @@
 // selection here always reaches the generation payload.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import {
   STYLES,
@@ -83,12 +84,6 @@ function write(k, v) {
   try {
     localStorage.setItem(k, JSON.stringify(v));
   } catch (_) {}
-}
-function esc(s) {
-  return String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 }
 
 let saved = read(LS.saved, []);

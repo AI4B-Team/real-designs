@@ -8,6 +8,7 @@
  */
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml } from "@/lib/safe-html";
 
 import { mountSourcePicker, type SourceId } from "@/lib/source-picker";
 
@@ -21,11 +22,7 @@ const SOURCE_LIST: Array<{ id: AddSource; label: string; icon: string; tab?: Sou
   { id: "url", label: "Listing Link", icon: "link", tab: "url" },
 ];
 
-const escHtml = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
+const escHtml = escapeHtml;
 
 let openPop = null;
 

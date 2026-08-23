@@ -3,6 +3,7 @@
  * contact list in, and push finished videos, presentations and designs back
  * out to the CRM timeline.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import {
   listCrm,
@@ -164,12 +165,6 @@ async function pushSignup(userId: string) {
   });
 }
 
-function esc(s: any) {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 function host() {
   return document.getElementById("p-crm") || document.getElementById("v-crm");
 }

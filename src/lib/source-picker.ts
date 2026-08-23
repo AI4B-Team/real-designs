@@ -1,3 +1,4 @@
+import { escapeHtml } from "@/lib/safe-html";
 /**
  * One shared source picker.
  *
@@ -275,11 +276,7 @@ export {
 
 
 
-const esc0 = (v: string) =>
-  String(v == null ? "" : v).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
+const esc0 = (v: string) => escapeHtml(v);
 
 let pickerSeq = 0;
 

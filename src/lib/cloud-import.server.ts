@@ -7,7 +7,24 @@
  * a request is made.
  */
 
+import { safeFetch } from "@/lib/safe-fetch.server";
+import { validateUploadBytes } from "@/lib/upload-guard";
+import { sanitizeFileName } from "@/lib/storage-paths";
+
 const MAX_BYTES = 15 * 1024 * 1024;
+
+/**
+ * The only hosts a share link may resolve to — including after a redirect.
+ * Drive and Dropbox both bounce downloads through their CDN hostnames.
+ */
+const CLOUD_HOSTS = [
+  "drive.google.com",
+  "docs.google.com",
+  "googleusercontent.com",
+  "drive.usercontent.google.com",
+  "dropbox.com",
+  "dropboxusercontent.com",
+];
 const OK_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/heic", "image/heif", "image/webp"];
 
 export type CloudLink = { provider: "google_drive" | "dropbox"; url: string; name: string };
@@ -67,17 +84,28 @@ export function normalizeCloudLink(
 }
 
 export async function fetchCloudFile(link: CloudLink) {
-  const res = await fetch(link.url, {
-    redirect: "follow",
-    headers: { "User-Agent": "RealDesigns/1.0" },
-  });
+  const res = await safeFetch(
+    link.url,
+    {
+      allowHosts: CLOUD_HOSTS,
+      maxBytes: MAX_BYTES,
+      maxRedirects: 4,
+      timeoutMs: 20_000,
+    },
+    { headers: { "User-Agent": "RealDesigns/1.0" } },
+  );
   if (!res.ok) {
     return {
       ok: false as const,
-      message: `Could not download (${res.status}) — check that the link is set to “Anyone with the link”`,
+      message:
+        res.code === "too_large"
+          ? "File is larger than 15 MB"
+          : res.code === "http_error"
+            ? `Could not download (${res.status ?? "error"}) — check that the link is set to “Anyone with the link”`
+            : res.message,
     };
   }
-  const type = ((res.headers.get("content-type") || "").split(";")[0] || "").trim().toLowerCase();
+  const type = res.contentType;
   if (!OK_TYPES.includes(type)) {
     return {
       ok: false as const,
@@ -86,11 +114,14 @@ export async function fetchCloudFile(link: CloudLink) {
         : `Unsupported file type${type ? ` (${type})` : ""}`,
     };
   }
-  const buf = new Uint8Array(await res.arrayBuffer());
-  if (buf.byteLength > MAX_BYTES)
-    return { ok: false as const, message: "File is larger than 15 MB" };
+  const buf = res.bytes;
 
-  const disp = res.headers.get("content-disposition") || "";
+  // Signature check: a Drive/Dropbox content-type header is not proof of what
+  // the bytes are, and these bytes go straight into the user's photo library.
+  const verdict = validateUploadBytes("room-photos", buf, type);
+  if (!verdict.ok) return { ok: false as const, message: verdict.message };
+
+  const disp = res.headers.contentDisposition;
   const nm = /filename\*?=(?:UTF-8''|")?([^";]+)/i.exec(disp)?.[1];
   const ext = type.includes("png")
     ? "png"
@@ -99,7 +130,9 @@ export async function fetchCloudFile(link: CloudLink) {
       : type.includes("heic") || type.includes("heif")
         ? "heic"
         : "jpg";
-  let name = (nm ? decodeURIComponent(nm) : link.name).replace(/[\\/]/g, "-").slice(0, 120);
+  // The provider controls this filename; it is never allowed to act as path
+  // structure, and it is only ever a display hint — the stored key is a UUID.
+  let name = sanitizeFileName(nm ? decodeURIComponent(nm) : link.name) || link.name;
   if (!/\.[a-z0-9]{3,4}$/i.test(name)) name = `${name}.${ext}`;
 
   let bin = "";

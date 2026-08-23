@@ -6,7 +6,26 @@
  * only ever hands over one connection's credential.
  */
 
+import { checkUrl } from "@/lib/safe-fetch.server";
+
 export type CrmProvider = "followupboss" | "hubspot" | "webhook";
+
+/**
+ * A customer-supplied webhook URL is the classic SSRF vector: it is arbitrary,
+ * server-fetched and carries a signature header. It goes through the canonical
+ * URL policy before any request is made.
+ */
+function assertWebhookUrl(url: string): string {
+  const check = checkUrl(url);
+  if (!check.ok) {
+    throw new Error(
+      check.code === "unsupported_scheme"
+        ? "Enter a full https webhook URL."
+        : "That webhook address is not publicly reachable and cannot be used.",
+    );
+  }
+  return check.url.toString();
+}
 
 export type CrmContact = {
   external_id: string;
@@ -85,8 +104,7 @@ export async function verifyCrm(
     });
     return { account: Array.isArray(out?.results) ? "HubSpot Portal" : null };
   }
-  const url = (endpoint || "").trim();
-  if (!/^https:\/\//i.test(url)) throw new Error("Enter a full https webhook URL.");
+  const url = assertWebhookUrl((endpoint || "").trim());
   await req(provider, url, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Real-Designs-Signature": credential },
@@ -182,8 +200,7 @@ export async function pushCrm(
     }
     return { ok: true, detail: "Note logged in HubSpot." };
   }
-  const url = (endpoint || "").trim();
-  if (!/^https:\/\//i.test(url)) throw new Error("This webhook has no https URL saved.");
+  const url = assertWebhookUrl((endpoint || "").trim());
   await req(provider, url, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Real-Designs-Signature": credential },

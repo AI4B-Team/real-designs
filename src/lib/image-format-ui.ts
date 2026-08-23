@@ -8,6 +8,7 @@
  */
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import {
   IMAGE_FORMAT_CARDS,
@@ -20,11 +21,6 @@ import {
 } from "@/lib/output-ratio";
 import { isCustomCrop } from "@/lib/photo-crop";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 
 export const CROP_WARNING =
   "This format may crop parts of your photos. You can reposition each photo before generation.";

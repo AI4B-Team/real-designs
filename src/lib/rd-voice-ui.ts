@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons as lucideIcons } from "lucide";
 /* Voice Studio — record or upload a voice sample, profile it, and narrate every
    video in that voice. Shared by the design-video and listing-video builders. */
@@ -11,11 +12,6 @@ import {
   type VoiceProfile,
 } from "@/lib/rd-voice";
 
-const esc = (s: unknown) =>
-  String(s ?? "").replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
-  );
 
 export { MY_VOICE };
 

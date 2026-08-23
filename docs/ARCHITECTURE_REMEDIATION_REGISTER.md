@@ -80,3 +80,83 @@ on failure but have no idempotency key yet.
 **Coverage.** `src/lib/__tests__/generation-run.test.ts` — 12 tests over single
 charge, replay, distinct inputs, single refund, retry after failure, refusal
 before any charge, concurrent duplicate, free actions and batch item outcomes.
+
+---
+
+## Phase 0C — Rendering, URL and file-import boundaries (complete)
+
+**Scope.** Targeted hardening of three confirmed risk boundaries. No page was
+redesigned and the prototype runtime was not converted to React.
+
+### Part 1 — Unsafe HTML rendering
+
+Three canonical helpers now own every escape decision (`src/lib/safe-html.ts`):
+`escapeHtml` (also escapes `'` and `` ` ``, which every local copy missed),
+`safeUrl` / `safeUrlAttr` (drops `javascript:`, `vbscript:`, `data:text/html`
+and obfuscated variants) and `sanitizeLimitedHtml` (tag/attribute allow-list).
+Recipient-facing text is additionally normalized to plain text on the server.
+
+- 58 modules were moved from a local `esc()` to the canonical escaper, including
+  the three largest template surfaces: `rd-app-script.ts`, `source-picker.ts`
+  and `add-source-popover.ts`.
+- `rd-firstuse.ts` now runs its before/after image source through `safeUrlAttr`.
+
+**Unsafe rendering sites deliberately left unchanged.**
+
+| Site | Why it was not changed |
+| --- | --- |
+| `rd-site-script.ts`, `rd-site-extra.ts` (marketing runtime) | Interpolates only literals from `src/content/*` bundled at build time. No request, storage, database or upload value reaches these templates. Converting them adds churn to the landing page with no risk reduction. |
+| `rd-studio-start.ts`, `scan-overlay.ts`, `beta-ui.ts`, `canvas-panel.ts`, `add-source-card.ts`, `sample-gallery.ts` | Static markup or in-repo catalog strings only; the dynamic parts are numbers, enum-like keys and icon names. |
+| `Sidebar.tsx` | Single `innerHTML` for an inline SVG constant, no interpolation. |
+| `*.test.ts` fixtures | Test-only DOM setup, never shipped. |
+| SVG icon strings across the runtime | Author-controlled constants; sanitizing them would strip the icons themselves. |
+
+Residual risk: these files stay one careless edit away from becoming unsafe.
+The follow-up (Phase 1) is to move rendering into React components rather than
+to keep auditing template strings.
+
+### Part 2 — URL and SSRF protection
+
+`src/lib/safe-fetch.server.ts` is the only sanctioned outbound fetch for
+user-influenced URLs. It rejects non-https schemes, credentials in the URL,
+loopback / private / CGNAT / link-local / multicast IPv4, IPv6 loopback,
+unique-local, link-local and IPv4-mapped forms (including the `::ffff:7f00:1`
+hex rewrite the URL parser produces), cloud metadata hosts, bare labels and
+`.local` / `.internal` / `.onion` suffixes; it re-validates every redirect hop,
+caps redirects, enforces timeout, size and content-type limits, and returns
+only three whitelisted response headers so upstream headers cannot leak.
+
+Callers hardened: `crm.server.ts` (webhooks), `cloud-import.server.ts`
+(Drive/Dropbox share links, host allow-list), `pdf.server.ts` (remote images),
+`scene-clips.server.ts`, `watch-sites.functions.ts` (robots.txt and reachability).
+
+### Part 3 — File uploads
+
+`src/lib/upload-guard.ts` sniffs real file signatures, reads PNG/JPEG
+dimensions, and applies per-bucket rules; `upload-guard.functions.ts`
+(`verifyUploadedObject`) re-reads the stored object server-side, and deletes it
+when the bytes disagree with the declared type. SVG uploads are rejected
+outright, executables and documents are rejected in image buckets, and storage
+paths must sit inside the caller's own folder. `room-photos.ts` uploads are
+verified after write; client-side checks are treated as a fast fail only.
+
+### Part 4 — Public content
+
+Presentation share pages render through React (auto-escaped). Recipient input
+(`commentOnPackage`, `decideOnPackage`) is now converted to plain text in the
+schema before it is persisted, so no downstream surface — PDF, email or
+prototype template — can be the one place that forgets to escape. Workspace
+branding still shows only verified names and https logo URLs.
+
+### Coverage
+
+`src/lib/__tests__/security-boundaries.test.ts` — 48 tests: script injection,
+attribute breakout from single and double quotes, `javascript:` / `vbscript:` /
+`data:text/html` URLs, malicious SVG in both sanitizer and upload paths,
+renamed executables, oversized files and image dimensions, storage-path
+traversal, and SSRF vectors (metadata IPs, private ranges, decimal-encoded
+IPv4, IPv6-mapped loopback, redirect-into-private-network, oversized and
+wrong-content-type responses, header leakage).
+
+**Status:** rendering, SSRF and upload-boundary items — Fixed. Full removal of
+template-string rendering — deferred to Phase 1.

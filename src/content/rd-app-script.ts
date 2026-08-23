@@ -1,6 +1,7 @@
 // Auto-ported interactions from the REAL DESIGNS prototype.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { installRdToast } from "@/lib/rd-toast";
 import { isPlanBlocked, planBlockTitle } from "@/lib/rd-upgrade";
@@ -9386,10 +9387,9 @@ ${picks
     /* A function declaration, not a const: Studio renders while initApp is still
        running, so this has to be callable before this line is reached. */
     function esc(s) {
-      return String(s == null ? "" : s).replace(
-        /[&<>"]/g,
-        (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-      );
+      /* One canonical escaper: also covers ' and `, which the old local copy
+         missed and which allow attribute breakout in unquoted templates. */
+      return escapeHtml(s);
     }
     const presMoney = (n) => "$" + Math.round(n || 0).toLocaleString("en-US");
 
@@ -10123,11 +10123,7 @@ ${picks
       try {
         team = await listTeam();
       } catch (_) {}
-      const esc = (s) =>
-        String(s || "").replace(
-          /[<>&"]/g,
-          (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" })[c],
-        );
+      const esc = escapeHtml;
       const invites = (team.sent || [])
         .map(
           (

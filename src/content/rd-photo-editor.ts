@@ -4,6 +4,7 @@
 // original — every save becomes a new version.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import JSZip from "jszip";
 import { roomPhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
@@ -25,11 +26,6 @@ import {
   bakeLook,
 } from "@/lib/rd-vfx-looks";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 
 const paint = () => {
   try {

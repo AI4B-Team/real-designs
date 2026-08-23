@@ -5,6 +5,7 @@
  * Nothing here decides anything: prices come from the capability model and
  * statuses come from the durable `scene_clips` row.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 import {
   ANIMATE_OPTIONS,
   ANIMATE_CREDITS_PER_CLIP,
@@ -37,12 +38,6 @@ export const LIFESTYLE_NOTICE =
 export const AERIAL_NOTICE = "Simulated aerial movement generated from a still photo.";
 export const BACKGROUND_NOTICE = "Your clip is generating. You can safely close this window.";
 
-function esc(s: unknown): string {
-  return String(s ?? "").replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
-  );
-}
 
 /** Rough wait we can state honestly: Veo returns in about one to three minutes. */
 export const CLIP_ETA = "About 1–3 Minutes";

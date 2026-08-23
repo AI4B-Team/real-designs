@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons as lucideIcons } from "lucide";
 /**
  * The one action bar for a generated design result.
@@ -76,12 +77,6 @@ const BAR: { id: ResultAction; icon: string; label: string }[] = (
   ] as ResultAction[]
 ).map((id) => ({ id, icon: spec(id).icon, label: spec(id).label }));
 
-const esc = (s: unknown) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
-  );
 
 function icons() {
   try {

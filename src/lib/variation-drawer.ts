@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons as lucideIcons } from "lucide";
 /**
  * Create Variation: branch a new version from a generated design.
@@ -17,12 +18,6 @@ export type VariationSource = {
   sourceSrc?: string | null;
 };
 
-const esc = (s: unknown) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
-  );
 
 function icons() {
   try {

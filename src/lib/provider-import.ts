@@ -11,6 +11,7 @@
  * there is no modal at all — the button is honestly disabled and the host
  * shows the "isn't available yet" message.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import "@/styles/rd-provider-import.css";
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
@@ -110,12 +111,6 @@ type Modal = {
 
 let OPEN: Modal | null = null;
 
-function esc(s: unknown): string {
-  return String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 export function closeProviderModal() {
   OPEN?.close();

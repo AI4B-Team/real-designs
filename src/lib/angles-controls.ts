@@ -10,6 +10,7 @@
  * Nothing here decides money or prompts: it reads and writes the state that
  * @/lib/angles-brief turns into a brief.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import { createIcons, icons as lucideIcons } from "lucide";
 import {
@@ -58,12 +59,6 @@ function icons() {
   }
 }
 
-function esc(s: unknown): string {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 /* ------------------------------------------------------------- state */
 

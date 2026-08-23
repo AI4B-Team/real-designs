@@ -3,6 +3,7 @@
 // from the property tree and media that already exist; nothing is re-uploaded.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 // TODO: Stabilization section 3. Baseline under tsconfig.legacy.json: 876 errors
 // (422 TS2339, 206 TS18047, 203 TS7006). Removal needs a dedicated pass that
 // types the module state object first; do not blanket-suppress.
@@ -249,11 +250,6 @@ function videoCreditBlock(cost) {
 }
 
 const BUCKET = "reveal-videos";
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 const goTo = (v) => {
   const fn = S.go || (typeof window !== "undefined" && window.__rdGo);
   if (fn) fn(v);

@@ -70,20 +70,33 @@ function wrap(text: string, font: PDFFont, size: number, width: number): string[
   return out;
 }
 
+/**
+ * Images embedded in an export can come from workspace branding, which is
+ * user-supplied, so remote URLs go through the canonical fetch policy.
+ */
+import { safeFetch } from "@/lib/safe-fetch.server";
+import { safeUrl } from "@/lib/safe-html";
+import { detectFileKind, RASTER_IMAGE_KINDS } from "@/lib/upload-guard";
+
 async function fetchImage(pdf: PDFDocument, url: string) {
   try {
-    if (!/^https?:|^data:/.test(url)) return null;
     let bytes: Uint8Array;
     let kind = "";
     if (url.startsWith("data:")) {
+      if (!safeUrl(url)) return null;
       kind = url.slice(5, url.indexOf(";"));
       const b64 = url.slice(url.indexOf(",") + 1);
       bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
     } else {
-      const res = await fetch(url);
+      const res = await safeFetch(url, {
+        maxBytes: 20 * 1024 * 1024,
+        timeoutMs: 15_000,
+        allowContentTypes: ["image/"],
+      });
       if (!res.ok) return null;
-      kind = res.headers.get("content-type") || "";
-      bytes = new Uint8Array(await res.arrayBuffer());
+      kind = res.contentType;
+      bytes = res.bytes;
+      if (!RASTER_IMAGE_KINDS.includes(detectFileKind(bytes))) return null;
     }
     if (/png/i.test(kind)) return await pdf.embedPng(bytes);
     return await pdf.embedJpg(bytes);

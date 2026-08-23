@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons as lucideIcons } from "lucide";
 /**
  * Room Canvas workspace wiring: the compact tool rail, the contextual
@@ -72,12 +73,6 @@ export function roomsForSpace(space: string): RoomOption[] {
   return ROOM_OPTIONS.filter((r) => r.space === s);
 }
 
-const esc = (s: unknown) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
-  );
 
 function icons() {
   try {

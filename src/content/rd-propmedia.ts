@@ -4,6 +4,7 @@
 // design generations stay labeled and linked back to their source photo.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { startVideoBuilder } from "@/lib/video-handoff";
 import { createIcons, icons } from "lucide";
 import { mountSourcePicker } from "@/lib/source-picker";
@@ -31,11 +32,6 @@ import {
 import { openPhotoEditor, openExportDialog } from "@/content/rd-photo-editor";
 import { track } from "@/lib/analytics";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 const paint = () => {
   try {
     createIcons({ icons });

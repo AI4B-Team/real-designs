@@ -16,6 +16,7 @@
  */
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
 import { addSourceCardHtml, mountAddSourceCard } from "@/lib/add-source-card";
@@ -158,11 +159,6 @@ const saveProjectDraft = (d) => _saveProjectDraft(d);
 const listProjectDrafts = (d) => _listProjectDrafts({ data: d || {} });
 const getProjectDraft = (d) => _getProjectDraft({ data: d });
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 const paint = () => {
   try {
     createIcons({ icons });

@@ -6,6 +6,7 @@
  * own Retry. Successful rows are never retried, and the panel is driven only
  * by the job store, so it cannot disagree with the Canvas overlay.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import {
   STAGE_TITLE,
@@ -18,16 +19,6 @@ import {
   type Job,
 } from "@/lib/generation-jobs";
 
-function esc(s: unknown): string {
-  return String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) =>
-      (({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }) as Record<
-        string,
-        string
-      >)[c] as string,
-  );
-}
 
 export function statusText(job: Job): string {
   if (job.stage === "complete") return "✓ Complete";

@@ -6,6 +6,7 @@
  * the browser with the shared REAL REVEAL renderer, and the result lands in
  * the media library like any other video.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl } from "@/lib/room-photos";
@@ -51,12 +52,6 @@ const LENGTHS: Array<[number, string]> = [
 ];
 
 
-function esc(s: any) {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 export type MotionClipInput = {
   title?: string | null;

@@ -3,6 +3,7 @@
 // library shows, filtered by property.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { loadMediaLibrary, onMediaChange, typeGroup, stageLabel } from "@/lib/media-library";
 import { propertyBuckets } from "@/lib/media-view";
@@ -12,11 +13,6 @@ import { setHandoff } from "@/lib/handoff";
 import { openStagingReview } from "@/content/rd-staging";
 import { startVideoBuilder } from "@/lib/video-handoff";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 const paint = () => {
   try {
     createIcons({ icons });

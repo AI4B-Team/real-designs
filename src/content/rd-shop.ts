@@ -4,6 +4,7 @@
 // Products page and Scope & Budget rollups read from.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import {
   visualSearchProvider,
@@ -39,11 +40,6 @@ import {
 } from "@/lib/project-products";
 import { track } from "@/lib/analytics";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 const money = (n) =>
   n == null
     ? "Price Unavailable"

@@ -7,6 +7,7 @@
  * surface everywhere. The geometry drawn here is the same polygon the mask
  * engine rasterizes for the backend — this is never a decorative overlay.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import {
   polygonBox,
@@ -62,12 +63,6 @@ let handlers: Handlers = {};
 
 const HOST_ID = "rdSurfOverlay";
 
-function esc(s: unknown): string {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 function stage(): HTMLElement | null {
   return document.getElementById("cBefore");

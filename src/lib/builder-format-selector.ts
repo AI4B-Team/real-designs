@@ -9,12 +9,8 @@
  */
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
-  );
 
 const optLabel = (o) => (o.note ? `${o.label} ${o.note}` : o.label);
 

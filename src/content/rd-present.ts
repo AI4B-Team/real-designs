@@ -3,6 +3,7 @@
 // track activity and export a print-ready PDF.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { resolvePhotoUrl } from "@/lib/room-photos";
 import { getPropertyTree, listSavedEstimates } from "@/lib/workspace.functions";
@@ -21,11 +22,6 @@ import {
   revokePackageLink,
 } from "@/lib/presentation-packages.functions";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 const paint = () => {
   try {
     createIcons({ icons });
