@@ -51,7 +51,15 @@ import {
 } from "@/lib/staging-rooms";
 import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
 import { runBulkDesign, styleFitsSpace } from "@/lib/staging-bulk";
-import { claimDraftStyle, setDraftStep, draftStyle, patchDraft } from "@/lib/design-draft";
+import {
+  claimDraftStyle,
+  setDraftStep,
+  draftStyle,
+  patchDraft,
+  openReview,
+  snapshotForGeneration,
+  recordGeneration,
+} from "@/lib/studio-draft";
 import {
   createBatch,
   completeJob,
