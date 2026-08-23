@@ -50,6 +50,17 @@ import {
 import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
 import { runBulkDesign } from "@/lib/staging-bulk";
 import {
+  createBatch,
+  completeJob,
+  failJob,
+  findJob,
+  getBatch,
+  setStage,
+  batchTitle,
+  countBatch,
+} from "@/lib/generation-jobs";
+import { mountBatchPanel, batchDoneMessage, thumbClass } from "@/lib/batch-progress";
+import {
   canEnterDesign,
   canEnterReview,
   creditCost,
@@ -2296,20 +2307,59 @@ function toggleSelect(it, next) {
    own and a failure only ever fails that photo, so the rest of the batch
    still finishes and only the failed ones offer a retry. */
 
-function runBatch(batch, direction) {
+function runBatch(batch, direction, opts = {}) {
+  if (S.busy) return; /* One batch at a time: a second click can never charge. */
   S.busy = true;
   S.direction = direction;
   syncSelection();
+  /* Idempotency: the same batch key always returns the same batch record, so
+     a double click, a resubmit or a remount never creates a second job set. */
+  const key = opts.batchKey || S.batchKey || `${S.draftId || "draft"}:${Date.now()}`;
+  S.batchKey = key;
+  const rec = createBatch(
+    key,
+    batch.map((it, i) => ({
+      key: it.key || String(i),
+      label: `${it.room || "Photo"} · Photo ${i + 1}`,
+      room: it.room || "",
+      style: (direction && direction.direction) || "",
+      thumb: it.previewUrl || null,
+    })),
+  );
+  const jobIdOf = (it) => `${rec.id}:${it.key}`;
+  const panel = mountBatchPanel(rec, {
+    onRetry: (jobId) => {
+      const job = findJob(jobId);
+      const item = batch.find((i) => jobIdOf(i) === jobId);
+      if (!job || !item) return;
+      /* Only this photo runs again, and a completed photo never does. */
+      item.state = "queued";
+      runBatch([item], direction, { batchKey: `${key}:retry:${jobId}:${Date.now()}` });
+    },
+    onView: () => goStep("final"),
+  });
+  const refresh = () => panel.update(getBatch(rec.id) || rec);
+
   batch.forEach((it) => {
     it.state = "generating";
     it.err = "";
+    it.jobId = jobIdOf(it);
     patchCard(it);
   });
   runBulkDesign(
     batch,
     { ...direction, outputRatio: normalizeOutputRatio(S.outputRatio) },
     {
+      onStage: (it, stage) => {
+        setStage(jobIdOf(it), stage);
+        refresh();
+        paintThumbState(it);
+      },
       onUpdate: (it) => {
+        if (it.state === "complete") completeJob(jobIdOf(it), it.resultPath || null);
+        else if (it.state === "failed") failJob(jobIdOf(it), it.err || "");
+        refresh();
+        paintThumbState(it);
         patchCard(it);
         saveDraft();
       },
@@ -2317,18 +2367,28 @@ function runBatch(batch, direction) {
         S.busy = false;
         syncSelection();
         saveDraft();
-        const failed = batch.filter((i) => i.state === "failed").length;
-        if (failed) {
-          try {
-            window.rdToast &&
-              window.rdToast(
-                `${failed} photo${failed === 1 ? "" : "s"} did not render. Retry them from the card.`,
-              );
-          } catch (_) {}
-        }
+        const done = getBatch(rec.id) || rec;
+        refresh();
+        /* One compact notification for the whole batch, never one per photo. */
+        try {
+          window.rdToast && window.rdToast(batchDoneMessage(done));
+        } catch (_) {}
       },
     },
   );
+}
+
+/* Thumbnail state is additive: a selected photo that is generating shows
+   both, and a finished thumbnail stops animating entirely. */
+function paintThumbState(it) {
+  try {
+    const card = document.querySelector(`[data-card="${it.key}"]`);
+    const thumb = card && (card.querySelector(".rdc-thumb") || card);
+    if (!thumb) return;
+    thumb.classList.remove("rd-thumb-gen", "rd-thumb-done", "rd-thumb-failed");
+    const cls = thumbClass({ stage: it.stage || (it.state === "complete" ? "complete" : "queued") });
+    if (cls) thumb.classList.add(cls);
+  } catch (_) {}
 }
 
 function startBulkDesign(list, reuseDirection) {
