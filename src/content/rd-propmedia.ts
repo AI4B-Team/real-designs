@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 // Complete Property Upload, background upload manager and the property media
 // review screen. This extends the existing Properties / Listing Batch systems:
 // assets attach to the same property rows, enhanced media stays in Media and
@@ -30,7 +31,6 @@ import {
 } from "@/lib/media-analysis";
 import { openPhotoEditor, openExportDialog } from "@/content/rd-photo-editor";
 import { track } from "@/lib/analytics";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 const paint = () => {
   try {

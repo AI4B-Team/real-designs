@@ -17,10 +17,10 @@
  * Transitions and the video ending are deliberately NOT features: they live
  * between cards, never in this indicator.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 
 const paint = (root) => {

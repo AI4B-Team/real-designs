@@ -10,6 +10,7 @@
  * Nothing here decides money or prompts: it only reads and writes the state
  * that @/lib/declutter-brief turns into a brief.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import { createIcons, icons as lucideIcons } from "lucide";
 import {
@@ -20,7 +21,6 @@ import {
   type MaskAssets,
 } from "@/lib/mask-engine";
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   CLUTTER_CATEGORIES,
   DECLUTTER_MODES,
   EMPTY_ROOM_CONFIRM,

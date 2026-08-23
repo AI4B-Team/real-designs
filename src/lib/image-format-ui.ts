@@ -6,6 +6,7 @@
  * is the canonical default; anything else can crop a photo, so the control
  * says so and offers per-photo positioning.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 /* eslint-disable */
 // @ts-nocheck
 
@@ -19,7 +20,6 @@ import {
   effectiveRatio,
 } from "@/lib/output-ratio";
 import { isCustomCrop } from "@/lib/photo-crop";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 
 export const CROP_WARNING =

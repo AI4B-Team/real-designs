@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 // Unified property photo editor + listing export.
 // Extends the existing app shell: it opens over the current view, reads the
 // same property media store the Media view uses, and never overwrites an
@@ -18,7 +19,6 @@ import { runPhotoEdit, interpretPhotoRequest, analyzePhoto } from "@/lib/photo-e
 import { track } from "@/lib/analytics";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   VFX_LOOKS,
   lookById,
   applyLookAdjust,

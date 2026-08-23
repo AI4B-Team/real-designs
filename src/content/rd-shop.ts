@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 // Shop the Design: product sourcing workspace launched from Studio, Designs and
 // design detail. It extends the existing systems instead of duplicating them:
 // selections are written to the shared project product store, which the existing
@@ -38,7 +39,6 @@ import {
   STATUS_LABEL,
 } from "@/lib/project-products";
 import { track } from "@/lib/analytics";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 const money = (n) =>
   n == null

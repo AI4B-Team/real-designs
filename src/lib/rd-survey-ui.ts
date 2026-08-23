@@ -6,9 +6,9 @@
  * stored on their signup profile so the back office can work the list and
  * push it into the connected CRM.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { getSignupSurvey, saveSignupSurvey } from "@/lib/signup-survey.functions";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 const HOW_HEARD = [
   "Google Search",

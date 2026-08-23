@@ -10,6 +10,7 @@
  * overwritten. Adjustments, crop, rotation and applied AI operations are held
  * as state, rendered on demand, and persisted through `photo_edits`.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import { createIcons, icons } from "lucide";
 import { openDisclosureExport } from "@/lib/disclosure-export";
@@ -184,7 +185,6 @@ import {
 /* ------------------------------------------------------------------ model */
 
 import { returnLabel, type ReturnDestination } from "@/lib/active-image";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 export type EditorPhoto = {
   key: string;

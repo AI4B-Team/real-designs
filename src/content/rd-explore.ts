@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 // Explore: the REAL DESIGNS style catalog inside the app.
 // Styles come from the canonical catalog in src/lib/style-catalog.ts so a
 // selection here always reaches the generation payload.
@@ -15,7 +16,6 @@ import {
 } from "@/lib/style-catalog";
 import { setStudioStyle, applyStudioStyleToControls } from "@/lib/studio-style";
 import { startExploreDraft } from "@/lib/design-draft";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 export { DIRECTIONS } from "@/content/directions";
 

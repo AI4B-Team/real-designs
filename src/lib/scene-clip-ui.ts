@@ -5,8 +5,8 @@
  * Nothing here decides anything: prices come from the capability model and
  * statuses come from the durable `scene_clips` row.
  */
-import {
 import { escapeHtml as esc } from "@/lib/safe-html";
+import {
   ANIMATE_OPTIONS,
   ANIMATE_CREDITS_PER_CLIP,
   ANIMATE_CATEGORIES,

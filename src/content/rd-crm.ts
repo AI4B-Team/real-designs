@@ -3,6 +3,7 @@
  * contact list in, and push finished videos, presentations and designs back
  * out to the CRM timeline.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import {
   listCrm,
@@ -13,7 +14,6 @@ import {
   pushToCrm,
 } from "@/lib/crm.functions";
 import { isSignupAdmin, listSignupSurveys, markSignupPushed } from "@/lib/signup-survey.functions";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 const PROVIDERS: Array<{
   id: string;

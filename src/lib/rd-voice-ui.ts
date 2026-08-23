@@ -1,9 +1,9 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons as lucideIcons } from "lucide";
 /* Voice Studio — record or upload a voice sample, profile it, and narrate every
    video in that voice. Shared by the design-video and listing-video builders. */
 
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   MY_VOICE,
   VOICE_SCRIPT,
   clearVoiceProfile,

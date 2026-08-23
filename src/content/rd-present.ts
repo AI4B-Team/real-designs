@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 // REAL DESIGNS — Presentations. Property-centered client packages: build from
 // existing designs, photos, videos and budgets, share a branded client link,
 // track activity and export a print-ready PDF.
@@ -13,7 +14,6 @@ import { presentationReadiness } from "@/lib/presentation-publish";
 import { buildApprovalEmail } from "@/lib/approval-link";
 import { productionSafeOrigin } from "@/lib/approval-link";
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   listPackages,
   getPackage,
   savePackage,

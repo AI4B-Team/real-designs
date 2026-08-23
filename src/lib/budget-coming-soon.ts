@@ -3,6 +3,7 @@
  * everywhere: budgets are coming, no numbers are invented in the meantime, and
  * you can tell us which market to price first.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import {
   BUDGET_TITLE,
@@ -12,7 +13,6 @@ import {
   BUDGET_CTA,
 } from "@/lib/budget-copy";
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   getBudgetAvailability,
   requestBudgetMarket,
   myBudgetRequests,

@@ -8,10 +8,10 @@
  *
  * Nothing here prices or prompts anything: @/lib/animate-brief owns that.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import { createIcons, icons as lucideIcons } from "lucide";
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   ASPECT_OPTIONS,
   CLIP_KINDS,
   DURATION_OPTIONS,

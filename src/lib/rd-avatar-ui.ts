@@ -1,4 +1,5 @@
 /* Shared AI Presenter (avatar) UI for the design-video and listing-video builders. */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import {
   AVATAR_MODES,
@@ -12,7 +13,6 @@ import {
   type AvatarConfig,
 } from "@/lib/rd-avatars";
 import { playAvatarVoice, speakingAvatar, stopAvatarVoice } from "@/lib/rd-avatar-voice";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 
 export { blankAvatarConfig } from "@/lib/rd-avatars";

@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 import "@/styles/rd-modal.css";
 
 import { createIcons, icons } from "lucide";
@@ -11,7 +12,6 @@ import { createIcons, icons } from "lucide";
    Project Title is deliberately absent: an address never rewrites a title. */
 
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   addressesMatch,
   buildAddress,
   cleanAddressText,

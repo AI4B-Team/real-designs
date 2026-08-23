@@ -3,8 +3,8 @@
    details. Suggestions come from the workspace's own properties; there is no
    third-party autocomplete provider configured, so manual typing always works
    and nothing is ever marked verified that was not. */
-import {
 import { escapeHtml as esc } from "@/lib/safe-html";
+import {
   addressesMatch,
   buildAddress,
   cleanAddressText,

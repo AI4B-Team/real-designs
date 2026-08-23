@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons as lucideIcons } from "lucide";
 /**
  * Canvas style selection UI: the Setup panel section plus the Browse Styles
@@ -35,7 +36,6 @@ import {
   type StyleNeed,
 } from "@/lib/canvas-style";
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   applyClear,
   clearPlan,
   undoClear,

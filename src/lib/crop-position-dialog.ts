@@ -5,6 +5,7 @@
  * generated and can drag and zoom until the framing is right. The frame is
  * never allowed to show empty space.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 /* eslint-disable */
 // @ts-nocheck
 
@@ -12,7 +13,6 @@ import { createIcons, icons } from "lucide";
 import { clampCrop, normalizeCrop, ratioValue, DEFAULT_CROP, MAX_CROP_SCALE } from "@/lib/photo-crop";
 import { ratioLabel } from "@/lib/output-ratio";
 import { modalFooterHtml } from "@/lib/modal-footer";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 
 /**

@@ -7,11 +7,11 @@
  * offers Retry, Replace Photo and Remove. Nothing here ever touches the
  * stored asset path: a display failure is a display failure, not a deletion.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { runCardAction, confirmDialog } from "@/lib/builder-card-menu";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 
 const paint = (root) => {

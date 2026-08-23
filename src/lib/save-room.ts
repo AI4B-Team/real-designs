@@ -9,12 +9,12 @@
  * A room is saved from its source photo alone. No design, no version and no
  * credit is required, and saving twice updates the same room.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { modalFooterHtml, setModalButtonLoading } from "@/lib/modal-footer";
 import { ROOM_OPTIONS, ROOM_GROUP_ORDER, roomByLabel, roomSpace } from "@/lib/staging-rooms";
 import { openRoomAreaPicker } from "@/lib/room-area-picker";
 import { saveStudioRoom, listRoomTargets } from "@/lib/rooms.functions";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 export type SaveRoomResult = {
   property_id: string;

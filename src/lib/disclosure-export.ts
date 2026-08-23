@@ -7,6 +7,7 @@
  * the audit trail. Re-exporting with different wording never re-runs AI and
  * never costs credits.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import { formDialog } from "@/lib/photo-editor-dialogs";
 import { rdToast } from "@/lib/rd-toast";
@@ -15,7 +16,6 @@ import { buildZip, dataUrlToBytes } from "@/lib/zip-store";
 import { recordExportAudit } from "@/lib/disclosure-audit.functions";
 import { loadDisclosureSettings, saveDisclosureSettings } from "@/lib/disclosure-settings";
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   buildExportAudit,
   captionFor,
   classifyVersion,

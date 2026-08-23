@@ -6,6 +6,7 @@
  * are saved as design versions on each asset, so they show up in the library
  * next to the original.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
@@ -17,7 +18,6 @@ import { STYLES, STYLE_CATEGORIES, styleById } from "@/lib/style-catalog";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import { roomSpace } from "@/lib/staging-rooms";
 import { styleFitsSpace } from "@/lib/staging-bulk";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 const PROJECT_TYPE: Record<string, string> = {
   interior: "interior",

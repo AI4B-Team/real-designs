@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 // REAL REVEAL — property video and marketing content.
 // Library, create wizard, storyboard editor and share settings. Sources come
 // from the property tree and media that already exist; nothing is re-uploaded.
@@ -207,7 +208,6 @@ import { animateModalHtml, clipCardHtml, clipReviewHtml } from "@/lib/scene-clip
 import { sceneClips } from "@/lib/scene-clip-client";
 import { ANIMATE_CREDITS_PER_CLIP } from "@/lib/scene-enhancement";
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   lookCats,
   fxCats,
   looksForCat,

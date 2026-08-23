@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 // Unified Media library screen. Every generated image, generated listing
 // video and uploaded source file lives here behind one set of type tabs and a
 // single status filter. Designs stays the design workspace; Media is the
@@ -62,7 +63,6 @@ import { isFavorite, toggleFavorite, favoriteToast } from "@/lib/favorites";
 import { bootFavorites } from "@/lib/favorites-boot";
 import { beginResume, markResumeConsumed } from "@/lib/resume";
 import { resumeInputForMedia } from "@/lib/media-resume";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 const paint = () => {
   try {

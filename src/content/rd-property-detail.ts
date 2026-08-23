@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 // Property detail: everything that belongs to one address, in one place.
 // Nothing here is a copy — each card is the same canonical record the Media
 // library shows, filtered by property.
@@ -11,7 +12,6 @@ import { resolvePhotoUrl } from "@/lib/room-photos";
 import { setHandoff } from "@/lib/handoff";
 import { openStagingReview } from "@/content/rd-staging";
 import { startVideoBuilder } from "@/lib/video-handoff";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 const paint = () => {
   try {

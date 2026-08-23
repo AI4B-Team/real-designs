@@ -6,6 +6,7 @@
  * the browser with the shared REAL REVEAL renderer, and the result lands in
  * the media library like any other video.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl } from "@/lib/room-photos";
@@ -20,7 +21,6 @@ import {
   type MotionStrength,
 } from "@/lib/video-motion-presets";
 import { PREVIEW_DISCLAIMER, attachMotionPreview } from "@/lib/video-motion-preview";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 const BUCKET = "reveal-videos";
 

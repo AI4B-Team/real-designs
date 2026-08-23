@@ -7,9 +7,9 @@
  * surface everywhere. The geometry drawn here is the same polygon the mask
  * engine rasterizes for the backend — this is never a decorative overlay.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   polygonBox,
   polygonCentroid,
   type Box,

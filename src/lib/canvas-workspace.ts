@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons as lucideIcons } from "lucide";
 /**
  * Room Canvas workspace wiring: the compact tool rail, the contextual
@@ -23,7 +24,6 @@ import { ensureNotEmpty } from "@/lib/route-states";
 import { initAutoRoom, markManualRoom } from "@/lib/canvas-autoroom";
 import { mountStudioResultActions } from "@/lib/canvas-actions";
 import { editorEntry, type ActiveImage } from "@/lib/active-image";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 
 const SETTINGS_KEY = "rd_canvas_workspace";

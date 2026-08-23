@@ -5,10 +5,10 @@
  * hold controls, so Privacy Blur targets, export options, preset naming and
  * batch selection all feel like one product rather than three.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import { modalFooterHtml } from "@/lib/modal-footer";
 import { createIcons, icons } from "lucide";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 
 export type FormDialogOptions = {

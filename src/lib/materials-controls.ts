@@ -11,6 +11,7 @@
  * Nothing here decides money or prompts: it only reads and writes the state
  * that @/lib/materials-brief turns into a brief.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import { createIcons, icons as lucideIcons } from "lucide";
 import {
@@ -51,7 +52,6 @@ import {
 } from "@/lib/materials-brief";
 
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   hoverSurface,
   mountSurfaceOverlay,
   resetSurfaceOverlay,

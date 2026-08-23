@@ -1,8 +1,8 @@
 /* Social Caption Studio — AI captions and hashtags for any photo, design or video. */
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { generateSocialCopy } from "@/lib/social-copy.functions";
 import { rdToast } from "@/lib/rd-toast";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 const PLATFORMS: [string, string][] = [
   ["instagram", "Instagram"],

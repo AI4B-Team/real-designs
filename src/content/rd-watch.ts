@@ -3,11 +3,11 @@
  * new properties. Nothing runs until the user attests, in writing, that they
  * own the site and have the right to the data on it.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   listWatchedSites,
   addWatchedSite,
   removeWatchedSite,

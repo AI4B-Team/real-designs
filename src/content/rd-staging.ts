@@ -14,6 +14,7 @@
  * URLs, uploads and classification run in the background and only ever add
  * information to a card that is already on screen.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
@@ -149,7 +150,6 @@ import { matchPropertyAddress } from "@/lib/property-address.functions";
 import { suggestAddresses } from "@/lib/property-address.functions";
 import { listMediaProperties, listMediaAssets } from "@/lib/property-media.functions";
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   saveProjectDraft as _saveProjectDraft,
   listProjectDrafts as _listProjectDrafts,
   getProjectDraft as _getProjectDraft,

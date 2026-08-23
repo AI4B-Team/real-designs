@@ -10,10 +10,10 @@
  * Nothing here decides money or prompts: it reads and writes the state that
  * @/lib/sketch-brief turns into a brief.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import { createIcons, icons as lucideIcons } from "lucide";
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   CONCEPT_DISCLAIMER,
   DEFAULT_EYE_HEIGHT_FT,
   FINISH_GRADES,

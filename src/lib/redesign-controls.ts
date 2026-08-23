@@ -5,10 +5,10 @@
  * Every control here is wired to real state read by the generation handler —
  * nothing is decorative.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import { createIcons, icons as lucideIcons } from "lucide";
 import {
-import { escapeHtml as esc } from "@/lib/safe-html";
   INTENSITY_LEVELS,
   LOCK_ELEMENTS,
   REALITY_LOCK_DISCLOSURE,

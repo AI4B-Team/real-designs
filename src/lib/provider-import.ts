@@ -11,10 +11,10 @@
  * there is no modal at all — the button is honestly disabled and the host
  * shows the "isn't available yet" message.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import "@/styles/rd-provider-import.css";
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 export type ProviderId = "drive" | "dropbox";
 

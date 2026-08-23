@@ -13,6 +13,7 @@
  * Nothing here decides money or prompts — it only reads and writes the state
  * that @/lib/object-edit-brief turns into a brief.
  */
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 import { createIcons, icons as lucideIcons } from "lucide";
 import {
@@ -50,7 +51,6 @@ import {
   type MaskAssets,
 } from "@/lib/mask-engine";
 import { materialGroups, surfacesForSpace, surfaceLabel } from "@/lib/materials-catalog";
-import { escapeHtml as esc } from "@/lib/safe-html";
 
 
 const byId = (id: string) => document.getElementById(id);
