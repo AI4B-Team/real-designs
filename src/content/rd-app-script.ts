@@ -10089,8 +10089,34 @@ ${picks
 
     const newLinkBtn = document.getElementById("newLinkBtn");
     if (newLinkBtn) newLinkBtn.addEventListener("click", presModal);
-    paintPresentations();
-    window.addEventListener("rd:saved", () => paintPresentations());
+
+    /* The client-link list is a React feature module. It owns the whole
+       #linkList region; this runtime only supplies data access and the
+       modals and exporters it triggers. */
+    const linkListHost = document.getElementById("linkList");
+    if (linkListHost) {
+      PRES_LIST = mountPresentationList(linkListHost, {
+        loadRows: () => listPresentations(),
+        loadActivity: (id) => listPresentationActivity({ data: { id } }),
+        deleteRow: (id) => deletePresentation({ data: { id } }),
+        onRowsChanged: () => updateSearchMeta(),
+        actions: {
+          send: (row, reminder) => presSendModal(row, reminder),
+          exportPdf: (id, target) => exportPresentationPdf(id, target),
+          exportBoard: (id, target) => exportPresentationBoard(id, target),
+          exportReel: (id, target) => exportSocialReel(id, target),
+          openStudio: () => go("studio"),
+          newLink: () => presModal(),
+        },
+      });
+      cleanups.push(() => {
+        try {
+          PRES_LIST.destroy();
+        } catch (_) {}
+        PRES_LIST = null;
+      });
+    }
+
 
     /* ---------- team ---------- */
     const ROLE_ORDER = ["viewer", "member", "admin"];
