@@ -416,14 +416,29 @@ export function reviewStepHtml(ctx) {
       )}
       ${factHtml("Shared Instructions", (model.notes || "").trim() || "None", "design")}
       ${factHtml("Individual Overrides", overrides ? `${overrides} photo${overrides === 1 ? "" : "s"}` : "None", "design")}
-      ${factHtml("Credit Cost", `${cost} credit${cost === 1 ? "" : "s"}`)}
-      ${factHtml("Available Balance", balance === null ? "Checking…" : `${balance} credit${balance === 1 ? "" : "s"}`)}
+      ${factHtml(freePlan ? "Free Designs Used" : "Credit Cost", freePlan ? `${cost} of 5 today` : `${cost} credit${cost === 1 ? "" : "s"}`)}
+      ${
+        freePlan
+          ? factHtml(
+              "Free Designs Left Today",
+              remainingToday === null ? "Checking…" : `${remainingToday} of 5`,
+            )
+          : factHtml(
+              "Available Balance",
+              balance === null ? "Checking…" : `${balance} credit${balance === 1 ? "" : "s"}`,
+            )
+      }
     </dl>
     ${
       short
-        ? `<p class="rdd-short"><i data-lucide="alert-circle"></i>You need ${short} more credit${short === 1 ? "" : "s"} to generate these ${items.length} design${items.length === 1 ? "" : "s"}.</p>`
+        ? `<p class="rdd-short"><i data-lucide="alert-circle"></i>${
+            freePlan
+              ? `You have ${remainingToday ?? 0} free design${remainingToday === 1 ? "" : "s"} left today and these need ${cost}. Remove ${short} photo${short === 1 ? "" : "s"} or upgrade.`
+              : `You need ${short} more credit${short === 1 ? "" : "s"} to generate these ${items.length} design${items.length === 1 ? "" : "s"}.`
+          }</p>`
         : ""
     }
+
     ${
       (model.notes || "").trim()
         ? `<p class="rdd-rnotes"><b>Shared Instructions</b><span>${esc(model.notes)}</span></p>`
