@@ -360,3 +360,61 @@ export async function runGeneration<T extends object>(
     throw err;
   }
 }
+
+/* ------------------------------------------------------------ batch items */
+
+export type ItemOutcome<T> =
+  | { ok: true; value: T; charged: number; balance: number; remainingToday: number | null; jobId: string }
+  | { ok: false; blocked: boolean; error: string };
+
+/**
+ * One item of a multi-output request: same guarantees as runGeneration, but a
+ * failure is returned instead of thrown so one bad photo never destroys the
+ * results that already succeeded.
+ *
+ * `blocked` means the credit charge itself was refused (out of credits, daily
+ * limit, plan) — the caller stops the batch. Anything else is a per-item
+ * failure that leaves the rest of the batch running.
+ */
+export async function runGenerationItem<T>(
+  req: GenerationRequest,
+  work: (ctx: RunContext) => Promise<T>,
+  injected?: Partial<RunDeps>,
+): Promise<ItemOutcome<T>> {
+  try {
+    const out = await runGeneration<{ value: T }>(
+      req,
+      async (ctx) => ({ value: await work(ctx) }),
+      injected,
+    );
+    return {
+      ok: true,
+      value: out.value,
+      charged: out.credit_state === "charged" ? chargedOf(out) : 0,
+      balance: balanceOf(out),
+      remainingToday: remainingOf(out),
+      jobId: out.job_id,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, blocked: isCreditRefusal(message), error: message };
+  }
+}
+
+/* runGeneration hands the charge figures to the work callback; a batch caller
+   needs them back out, so the item wrapper reads them off the context copy the
+   callback stored. These stay small helpers rather than a wider shape change. */
+type Charged = { __charged?: number; __balance?: number; __remaining?: number | null };
+function chargedOf(o: object): number {
+  return (o as Charged).__charged ?? 0;
+}
+function balanceOf(o: object): number {
+  return (o as Charged).__balance ?? 0;
+}
+function remainingOf(o: object): number | null {
+  return (o as Charged).__remaining ?? null;
+}
+
+export function isCreditRefusal(message: string): boolean {
+  return /free designs for today|needs a paid plan|Not enough credits/i.test(message);
+}
