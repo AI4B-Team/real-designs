@@ -11,6 +11,13 @@
   --line: #e5e5e5;
   --line-2: #d6d6d6;
   --red: #cc0000;
+  /* Aliases used across builder styles. Without these, `var(--brand)` is an
+     invalid substitution and whole shorthands (borders, backgrounds) drop out. */
+  --brand: #cc0000;
+  --danger: #cc0000;
+  --card: #fff;
+  --soft: #f5f5f5;
+  --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --red-dk: #a30000;
   --red-tint: #fdecec;
   --mute: #6b6b6b;
