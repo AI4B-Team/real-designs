@@ -1628,6 +1628,8 @@ function renderDesignFlow(el) {
         ratioLabel: reviewFormatLabel(),
         cropCount: items.filter((it) => tileRatio(it) !== "original").length,
         balance: typeof S.creditBalance === "number" ? S.creditBalance : null,
+        plan: S.creditPlan || null,
+        remainingToday: typeof S.creditRemaining === "number" ? S.creditRemaining : null,
         photoLabel,
         photoFormat: (it) => ratioLabel(tileRatio(it)),
         photoCustomCrop: (it) => isCustomCrop(it.crop) && tileRatio(it) !== "original",
@@ -1635,8 +1637,11 @@ function renderDesignFlow(el) {
           items,
           model,
           balance: typeof S.creditBalance === "number" ? S.creditBalance : null,
+          plan: S.creditPlan || null,
+          remainingToday: typeof S.creditRemaining === "number" ? S.creditRemaining : null,
           uploading: S.items.some((i) => i.status === "uploading"),
         }),
+
       })
     : designStepHtml({ items, model });
 
