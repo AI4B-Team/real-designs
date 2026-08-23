@@ -485,7 +485,7 @@ import {
 } from "@/content/rd-reveal";
 import { openPropertyUpload, mountUploadDock } from "@/content/rd-propmedia";
 import { mountSourcePicker } from "@/lib/source-picker";
-import { runModule, reportModuleFailure } from "@/lib/module-guard";
+import { runModule, reportModuleFailure, isAbortLikeError } from "@/lib/module-guard";
 import { mountMediaLibrary } from "@/content/rd-media-lib";
 import { mountCrm } from "@/content/rd-crm";
 import * as RDMediaLib from "@/lib/media-library";
