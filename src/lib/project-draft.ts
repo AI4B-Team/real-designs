@@ -10,6 +10,8 @@
  * confirms. It is never read as the source of truth when the server answers.
  */
 
+import { reportError } from "@/lib/errors/report";
+
 export type DraftSaveState = "idle" | "saving" | "saved" | "error";
 
 export type DraftPayload = Record<string, any> & { id: string; project_type: string };
@@ -94,8 +96,15 @@ export class DraftAutosaver {
     try {
       if (payload) store.setItem(cacheKey(this.id), JSON.stringify({ at: Date.now(), payload }));
       else store.removeItem(cacheKey(this.id));
-    } catch {
-      /* a full quota must not break the save loop */
+    } catch (e) {
+      /* a full quota must not break the save loop, but losing the local copy
+         is the difference between "retry later" and "work is gone" */
+      reportError(e, {
+        operation: "draft.cache",
+        category: "storage",
+        severity: "medium",
+        context: { draftId: this.id },
+      });
     }
   }
 
@@ -142,7 +151,18 @@ export class DraftAutosaver {
       this.pending = this.pending ?? body;
       this.attempt += 1;
       const steps = this.opt.retryMs ?? [1000, 3000, 8000];
-      this.emit("error", { error: (e && e.message) || "Couldn't save", attempt: this.attempt });
+      /* Autosave failures are the classic silent data-loss path: the local
+         cache still holds the payload, but the user must know the server copy
+         is behind, and support must be able to find the failure. */
+      const app = reportError(e, {
+        operation: "draft.autosave",
+        category: "persistence",
+        severity:
+          this.attempt > (this.opt.retryMs ?? [1000, 3000, 8000]).length ? "critical" : "medium",
+        code: "draft_save_failed",
+        context: { draftId: this.id, attempt: this.attempt },
+      });
+      this.emit("error", { error: app.userMessage, attempt: this.attempt });
       if (this.attempt <= steps.length) {
         const wait = steps[Math.min(this.attempt - 1, steps.length - 1)] ?? 3000;
         const { set } = this.timers();

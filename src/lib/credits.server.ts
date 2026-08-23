@@ -9,6 +9,7 @@
  * else. That rule is enforced inside spend_credits, not here.
  */
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { AppError } from "@/lib/errors/app-error";
 
 export type CreditAction = "design" | "scope" | "plan_3d" | "video";
 
@@ -50,7 +51,22 @@ export async function charge(
     _action: action,
     ...(note ? { _note: note } : {}),
   });
-  if (error) throw new Error(`Credit charge failed: ${error.message}`);
+  if (error) {
+    /* A charge that errors (as opposed to being refused) is an infrastructure
+       failure: no credits were taken, and the caller must not treat it as a
+       refusal the user can fix. */
+    throw new AppError({
+      code: "credit_charge_failed",
+      category: "credits",
+      severity: "critical",
+      operation: "credits.charge",
+      technicalMessage: error.message,
+      userMessage:
+        "We couldn't check your credits just now. Nothing was charged — try again in a moment.",
+      retryable: true,
+      context: { userId, action },
+    });
+  }
   return data as unknown as ChargeResult;
 }
 
@@ -104,5 +120,14 @@ export async function readAccount(userId: string): Promise<CreditAccount> {
     if (!isTransient(lastMessage)) break;
     await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
   }
-  throw new Error(lastMessage || "Could not read credit account");
+  throw new AppError({
+    code: "credit_account_unavailable",
+    category: "credits",
+    severity: "high",
+    operation: "credits.readAccount",
+    technicalMessage: lastMessage,
+    userMessage: "We couldn't load your credit balance. Nothing was charged — try again in a moment.",
+    retryable: true,
+    context: { userId },
+  });
 }
