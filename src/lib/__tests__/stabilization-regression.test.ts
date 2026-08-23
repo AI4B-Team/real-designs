@@ -660,9 +660,9 @@ describe("regression: photo editor saves", () => {
 
 describe("regression: media library", () => {
   const items = [
-    { id: "m1", kind: "photo", name: "Kitchen", created_at: "2026-01-01", storage_path: "u/m1.jpg" },
-    { id: "m2", kind: "video", name: "Tour", created_at: "2026-02-01", storage_path: "u/m2.mp4" },
-    { id: "m3", kind: "photo", name: "Living Room", created_at: "2026-03-01", storage_path: "u/m3.jpg" },
+    { id: "m1", type: "photo", title: "Kitchen", room: "Kitchen", created_at: "2026-01-01", storage_path: "u/m1.jpg" },
+    { id: "m2", type: "video", title: "Tour", created_at: "2026-02-01", storage_path: "u/m2.mp4" },
+    { id: "m3", type: "photo", title: "Living Room", created_at: "2026-03-01", storage_path: "u/m3.jpg" },
   ];
 
   it("search narrows by name without dropping unrelated fields", () => {
