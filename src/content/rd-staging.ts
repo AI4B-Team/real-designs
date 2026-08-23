@@ -391,6 +391,9 @@ function railForStep() {
 
 function show() {
   host();
+  try {
+    setDraftStep(DRAFT_STEP[(S && S.step) || "review"] || "photos");
+  } catch (_) {}
   /* Navigating through the router keeps the hash, the browser history and a
      refresh all pointing at the same page. */
   try {
