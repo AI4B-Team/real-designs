@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Phase 0D — structured error handling.
  *
