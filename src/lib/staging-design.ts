@@ -148,6 +148,18 @@ export function hasOverride(model, item) {
   return !!((model && model.overrides) || {})[item && item.key];
 }
 
+/** The free-text instruction written for one specific photo, if any. */
+export function photoNote(model, item) {
+  const map = (model && model.notesByPhoto) || {};
+  return String(map[item && item.key] || "").trim();
+}
+
+/** A photo is customized when it has its own style, its own note, or both. */
+export function hasCustomization(model, item) {
+  return hasOverride(model, item) || !!photoNote(model, item);
+}
+
+
 /** Styles offered for a space, compatible ones only. */
 export function compatibleStyles(space) {
   return STYLES.filter((s) => s.isActive !== false && styleFitsSpace(s.id, space));
