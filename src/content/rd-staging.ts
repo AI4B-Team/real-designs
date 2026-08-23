@@ -91,6 +91,14 @@ import {
 import { cardStatusHtml, registerCardStatus } from "@/lib/builder-card-status";
 import { formatSelectorHtml } from "@/lib/builder-format-selector";
 import {
+  imageFormatSectionHtml,
+  bindImageFormat,
+  focusImageFormat,
+} from "@/lib/image-format-ui";
+import { openCropDialog } from "@/lib/crop-position-dialog";
+import { normalizeCrop, cropForDraft, isCustomCrop, cropStyle } from "@/lib/photo-crop";
+
+import {
   OUTPUT_RATIOS,
   PRIMARY_OUTPUT_RATIOS,
   MORE_OUTPUT_RATIOS,
