@@ -1,10 +1,10 @@
-import { escapeHtml as esc } from "@/lib/safe-html";
 // Complete Property Upload, background upload manager and the property media
 // review screen. This extends the existing Properties / Listing Batch systems:
 // assets attach to the same property rows, enhanced media stays in Media and
 // design generations stay labeled and linked back to their source photo.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { startVideoBuilder } from "@/lib/video-handoff";
 import { createIcons, icons } from "lucide";
 import { mountSourcePicker } from "@/lib/source-picker";

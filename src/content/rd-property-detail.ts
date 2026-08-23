@@ -1,9 +1,9 @@
-import { escapeHtml as esc } from "@/lib/safe-html";
 // Property detail: everything that belongs to one address, in one place.
 // Nothing here is a copy — each card is the same canonical record the Media
 // library shows, filtered by property.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { loadMediaLibrary, onMediaChange, typeGroup, stageLabel } from "@/lib/media-library";
 import { propertyBuckets } from "@/lib/media-view";

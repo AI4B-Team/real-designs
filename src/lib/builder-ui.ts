@@ -1,4 +1,3 @@
-import { escapeHtml as esc } from "@/lib/safe-html";
 /* Shared builder chrome.
  *
  * The photo-staging builder and the property-video builder used to draw their
@@ -8,6 +7,7 @@ import { escapeHtml as esc } from "@/lib/safe-html";
  */
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 
 /**

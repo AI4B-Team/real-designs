@@ -1,10 +1,10 @@
-import { escapeHtml as esc } from "@/lib/safe-html";
 // Shop the Design: product sourcing workspace launched from Studio, Designs and
 // design detail. It extends the existing systems instead of duplicating them:
 // selections are written to the shared project product store, which the existing
 // Products page and Scope & Budget rollups read from.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import {
   visualSearchProvider,

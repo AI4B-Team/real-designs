@@ -5,9 +5,9 @@
  * room to breathe, and the credit-spending decision belongs on a real Review
  * step the user can leave and come back to.
  */
-import { escapeHtml as esc } from "@/lib/safe-html";
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { openStyleBrowser } from "@/lib/canvas-style-ui";
 import {

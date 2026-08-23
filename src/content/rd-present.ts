@@ -1,9 +1,9 @@
-import { escapeHtml as esc } from "@/lib/safe-html";
 // REAL DESIGNS — Presentations. Property-centered client packages: build from
 // existing designs, photos, videos and budgets, share a branded client link,
 // track activity and export a print-ready PDF.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { resolvePhotoUrl } from "@/lib/room-photos";
 import { getPropertyTree, listSavedEstimates } from "@/lib/workspace.functions";

@@ -7,9 +7,9 @@
  * in both workflows. Each builder only supplies its own action list and a
  * handler for those actions.
  */
-import { escapeHtml as esc } from "@/lib/safe-html";
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { modalFooterHtml } from "@/lib/modal-footer";
 

@@ -6,9 +6,9 @@
  * are saved as design versions on each asset, so they show up in the library
  * next to the original.
  */
-import { escapeHtml as esc } from "@/lib/safe-html";
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { resolvePhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
 import { renderDesign } from "@/lib/design-render.functions";

@@ -17,9 +17,9 @@
  * Transitions and the video ending are deliberately NOT features: they live
  * between cards, never in this indicator.
  */
-import { escapeHtml as esc } from "@/lib/safe-html";
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 
 

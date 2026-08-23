@@ -14,9 +14,9 @@
  * URLs, uploads and classification run in the background and only ever add
  * information to a card that is already on screen.
  */
-import { escapeHtml as esc } from "@/lib/safe-html";
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
 import { addSourceCardHtml, mountAddSourceCard } from "@/lib/add-source-card";

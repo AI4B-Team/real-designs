@@ -1,7 +1,7 @@
-import { escapeHtml as esc } from "@/lib/safe-html";
 // Admin-only Style Library manager, rendered inside the Explore drawer.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { STYLES, STYLE_CATEGORIES, styleById, applyStyleOverrides } from "@/lib/style-catalog";
 import {
   listStyleOverrides,

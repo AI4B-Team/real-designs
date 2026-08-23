@@ -1,9 +1,9 @@
-import { escapeHtml as esc } from "@/lib/safe-html";
 // REAL DESIGNS — Reports. Operational workspace overview built entirely from
 // real records: properties, projects, rooms, designs, scopes, budgets, credit
 // ledger and client presentation activity.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import { getWorkspaceReport } from "@/lib/reports.functions";
 import { budgetAvailability, budgetsLive } from "@/lib/budget-coming-soon";

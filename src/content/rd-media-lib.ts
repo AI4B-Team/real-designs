@@ -1,10 +1,10 @@
-import { escapeHtml as esc } from "@/lib/safe-html";
 // Unified Media library screen. Every generated image, generated listing
 // video and uploaded source file lives here behind one set of type tabs and a
 // single status filter. Designs stays the design workspace; Media is the
 // asset library.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import {
   loadMediaLibrary,

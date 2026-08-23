@@ -1,10 +1,10 @@
-import { escapeHtml as esc } from "@/lib/safe-html";
 // Unified property photo editor + listing export.
 // Extends the existing app shell: it opens over the current view, reads the
 // same property media store the Media view uses, and never overwrites an
 // original — every save becomes a new version.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import JSZip from "jszip";
 import { roomPhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";

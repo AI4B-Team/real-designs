@@ -1,4 +1,3 @@
-import { escapeHtml as esc } from "@/lib/safe-html";
 /**
  * One segmented format selector for every builder header.
  *
@@ -10,6 +9,7 @@ import { escapeHtml as esc } from "@/lib/safe-html";
  */
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 
 const optLabel = (o) => (o.note ? `${o.label} ${o.note}` : o.label);

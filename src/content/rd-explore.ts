@@ -1,9 +1,9 @@
-import { escapeHtml as esc } from "@/lib/safe-html";
 // Explore: the REAL DESIGNS style catalog inside the app.
 // Styles come from the canonical catalog in src/lib/style-catalog.ts so a
 // selection here always reaches the generation payload.
 /* eslint-disable */
 // @ts-nocheck
+import { escapeHtml as esc } from "@/lib/safe-html";
 import { createIcons, icons } from "lucide";
 import {
   STYLES,
