@@ -193,17 +193,44 @@ export async function saveAsCopy(
     .single();
   if (ce) throw new Error(ce.message);
 
-  const version = await recordDerivedVersion(db, {
-    userId: input.userId,
-    assetId: copyId,
+  /* The copy's own first version is the copied file itself, so this row is
+     written directly: the "never overwrite the source" check compares against
+     the original, which the copy is a branch of, not a rewrite of. */
+  const versionId = crypto.randomUUID();
+  const lineage = buildLineage({
+    sourceAssetId: copyId,
     parent: input.parent,
     operation: "copy",
+    outputAssetId: copyId,
+    outputVersionId: versionId,
     outputPath: input.outputPath,
-    label: input.label ?? "Copy",
+    userId: input.userId,
+    propertyId: src.property_id ?? null,
     settings: { copiedFromAssetId: input.assetId },
-    approve: true,
+    persistence: "durable",
   });
-  return { asset: copy as AssetRow, version };
+  const { data: version, error: ve } = await db
+    .from("property_media_versions")
+    .insert({
+      id: versionId,
+      user_id: input.userId,
+      asset_id: copyId,
+      label: input.label ?? "Copy",
+      kind: "enhanced",
+      modification_class: src.modification_class ?? "Unmodified Original",
+      storage_path: input.outputPath,
+      ops: withLineage({ copiedFromAssetId: input.assetId }, lineage),
+      approved: true,
+      archived: false,
+    } as any)
+    .select("*")
+    .single();
+  if (ve) throw new Error(ve.message);
+  await db
+    .from("property_media_assets")
+    .update({ approved_version_id: versionId } as any)
+    .eq("id", copyId);
+  return { asset: copy as AssetRow, version: version as VersionRow };
 }
 
 /* ------------------------------------------------------------------ *
