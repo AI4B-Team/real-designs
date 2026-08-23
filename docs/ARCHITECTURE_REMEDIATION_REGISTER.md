@@ -300,3 +300,72 @@ Suite: **1103 passing / 5 skipped, 96 files** (was 1086).
 
 **Status:** Fixed. Asset lineage and crop architecture are untouched and remain
 open for the next phase. No visual redesign was made.
+
+## Phase 1B — One canonical asset and version lineage (complete)
+
+Assets and versions were described by competing models: `property_media_assets`
+plus `property_media_versions`, the older `photo_edits` rows, the legacy
+`versions` table, and ad-hoc "latest image" lookups. Storage cleanup scanned
+references with its own list of tables, so it could disagree with what the app
+considered in use, and Save could point at a preview blob.
+
+### Canonical concepts
+
+Defined and documented in `src/lib/lineage.ts`:
+
+- **Source Asset** — the uploaded original (`property_media_assets`). Immutable.
+- **Derived Asset** — a separate asset created by Save as Copy; starts its own
+  branch and carries a pointer back to the asset it was copied from.
+- **Version** — a durable row in `property_media_versions` holding one
+  persisted result.
+- **Preview** — a `blob:`/`data:`/`http(s)` URL. Never a version, never
+  downloadable, never shareable.
+- **Active Version** — the exact version the user is looking at, resolved by
+  explicit id, then the approved version, then the source. A missing id is an
+  error, never a silent fallback to newest.
+- **Parent Version** — the asset or version the pixels came from.
+- **Generation Job** — the Phase 0B run that produced the output.
+
+### Lineage record
+
+Every durable derived result carries a versioned lineage envelope inside the
+existing `ops` jsonb (no destructive schema rewrite this phase) recording the
+source asset, parent ref, operation (`generate | edit | enhance | upscale |
+crop | copy | import`), job id, output asset and version, user, property
+context, the settings snapshot and creation timestamp, plus a `persistence`
+field. Legacy rows without an envelope are adapted on read (`adapted: true`)
+rather than treated as unknown.
+
+### Rules now enforced
+
+- `src/lib/lineage.server.ts` is the one writer for durable versions. It
+  refuses preview paths and refuses to write over a source's file.
+- Save labels come from `saveActionFor` / `saveLabelFor`: an immutable source or
+  an approved/published version shows **Save as New Version**; only a working
+  version shows **Save Changes**. **Save as Copy** creates a separate durable
+  asset with its own first version and a recorded branch point.
+- Version History reads durable rows (`durableVersions`), not UI state.
+- Download and tool handoff use the exact active persisted version
+  (`downloadRef`, `handoffRef`); an unsaved preview is refused with a prompt to
+  save first. Public approval links stay locked to an exact version id.
+- `buildReferenceIndex` is the single reference scan (versions, assets,
+  photo edits, legacy versions, presentations, video scenes/clips/projects/
+  audio, and job outputs). `deleteVersionSafely` refuses in plain language when
+  a presentation, video, property, media record or job still points at the file,
+  and `storage-cleanup.server.ts` now uses the same index — an incomplete scan
+  stops cleanup instead of deleting on a partial picture.
+- Failed generation artifacts are classified separately from orphans, and the
+  orphan report (`orphanDiagnostic`) only reports: it deletes nothing.
+
+### Coverage
+
+`src/lib/__tests__/lineage.test.ts` (21 tests) covers source immutability,
+edit-source-to-new-version, editing a mutable version, Save as Copy branching,
+generating from an edited version, opening an exact version in another tool,
+downloading the active version, refreshing version history, version-locked
+public links, deleting an unreferenced version, refusing deletion of a
+referenced asset, the orphan diagnostic, and the legacy-record adapter. Full
+suite: 1124 passing.
+
+Not done in this phase (deliberate): merging `photo_edits` and the legacy
+`versions` table into `property_media_versions`, and crop consolidation.
