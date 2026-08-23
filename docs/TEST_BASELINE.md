@@ -61,3 +61,12 @@ Future phases must preserve those ids or update the specs in the same change.
   `E2E_REAL_PROVIDER=1`, so the baseline run spends no credits.
 - The Vitest suites are pure logic plus JSDOM; they perform no network or
   database access.
+
+## Phase 0B update
+
+- 93 test files, **1015 unit tests passing**, 5 skipped (was 1003 passing at Phase 0A).
+- New: `src/lib/__tests__/generation-run.test.ts` (12 tests) pins the generation
+  transaction — one charge per request, replay of a repeated request, one refund
+  per failure, retry-after-failure, refusal before any charge, concurrent
+  duplicate handling, and batch item outcomes.
+- Typecheck clean (`tsgo --noEmit`).
