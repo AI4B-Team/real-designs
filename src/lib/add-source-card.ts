@@ -219,10 +219,9 @@ export function mountAddSourceCard(
       closeAddSourcePopover();
       return;
     }
-    const first = sources[0];
-    if (first) {
+    if (sources.length === 1) {
       /* Only one source: skip the menu and go straight to it. */
-      void handleSelect(first.id);
+      void handleSelect(sources[0].id);
       return;
     }
     openSourcePopover(
