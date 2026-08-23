@@ -355,7 +355,7 @@ describe("lineage repository", () => {
     expect(cv.asset_id).toBe(copy.id);
     expect(lineageOf(cv).settings["copiedFromAssetId"]).toBe(ASSET);
     /* The original asset and its history are untouched. */
-    expect(db.tables["property_media_assets"].some((a: Row) => a.id === ASSET)).toBe(true);
+    expect(db.tables["property_media_assets"].some((a: Row) => a["id"] === ASSET)).toBe(true);
   });
 
   it("reads Version History and the exact active version from durable rows", async () => {
