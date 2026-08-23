@@ -272,7 +272,14 @@ export const buildScope = createServerFn({ method: "POST" })
       disclaimer:
         "Planning range, Tampa Bay market, from our own project data. Not a bid or an engineering determination.",
     };
+    } catch (err) {
+      // The scope could not be priced after we charged for it: give it back.
+      const { refund } = await import("@/lib/credits.server");
+      await refund(context.userId, billing.charged, "Priced scope failed");
+      throw err;
+    }
   });
+
 
 /** Read back a computed scope with its audited lines. */
 export const getScope = createServerFn({ method: "GET" })
