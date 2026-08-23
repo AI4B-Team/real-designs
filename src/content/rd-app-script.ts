@@ -2138,7 +2138,8 @@ export function initApp(): () => void {
         : empty("Nothing Needs Your Attention", "Priced rooms inside target will stay quiet here");
 
       /* budget vs scope */
-      bt.innerHTML = s.projects.length
+      if (bt)
+        bt.innerHTML = s.projects.length
         ? s.projects
             .map((p) => {
               const t = p.budget_target;
