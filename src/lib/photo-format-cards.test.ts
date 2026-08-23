@@ -77,15 +77,16 @@ describe("photo format reshapes the review grid", () => {
   it("defaults to original and switches every frame immediately", async () => {
     await openReviewWith(["a.jpg", "b.jpg", "c.jpg"]);
     expect(tileClasses()).toEqual(["rt-orig", "rt-orig", "rt-orig"]);
-    expect(addClass()).toBe("rt-orig");
+    /* The add card keeps its own fixed shape; it never mirrors the format. */
+    expect(addClass()).toBe("none");
 
     await chooseFormat("9:16");
     expect(tileClasses()).toEqual(["rt-916", "rt-916", "rt-916"]);
-    expect(addClass()).toBe("rt-916");
+    expect(addClass()).toBe("none");
 
     await chooseFormat("16:9");
     expect(tileClasses()).toEqual(["rt-169", "rt-169", "rt-169"]);
-    expect(addClass()).toBe("rt-169");
+    expect(addClass()).toBe("none");
   }, 20000);
 
 
@@ -136,6 +137,6 @@ describe("photo format reshapes the review grid", () => {
     await openReviewWith(["a.jpg"]);
     const add = stagingHost().querySelector(".rv-addcard") as HTMLElement;
     expect(add.querySelector(".rv-room")).toBeNull();
-    expect(add.querySelector(".rv-addcard-pad")).toBeTruthy();
+    expect(add.querySelector("[data-addface]")).toBeTruthy();
   });
 });
