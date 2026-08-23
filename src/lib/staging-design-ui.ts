@@ -69,71 +69,117 @@ export function quickCards(space, selectedId, max = QUICK_CARDS) {
   return out;
 }
 
+/**
+ * One style card. The selected indicator is rendered ONLY for the selected
+ * style — it is never a decorative element present on every card, so the
+ * visual state, the draft and the canonical style id always agree.
+ */
 function cardHtml(rec, on, scope) {
-  return `<button type="button" class="rdd-card${on ? " on" : ""}" role="radio" aria-checked="${on ? "true" : "false"}"
-    data-style="${esc(rec.id)}" data-scope="${esc(scope)}">
+  const locked = rec.plan && rec.plan !== "free" ? String(rec.plan) : "";
+  return `<button type="button" class="rdd-card${on ? " on" : ""}" role="radio"
+    aria-checked="${on ? "true" : "false"}" aria-selected="${on ? "true" : "false"}"
+    title="${esc(rec.displayName)}" data-style="${esc(rec.id)}" data-scope="${esc(scope)}">
     <span class="rdd-card-th">${
       rec.previewImage
         ? `<img src="${esc(rec.previewImage)}" alt="${esc(rec.displayName)} example" loading="lazy">`
         : ""
-    }<i data-lucide="check"></i></span>
+    }${
+      on
+        ? `<span class="rdd-card-ck" aria-hidden="true"><i data-lucide="check"></i></span>`
+        : ""
+    }${locked ? `<span class="rdd-card-plan">${esc(locked.toUpperCase())}</span>` : ""}</span>
     <span class="rdd-card-t">${esc(rec.displayName)}</span>
   </button>`;
 }
 
-function photoRowHtml(model, group) {
-  return `<div class="rdd-photos">${group.items
-    .map((it) => {
-      const id = effectiveStyleId(model, it);
-      const own = hasOverride(model, it);
-      return `<div class="rdd-photo${own ? " own" : ""}">
-        <span class="rdd-photo-th"><img src="${esc(it.signed || it.previewUrl || "")}" alt="${esc(it.room || "Photo")}" loading="lazy"></span>
-        <span class="rdd-photo-m"><b>${esc(it.room || "Room type needed")}</b>
-          <em>${esc(id ? styleName(id) : "No style yet")}${own ? " · Own style" : ""}</em></span>
-        <span class="rdd-photo-a">
-          <button type="button" class="fb-link" data-photostyle="${esc(it.key)}">Change</button>
-          ${own ? `<button type="button" class="fb-link" data-photoreset="${esc(it.key)}">Use Group Style</button>` : ""}
-        </span>
-      </div>`;
-    })
+/** "Kitchen ×4 · Entry ×1" — exactly which photos a category style covers. */
+function appliesToHtml(cat) {
+  return `<p class="rdd-applies"><b>Applies To:</b> ${cat.rooms
+    .map((r) => `${esc(r.room)} &times;${r.count}`)
+    .join(" &middot; ")}</p>`;
+}
+
+function groupHtml(model, cat) {
+  const selected = cat.styleId;
+  const cards = cat.space === "unassigned" ? [] : quickCards(cat.space, selected);
+  return `<section class="rdd-group" data-space="${esc(cat.space)}">
+    <header class="rdd-group-h">
+      <h3>${esc(cat.label)} &middot; ${cat.count} Photo${cat.count === 1 ? "" : "s"}</h3>
+      <span class="rdd-group-a">${
+        cat.space === "unassigned"
+          ? `<span class="rdd-warn"><i data-lucide="alert-circle"></i>Set a room or area on the Photos step first.</span>`
+          : `${
+              selected
+                ? `<button type="button" class="fb-link rdd-clear" data-clear="${esc(cat.space)}" aria-label="Clear the ${esc(cat.label)} style">Clear Selection</button>`
+                : ""
+            }<button type="button" class="fb-link rdd-all" data-viewall="${esc(cat.space)}">View All Styles</button>`
+      }</span>
+    </header>
+    ${
+      cat.space === "unassigned"
+        ? ""
+        : `<div class="rdd-cards" role="radiogroup" aria-label="${esc(cat.label)} styles">${cards
+            .map((rec) => cardHtml(rec, rec.id === selected, cat.space))
+            .join("")}</div>`
+    }
+    ${appliesToHtml(cat)}
+  </section>`;
+}
+
+/** Compact per-category completion status shown above the style grids. */
+function statusHtml(cats) {
+  return `<div class="rdd-status">${cats
+    .map(
+      (c) =>
+        `<span class="rdd-chip${c.complete ? " ok" : ""}" data-space="${esc(c.space)}">
+          <i data-lucide="${c.complete ? "check-circle-2" : "circle-alert"}"></i>
+          <b>${esc(c.label)}:</b> ${esc(c.complete ? c.styleName || "Mixed Styles" : "Style Needed")}</span>`,
+    )
     .join("")}</div>`;
 }
 
-function groupHtml(model, group) {
-  const selected = group.space === "unassigned" ? "" : model.styleBySpace[group.space] || "";
-  const cards = group.space === "unassigned" ? [] : quickCards(group.space, selected);
-  return `<section class="rdd-group" data-space="${esc(group.space)}">
-    <header class="rdd-group-h">
-      <h3>${esc(group.label)} · ${group.items.length} Photo${group.items.length === 1 ? "" : "s"}</h3>
-      ${
-        group.space === "unassigned"
-          ? `<span class="rdd-warn"><i data-lucide="alert-circle"></i>Set a room or area on the Photos step first.</span>`
-          : `<button type="button" class="fb-link rdd-all" data-viewall="${esc(group.space)}">View All Styles</button>`
-      }
-    </header>
-    ${
-      group.space === "unassigned"
-        ? ""
-        : `<div class="rdd-cards" role="radiogroup" aria-label="${esc(group.label)} styles">${cards
-            .map((rec) => cardHtml(rec, rec.id === selected, group.space))
-            .join("")}</div>`
-    }
-    ${photoRowHtml(model, group)}
-  </section>`;
+/** Per-photo overrides live in one collapsed section, never clipped rows. */
+function overridesHtml(model, cats) {
+  const rows = [];
+  cats.forEach((cat) => {
+    cat.items.forEach((it) => {
+      const own = hasOverride(model, it);
+      const id = effectiveStyleId(model, it);
+      const state = own
+        ? `Custom Style: ${styleName(id) || "Not chosen"}`
+        : id
+          ? `Uses ${cat.label} Style: ${styleName(id)}`
+          : `No ${cat.label} style chosen yet`;
+      rows.push(`<div class="rdd-photo${own ? " own" : ""}">
+        <span class="rdd-photo-th"><img src="${esc(it.signed || it.previewUrl || "")}" alt="${esc(it.room || "Photo")}" loading="lazy"></span>
+        <span class="rdd-photo-m"><b>${esc(it.room || "Room Type Needed")}</b><em>${esc(state)}</em></span>
+        <span class="rdd-photo-a">
+          <button type="button" class="fb-link" data-photostyle="${esc(it.key)}">Customize</button>
+          ${own ? `<button type="button" class="fb-link" data-photoreset="${esc(it.key)}">Use Group Style</button>` : ""}
+        </span>
+      </div>`);
+    });
+  });
+  return `<details class="rdd-ovr">
+    <summary><i data-lucide="chevron-right"></i><b>Customize Individual Photos</b>
+      <em>Assign a different style or instructions to a specific photo.</em></summary>
+    <div class="rdd-photos">${rows.join("")}</div>
+  </details>`;
 }
 
 /** The full Design page body. */
 export function designStepHtml(ctx) {
   const items = ctx.items || [];
   const model = ctx.model;
-  const groups = designGroups(items);
-  const blockers = designBlockers(items, model);
-  return `<div class="rdd-page">
-    <div class="rdd-intro">
-      <h2>Choose a Design Style</h2>
-      <p>Choose one shared direction or customize styles for different spaces.</p>
-    </div>
-    <div class="rdd-groups">${groups.map((g) => groupHtml(model, g)).join("")}</div>
+  const cats = categoryStatus(items, model);
+  const summary = designBlockerSummary(items, model);
+  const blocked = designBlockers(items, model).length > 0;
+  return `<div class="rdd-page rdd-design">
+    <div class="rdd-scroll">
+    ${statusHtml(cats)}
+    <div class="rdd-groups">${cats.map((c) => groupHtml(model, c)).join("")}</div>
+    ${overridesHtml(model, cats)}
+
 
     <section class="rdd-shared">
       <h3>Design Direction</h3>
