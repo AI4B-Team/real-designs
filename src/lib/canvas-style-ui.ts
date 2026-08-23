@@ -627,6 +627,50 @@ export function mountCanvasStyle(
     openBrowser({ need, ctx: c, currentId: selection()?.styleId || "", onPick: pick });
   }
 
+  /* Undo history for Clear: the previous style and the exact scope it lived
+     at, so Undo restores it where it was and nowhere else. */
+  const undoStack: StyleUndo[] = [];
+
+  function clearStyle(): boolean {
+    const need = needNow();
+    const sel = selection();
+    if (!need || !sel) return false;
+    const c = getContext();
+    const others = Math.max(0, (c.photoKeys || []).filter((k) => k && k !== c.photoKey).length);
+    const plan = clearPlan(sel, { otherPhotoCount: others });
+    if (!plan) return false;
+    /* A project or property style is shared: never take it away from other
+       photos silently. */
+    if (plan.needsConfirm && typeof window !== "undefined" && typeof window.confirm === "function") {
+      if (!window.confirm(plan.confirmMessage)) return false;
+    }
+    const res = applyClear(store, sel, ctxFor(need, c));
+    store = res.store;
+    undoStack.push(res.undo);
+    saveDirections(store);
+    expanded = true;
+    paint();
+    try {
+      window.dispatchEvent(
+        new CustomEvent("rd:canvas-style", { detail: { need, styleId: "", cleared: plan.scope } }),
+      );
+    } catch (_) {
+      /* event is advisory */
+    }
+    return true;
+  }
+
+  function undoLast(): boolean {
+    const last = undoStack.pop();
+    if (!last) return false;
+    store = undoClear(store, last);
+    saveDirections(store);
+    expanded = true;
+    paint();
+    return true;
+  }
+
+
   document.addEventListener("click", (e: any) => {
     const el = host();
     if (!el || el.hidden) return;
