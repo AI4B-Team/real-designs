@@ -371,6 +371,15 @@ function SharedPackage() {
   const accent = /^#[0-9a-f]{6}$/i.test(pk.accent || "") ? pk.accent : "#CC0000";
   const title = presentationTitle(pk.title);
   const prepared = preparedByLine(pk.settings);
+  // Workspace branding only replaces the REAL DESIGNS mark when the brand kit
+  // was verified; otherwise the canonical mark stays.
+  const settings = (pk.settings ?? {}) as Record<string, unknown>;
+  const branding = resolveShareBranding({
+    name: typeof settings["brand_name"] === "string" ? (settings["brand_name"] as string) : null,
+    logo_url: pk.logo_url ?? null,
+    verified: settings["brand_verified"] === true,
+    accent,
+  });
   const version = presentationVersion(items);
   const shown = perms.mode === "slideshow" ? items.slice(cursor, cursor + 1) : items;
 
