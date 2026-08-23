@@ -160,7 +160,8 @@ export const PresentationList = forwardRef<PresentationListHandle, PresentationL
     useEffect(() => {
       if (!flash || !listRef.current) return;
       const node = listRef.current.querySelector('[data-pid="' + CSS.escape(flash) + '"]');
-      node?.scrollIntoView({ block: "center", behavior: "smooth" });
+      if (node && typeof node.scrollIntoView === "function")
+        node.scrollIntoView({ block: "center", behavior: "smooth" });
     }, [flash]);
 
     const toggleHistory = useCallback(
