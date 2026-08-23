@@ -65,19 +65,19 @@ const chooseFormat = async (ratio: string) => {
 
 const tileClasses = () =>
   [...stagingHost().querySelectorAll(".rv-tile")].map(
-    (t) => ["rt-916", "rt-169", "rt-11"].find((c) => t.classList.contains(c)) || "none",
+    (t) => ["rt-916", "rt-169", "rt-11", "rt-orig"].find((c) => t.classList.contains(c)) || "none",
   );
 
 const addClass = () => {
   const a = stagingHost().querySelector(".rv-addcard") as HTMLElement;
-  return ["rt-916", "rt-169", "rt-11"].find((c) => a.classList.contains(c)) || "none";
+  return ["rt-916", "rt-169", "rt-11", "rt-orig"].find((c) => a.classList.contains(c)) || "none";
 };
 
 describe("photo format reshapes the review grid", () => {
-  it("defaults to square and switches every frame immediately", async () => {
+  it("defaults to original and switches every frame immediately", async () => {
     await openReviewWith(["a.jpg", "b.jpg", "c.jpg"]);
-    expect(tileClasses()).toEqual(["rt-11", "rt-11", "rt-11"]);
-    expect(addClass()).toBe("rt-11");
+    expect(tileClasses()).toEqual(["rt-orig", "rt-orig", "rt-orig"]);
+    expect(addClass()).toBe("rt-orig");
 
     await chooseFormat("9:16");
     expect(tileClasses()).toEqual(["rt-916", "rt-916", "rt-916"]);
@@ -92,7 +92,7 @@ describe("photo format reshapes the review grid", () => {
   it("keeps the selected button and the card shapes in agreement", async () => {
     await openReviewWith(["a.jpg"]);
     await chooseFormat("1:1");
-    const on = stagingHost().querySelector(".bx-fmtseg button.on") as HTMLElement;
+    const on = stagingHost().querySelector(".rif-card.on") as HTMLElement;
     expect(on.getAttribute("data-ratio")).toBe("1:1");
     expect(tileClasses()).toEqual(["rt-11"]);
   });

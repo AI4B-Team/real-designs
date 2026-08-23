@@ -1,51 +1,85 @@
 /**
- * Photo Design output ratios.
+ * Image Format — the aspect ratio a design is generated at.
  *
- * The header offers exactly the same three primary choices as the Video
- * Builder — Portrait 9:16, Landscape 16:9, Square 1:1 — in the same order, so
- * a photo project and a video project speak one format language. Everything
- * else (Original, 4:3, 4:5, 3:2, 2:3) stays available under "More Ratios".
+ * This is not a file format: it controls the shape of the generated image.
+ * The setting is chosen in the Photos step, stored in the durable draft and
+ * carried unchanged through Design, Review and generation.
  *
- * The ratio is metadata only: it is stored beside the photo and passed into
- * generation. The uploaded original is never rewritten.
+ * "Original" is the one canonical default: each source photo keeps its own
+ * shape and nothing is cropped away.
  */
 
-export type OutputRatio = "original" | "9:16" | "16:9" | "1:1" | "4:3" | "4:5" | "3:2" | "2:3";
+export type OutputRatio =
+  | "original"
+  | "9:16"
+  | "16:9"
+  | "1:1"
+  | "4:3"
+  | "4:5"
+  | "3:2"
+  | "2:3"
+  | "5:4";
 
 export type RatioOption = { id: OutputRatio; label: string; note?: string };
 
-/** The three buttons the header is allowed to show, matching Video Format. */
+/** The three buttons the video-parity header is allowed to show. */
 export const PRIMARY_OUTPUT_RATIOS: RatioOption[] = [
   { id: "9:16", label: "Portrait", note: "9:16" },
   { id: "16:9", label: "Landscape", note: "16:9" },
   { id: "1:1", label: "Square", note: "1:1" },
 ];
 
-/** Everything reachable through "More Ratios". */
+/**
+ * The Image Format cards shown in the Photos step, in order. Original leads
+ * because it is the safe default.
+ */
+export const IMAGE_FORMAT_CARDS: RatioOption[] = [
+  { id: "original", label: "Original", note: "Keep Each Photo's Current Shape" },
+  { id: "16:9", label: "Landscape", note: "16:9" },
+  { id: "1:1", label: "Square", note: "1:1" },
+  { id: "9:16", label: "Portrait", note: "9:16" },
+];
+
+/** Everything reachable through "More" — every one supported by generation. */
 export const MORE_OUTPUT_RATIOS: RatioOption[] = [
   { id: "original", label: "Original" },
-  { id: "4:3", label: "Landscape", note: "4:3" },
-  { id: "4:5", label: "Portrait", note: "4:5" },
+  { id: "4:3", label: "MLS Landscape", note: "4:3" },
   { id: "3:2", label: "Classic", note: "3:2" },
+  { id: "5:4", label: "Print", note: "5:4" },
+  { id: "4:5", label: "Instagram Post", note: "4:5" },
   { id: "2:3", label: "Portrait", note: "2:3" },
 ];
 
-export const OUTPUT_RATIOS: RatioOption[] = [...PRIMARY_OUTPUT_RATIOS, ...MORE_OUTPUT_RATIOS];
+export const OUTPUT_RATIOS: RatioOption[] = [
+  { id: "original", label: "Original" },
+  { id: "16:9", label: "Landscape", note: "16:9" },
+  { id: "1:1", label: "Square", note: "1:1" },
+  { id: "9:16", label: "Portrait", note: "9:16" },
+  { id: "4:3", label: "MLS Landscape", note: "4:3" },
+  { id: "3:2", label: "Classic", note: "3:2" },
+  { id: "5:4", label: "Print", note: "5:4" },
+  { id: "4:5", label: "Instagram Post", note: "4:5" },
+  { id: "2:3", label: "Portrait", note: "2:3" },
+];
 
-/** New photo projects open in Square 1:1, the default shown on Prepare Your Photos. */
-export const DEFAULT_OUTPUT_RATIO: OutputRatio = "1:1";
+/** Every ratio the generation backend accepts. */
+export const SUPPORTED_RATIOS = OUTPUT_RATIOS.map((r) => r.id);
+
+/** The one canonical default: never Square, never inherited. */
+export const DEFAULT_OUTPUT_RATIO: OutputRatio = "original";
 
 export function isOutputRatio(v: unknown): v is OutputRatio {
   return OUTPUT_RATIOS.some((r) => r.id === v);
 }
 
 export function isPrimaryRatio(v: unknown): boolean {
-  return PRIMARY_OUTPUT_RATIOS.some((r) => r.id === v);
+  return IMAGE_FORMAT_CARDS.some((r) => r.id === v);
 }
 
 export function normalizeOutputRatio(v: unknown): OutputRatio {
   return isOutputRatio(v) ? v : DEFAULT_OUTPUT_RATIO;
 }
+
 
 /** Per-photo override, or null when the photo follows the project default. */
 export function normalizeOverride(v: unknown): OutputRatio | null {
@@ -84,7 +118,9 @@ const RATIO_CLASS: Record<OutputRatio, string> = {
   "4:5": "rt-45",
   "3:2": "rt-32",
   "2:3": "rt-23",
+  "5:4": "rt-54",
   original: "rt-orig",
+
 };
 
 export const RATIO_CLASSES: string[] = Object.values(RATIO_CLASS);

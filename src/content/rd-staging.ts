@@ -91,6 +91,14 @@ import {
 import { cardStatusHtml, registerCardStatus } from "@/lib/builder-card-status";
 import { formatSelectorHtml } from "@/lib/builder-format-selector";
 import {
+  imageFormatSectionHtml,
+  bindImageFormat,
+  focusImageFormat,
+} from "@/lib/image-format-ui";
+import { openCropDialog } from "@/lib/crop-position-dialog";
+import { normalizeCrop, cropForDraft, isCustomCrop, cropStyle } from "@/lib/photo-crop";
+
+import {
   OUTPUT_RATIOS,
   PRIMARY_OUTPUT_RATIOS,
   MORE_OUTPUT_RATIOS,
@@ -200,6 +208,8 @@ function mkItem(file) {
     err: "",
     /* null = follow the project default. */
     ratio: null,
+    /* Placement inside a fixed Image Format frame; null = centred default. */
+    crop: null,
     /* The ratio a finished design was actually rendered at. */
     resultRatio: null,
     /* Non-destructive orientation, in degrees clockwise. */
@@ -284,6 +294,7 @@ function draftPayload() {
           result_path: i.resultPath || null,
           error: i.err || "",
           ratio: normalizeOverride(i.ratio),
+          crop: cropForDraft(i.crop),
           result_ratio: i.resultRatio || null,
           rotation: normalizeRotation(i.rotation),
         };
@@ -629,6 +640,7 @@ function hydrate(draft) {
       resultPath: saved.result_path || null,
       resultUrl: null,
       ratio: normalizeOverride(saved.ratio),
+      crop: cropForDraft(saved.crop),
       resultRatio: saved.result_ratio || null,
       rotation: normalizeRotation(saved.rotation),
       err: saved.state === "generating" ? "That render was interrupted." : saved.error || "",
@@ -1052,7 +1064,7 @@ function designFeatures(it) {
     out.push({
       id: "ratio",
       icon: "crop",
-      label: "Photo Format",
+      label: "Image Format",
       value: ratioLabel(it.ratio),
       removable: false,
     });
@@ -1107,6 +1119,12 @@ function tileRatioClass(it) {
  * reference — a signed URL is only ever a cached hint — so every frame stays
  * bound to a path and can re-sign itself instead of going gray.
  */
+/** The card image previews the exact framing generation will use. */
+function cropAttr(it) {
+  if (!it || !isCustomCrop(it.crop) || tileRatio(it) === "original") return "";
+  return ` style="${cropStyle(it.crop)}"`;
+}
+
 function imgAttrs(it) {
   const bind = it.resultUrl || it.resultPath ? it.resultPath || it.path || "" : it.path || "";
   const url = it.resultUrl || it.signed || it.previewUrl || "";
@@ -1159,7 +1177,7 @@ function cardHtml(it, seq) {
   return `<div class="rv-tile ${rc} ${it.selected ? "on" : ""}${ws ? " ws-" + ws.cls : ""}${failed ? " rd-fail" : ""}" data-k="${it.key}">
     <div class="rv-tile-th${failed ? " rd-img-fail" : ""}"${failed ? ' data-photo-fail="upload"' : ""} data-open="${it.key}" role="button" tabindex="0" aria-label="Photo ${n}: open ${esc(it.name)} in the design canvas">
 
-      <img${imgAttrs(it)} data-rot="${normalizeRotation(it.rotation)}" alt="${esc(it.name)}" loading="lazy">
+      <img${imgAttrs(it)}${cropAttr(it)} data-rot="${normalizeRotation(it.rotation)}" alt="${esc(it.name)}" loading="lazy">
       <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Design ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
       ${sceneNumberHtml(n)}
       ${cardStatusHtml({ flow: "photo", key: it.key, noun: "design settings", features: designFeatures(it) })}
@@ -1167,7 +1185,7 @@ function cardHtml(it, seq) {
       ${uploadChipHtml(it)}
       ${it.status === "failed" ? photoFailPanelHtml("upload") : ""}
       ${it.state === "generating" ? '<span class="rds-run"><i data-lucide="loader"></i>Generating</span>' : ""}
-      ${override ? `<span class="rv-tile-fmt" title="Custom format: ${esc(ratioLabel(override))}"><i data-lucide="crop"></i>${esc(ratioLabel(override))}</span>` : ""}
+      ${override ? `<span class="rv-tile-fmt" title="Image Format: ${esc(ratioLabel(override))}"><i data-lucide="crop"></i>${esc(ratioLabel(override))}</span>` : ""}
       ${imageToolbarHtml(
         failed
           ? []
@@ -1218,8 +1236,97 @@ function gridHtml() {
     .join("")}${addCardHtml()}</div>`;
 }
 
-/* The counts live in the selection bar and the footer, so the only thing left
-   to say beside the address is whether the work is safely stored. */
+/* ------------------------------------------------------------ image format
+   Image Format is chosen here, in the Photos step, and nowhere else. Review
+   only ever displays the stored choice. */
+
+/**
+ * A label no two photos can share, so a four-kitchen batch is still readable:
+ * "Kitchen · Photo 2".
+ */
+function photoLabel(it, n) {
+  const seq = Number(n) || ordered().findIndex((x) => x.key === it.key) + 1;
+  const room = (it && it.room) || "Room Type Needed";
+  return `${room} · Photo ${seq}`;
+}
+
+/** The photos the format control lists, already labelled. */
+function formatItems() {
+  return ordered().map((it, i) => ({
+    key: it.key,
+    room: it.room,
+    ratio: it.ratio,
+    crop: it.crop,
+    label: photoLabel(it, i + 1),
+  }));
+}
+
+function formatSectionHtml() {
+  return imageFormatSectionHtml({
+    value: normalizeOutputRatio(S.outputRatio),
+    items: formatItems(),
+    open: !!S.formatOpen,
+  });
+}
+
+/** Re-render the Image Format section in place, never the whole page. */
+function renderFormatSection(el) {
+  const host_ = (el || host())?.querySelector("#rdsFormat");
+  if (!host_ || !host_.parentElement) return;
+  const box = document.createElement("div");
+  box.innerHTML = formatSectionHtml();
+  const next = box.firstElementChild;
+  if (!next) return;
+  host_.replaceWith(next);
+  bindFormatSection(el || host());
+  paint();
+}
+
+function bindFormatSection(el) {
+  if (!el) return;
+  bindImageFormat(el, {
+    onRatio: (r) => void setProjectRatio(r),
+    onMore: () => openProjectRatioMore(),
+    onPhotoRatio: (key, ratio) => {
+      const it = itemAt(key);
+      if (!it) return;
+      it.ratio = normalizeOverride(ratio);
+      S.formatOpen = true;
+      saveDraft();
+      applyRatiosLive();
+      renderFormatSection(el);
+    },
+    onCrop: (key) => openCropFor([itemAt(key)].filter(Boolean)),
+    onCropAll: () => openCropFor(ordered().filter((i) => i.selected)),
+  });
+}
+
+/** Open the reposition dialog for photos that render at a fixed ratio. */
+function openCropFor(items) {
+  const list = (items || [])
+    .map((it) => ({
+      key: it.key,
+      name: photoLabel(it),
+      url: it.resultUrl || it.signed || it.previewUrl || "",
+      ratio: tileRatio(it),
+      crop: normalizeCrop(it.crop),
+    }))
+    .filter((p) => p.url && p.ratio !== "original");
+  if (!list.length) {
+    cmToast("Choose a fixed image format first — Original never crops.");
+    return;
+  }
+  openCropDialog(list, (key, crop) => {
+    const it = itemAt(key);
+    if (!it) return;
+    it.crop = cropForDraft(crop);
+    saveDraft();
+    applyRatiosLive();
+    renderFormatSection(host());
+  });
+}
+
+
 function statusText() {
   const uploading = S.items.some((i) => i.status === "uploading");
   if (S.saveState === "saving" || uploading) return saveLabel("saving");
@@ -1301,22 +1408,12 @@ function render() {
     <div class="rv-head">
       <div>
         <h2>Prepare Your Photos</h2>
-        <p>Choose the photos you want to design, confirm their room types, and select an output format.</p>
+        <p>Choose the photos you want to design, confirm their room types, and set the image format.</p>
       </div>
       <div class="rv-head-tools">
-        ${formatSelectorHtml({
-          label: "Photo Format",
-          options: PRIMARY_OUTPUT_RATIOS,
-          value: normalizeOutputRatio(S.outputRatio),
-          attr: "ratio",
-          id: "rds-ratio",
-          more: { label: "More Ratios", value: "__more" },
-          customLabel: ratioLabel(S.outputRatio),
-        })}
         <input type="file" id="rdsFile" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif" multiple hidden>
         <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
           <div class="rv-more-m">
-            <button data-act="moreratios">More Ratios</button>
             <button data-act="all">Select All</button>
             <button data-act="none">Deselect All</button>
             <button data-act="del">Remove Selected</button>
@@ -1330,7 +1427,9 @@ function render() {
     <div class="rv-layout rv-railed">
       ${stepRailHtml("review")}
       <div class="rv-wiz bx-work">
+        ${formatSectionHtml()}
         <div class="rv-utility">
+
           <label class="rv-selall"><input type="checkbox" id="rdsSelAll" ${all ? "checked" : ""}><b id="rdsSelCount">${sel} of ${S.items.length} selected</b></label>
           <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}</div>
           <div class="rv-utility-a" id="rdsBulkBar"${sel > 0 ? "" : ' hidden'}>
@@ -1373,6 +1472,10 @@ function render() {
   mountUploadRetries(el);
   mountRotations(el);
   mountFloatingAdd(el);
+  if (S.focusFormat) {
+    S.focusFormat = false;
+    focusImageFormat(el);
+  }
 }
 
 /* ------------------------------------------------- design + review pages
@@ -1434,6 +1537,10 @@ function renderDesignFlow(el) {
         model,
         address: S.address || "",
         ratioLabel: ratioLabel(S.outputRatio),
+        balance: typeof S.creditBalance === "number" ? S.creditBalance : null,
+        photoLabel,
+        photoFormat: (it) => ratioLabel(tileRatio(it)),
+        photoCustomCrop: (it) => isCustomCrop(it.crop) && tileRatio(it) !== "original",
         blockers: reviewBlockers({
           items,
           model,
@@ -1470,6 +1577,11 @@ function renderDesignFlow(el) {
     bindReviewStep(el, {
       onEditPhotos: () => goStep("review"),
       onEditDesign: () => goStep("design"),
+      onEditFormat: () => {
+        S.formatOpen = true;
+        S.focusFormat = true;
+        goStep("review");
+      },
       onGenerate: () => {
         persistDesign();
         goStep("review");
@@ -1695,7 +1807,7 @@ async function setProjectRatio(next) {
   const overrides = overriddenItems();
   if (overrides.length) {
     const choice = await ratioChoiceDialog({
-      title: "Update Photo Format?",
+      title: "Update Image Format?",
       body: "Some photos use a custom output ratio.",
     });
     if (choice === "cancel") return;
@@ -1704,6 +1816,7 @@ async function setProjectRatio(next) {
   S.outputRatio = ratio;
   saveDraft();
   applyRatiosLive();
+  renderFormatSection(host());
 }
 
 /**
@@ -1724,6 +1837,11 @@ function applyRatiosLive() {
     if (!it) return;
     const want = tileRatioClass(it);
     RATIO_CLASSES.forEach((c) => tile.classList.toggle(c, c === want));
+    const im = tile.querySelector(".rv-tile-th img");
+    if (im) {
+      if (isCustomCrop(it.crop) && tileRatio(it) !== "original") im.setAttribute("style", cropStyle(it.crop));
+      else im.removeAttribute("style");
+    }
     /* The badge only exists while the photo genuinely overrides the project. */
     const frame = tile.querySelector(".rv-tile-th");
     const badge = tile.querySelector(".rv-tile-fmt");
@@ -1731,11 +1849,11 @@ function applyRatiosLive() {
     if (override && !badge && frame) {
       const b = document.createElement("span");
       b.className = "rv-tile-fmt";
-      b.title = "Custom format: " + ratioLabel(override);
+      b.title = "Image Format: " + ratioLabel(override);
       b.innerHTML = '<i data-lucide="crop"></i>' + esc(ratioLabel(override));
       frame.appendChild(b);
     } else if (override && badge) {
-      badge.title = "Custom format: " + ratioLabel(override);
+      badge.title = "Image Format: " + ratioLabel(override);
       badge.innerHTML = '<i data-lucide="crop"></i>' + esc(ratioLabel(override));
     } else if (!override && badge) {
       badge.remove();
@@ -1757,7 +1875,7 @@ function applyRatiosLive() {
   const sel = el.querySelector("[data-ratiosel]");
   if (sel && sel.value !== project) sel.value = project;
   /* A ratio outside the three primaries shows as the compact custom chip. */
-  if (!isPrimaryRatio(project)) renderHeaderFormat(el, project);
+  if (el.querySelector(".bx-fmtsel") && !isPrimaryRatio(project)) renderHeaderFormat(el, project);
   paint();
 }
 
@@ -1779,7 +1897,7 @@ function renderHeaderFormat(el, project) {
   if (!host_ || !host_.parentElement) return;
   const wrap = document.createElement("div");
   wrap.innerHTML = formatSelectorHtml({
-    label: "Photo Format",
+    label: "Image Format",
     options: PRIMARY_OUTPUT_RATIOS,
     value: project,
     attr: "ratio",
@@ -1850,7 +1968,7 @@ function openRatioOverride(it) {
   const opts = [
     {
       id: "",
-      label: "Use Project Format",
+      label: "Group Image Format",
       note: "Currently " + ratioLabel(project),
       ratio: project,
     },
@@ -1880,10 +1998,10 @@ function openRatioOverride(it) {
   const wrap = document.createElement("div");
   wrap.className = "bx-cdlg";
   wrap.innerHTML = `<div class="bx-cdlg-in rdof-dlg" role="dialog" aria-modal="true" aria-labelledby="rdofTitle">
-    <h3 id="rdofTitle">Override Photo Format</h3>
+    <h3 id="rdofTitle">Image Format For This Photo</h3>
     <p>Use the project format or choose a different format for this photo.</p>
     <p class="rdof-meta">${esc(roomLabel(it) || "Photo")}${it.name ? " · " + esc(it.name) : ""}</p>
-    <div class="rdof-grid" role="radiogroup" aria-label="Photo Format">${opts.map(cardHtml).join("")}</div>
+    <div class="rdof-grid" role="radiogroup" aria-label="Image Format">${opts.map(cardHtml).join("")}</div>
     ${modalFooterHtml({
       extra: initial
         ? { label: "Reset To Project Format", value: "reset", variant: "ghost" }
@@ -2005,7 +2123,7 @@ function bindReview(el) {
       }
     }),
   );
-  bindRatioControls(el);
+  bindFormatSection(el);
   bindAddress(el);
 
   /* Add Photos stays on this page: the picker adds straight into the grid. */
@@ -2428,8 +2546,8 @@ registerCardMenu("photo", {
           {
             action: "ratio",
             label: normalizeOverride(it.ratio)
-              ? "Override Format · " + ratioLabel(it.ratio)
-              : "Override Format",
+              ? "Image Format · " + ratioLabel(it.ratio)
+              : "Image Format",
             icon: "crop",
           },
         ],

@@ -242,7 +242,7 @@ describe("photo staging: add photos -> review rooms", () => {
     expect(hostEl.querySelector(".rv-rail")).toBeTruthy();
     expect(hostEl.querySelector(".rv-gridfoot")).toBeTruthy();
     expect(hostEl.textContent).toContain(
-      "Choose the photos you want to design, confirm their room types, and select an output format.",
+      "Choose the photos you want to design, confirm their room types, and set the image format.",
     );
     /* Bulk actions collapse into a More menu. */
     expect(hostEl.querySelector(".rv-utility .rv-more")).toBeTruthy();
