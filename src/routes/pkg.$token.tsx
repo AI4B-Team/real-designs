@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { RealDesignsLogoResponsive, REAL_DESIGNS_HOME } from "@/components/brand/RealDesignsLogo";
+import { resolveShareBranding } from "@/lib/share-branding";
 import {
   approvalScopeMessage,
   buildItems,
@@ -401,7 +402,18 @@ function SharedPackage() {
   return (
     <main className="sp-wrap" style={{ "--sp-accent": accent } as Record<string, string>}>
       <header className="sp-head">
-        <RealDesignsLogoResponsive href={REAL_DESIGNS_HOME} />
+        {branding.kind === "workspace" ? (
+          <span className="sp-brand">
+            {branding.logo_url ? (
+              <img src={branding.logo_url} alt={branding.name} className="sp-brand-logo" />
+            ) : (
+              <span className="sp-brand-name">{branding.name}</span>
+            )}
+            <span className="sp-via">Shared Through REAL DESIGNS</span>
+          </span>
+        ) : (
+          <RealDesignsLogoResponsive href={REAL_DESIGNS_HOME} />
+        )}
         <span className="sp-kicker">{recipientLine(pk.client_name)}</span>
       </header>
 
