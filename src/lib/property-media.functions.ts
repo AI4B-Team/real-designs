@@ -164,33 +164,37 @@ export const addMediaVersion = createServerFn({ method: "POST" })
         storage_path: z.string().min(1).max(400),
         ops: z.record(z.string(), z.unknown()).default({}),
         approve: z.boolean().default(false),
+        /* Exact input this version was derived from. */
+        parent: z
+          .object({
+            kind: z.enum(["asset", "version"]),
+            id: z.string().uuid(),
+            path: z.string().min(1).max(400),
+          })
+          .optional(),
+        source_path: z.string().max(400).optional(),
+        job_id: z.string().max(120).nullable().optional(),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: row, error } = await supabase
-      .from("property_media_versions")
-      .insert({
-        user_id: userId,
-        asset_id: data.asset_id,
-        label: data.label,
-        kind: data.kind,
-        modification_class: data.modification_class,
-        storage_path: data.storage_path,
-        ops: data.ops,
-        approved: data.approve,
-      } as any)
-      .select("*")
-      .single();
-    if (error) throw new Error(error.message);
-    const patch: Record<string, unknown> = { modification_class: data.modification_class };
-    if (data.approve) patch["approved_version_id"] = row.id;
-    await supabase
-      .from("property_media_assets")
-      .update(patch as any)
-      .eq("id", data.asset_id);
-    return row;
+    /* One writer for durable versions: the lineage repository refuses
+       preview paths, refuses overwriting the original, and records where the
+       pixels came from. */
+    const { recordDerivedVersion } = await import("@/lib/lineage.server");
+    return await recordDerivedVersion(context.supabase, {
+      userId: context.userId,
+      assetId: data.asset_id,
+      parent: data.parent ?? { kind: "asset", id: data.asset_id, path: data.source_path ?? "" },
+      operation: data.kind === "design" ? "generate" : data.kind === "ai_edit" ? "edit" : "enhance",
+      outputPath: data.storage_path,
+      label: data.label,
+      kind: data.kind,
+      modificationClass: data.modification_class,
+      jobId: data.job_id ?? null,
+      settings: data.ops,
+      approve: data.approve,
+    });
   });
 
 export const approveMediaVersion = createServerFn({ method: "POST" })
@@ -246,12 +250,12 @@ export const deleteMediaVersion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("property_media_versions")
-      .delete()
-      .eq("id", data.id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    /* A version whose file is still shown in a presentation, video or another
+       record is not deletable — the caller is told what is holding it. */
+    const { deleteVersionSafely } = await import("@/lib/lineage.server");
+    const res = await deleteVersionSafely(context.supabase, context.userId, data.id);
+    if (!res.deleted && res.reasons.length) throw new Error(res.message);
+    return { ok: res.deleted };
   });
 
 export const listMediaProperties = createServerFn({ method: "GET" })
