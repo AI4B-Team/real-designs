@@ -50,6 +50,7 @@ function build(rec: StyleRecord): StudioStyleChoice {
 }
 
 /** Validates the id against the catalog and persists it. Returns null when unknown. */
+let announcing = false;
 export function setStudioStyle(id?: string | null): StudioStyleChoice | null {
   const rec = styleById(id);
   if (!rec) return null;
@@ -70,9 +71,16 @@ export function setStudioStyle(id?: string | null): StudioStyleChoice | null {
   } catch (_) {
     /* storage may be blocked */
   }
+  /* Listeners re-read (and sometimes re-write) the choice, so the
+     announcement is never allowed to re-enter itself. */
+  if (announcing) return choice;
+  announcing = true;
   try {
     window.dispatchEvent(new CustomEvent("rd:style-selected", { detail: choice }));
-  } catch (_) {}
+  } catch (_) {
+  } finally {
+    announcing = false;
+  }
   return choice;
 }
 
