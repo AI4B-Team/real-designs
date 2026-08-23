@@ -9,7 +9,7 @@
 import { assertDesignState, readDesignSelection } from "@/lib/staging-design";
 import { describe, expect, it } from "vitest";
 /* The staging model is plain JS by design; tests treat it structurally. */
-import { designStepHtml, quickCards } from "@/lib/staging-design-ui";
+import { designStepHtml, quickCards, reviewStepHtml } from "@/lib/staging-design-ui";
 import {
   categoryStatus,
   clearCategoryStyle,
@@ -18,7 +18,7 @@ import {
   effectiveStyleId,
   newDesignModel,
 } from "@/lib/staging-design";
-import { compatibleStyles } from "@/lib/staging-design";
+import { compatibleStyles, hasCustomization, photoNote } from "@/lib/staging-design";
 
 const items = [
   { key: "a", room: "Kitchen", selected: true },
@@ -238,5 +238,38 @@ describe("design option cards", () => {
     doc.innerHTML = html();
     expect(readDesignSelection(doc)).toMatchObject({ direction: "makeover", grade: "standard" });
     expect(assertDesignState("test", model, readDesignSelection(doc))).toBe(true);
+  });
+});
+
+/**
+ * Per-photo instructions used to be a promise with no input and no readout:
+ * the model field was sent to generation while the UI never collected it and
+ * Review never showed it. These tests hold the round trip together.
+ */
+describe("per-photo instructions", () => {
+  const model = newDesignModel();
+  model.styleBySpace = { interior: "modern", exterior: "modern" };
+  model.notesByPhoto = { b: "Leave the fireplace exactly as it is." };
+
+  it("offers an instruction field for every photo on the Design step", () => {
+    const doc = document.createElement("div");
+    doc.innerHTML = designStepHtml({ items, model });
+    const fields = doc.querySelectorAll("[data-photonote]");
+    expect(fields.length).toBe(items.length);
+    const own = doc.querySelector('[data-photonote="b"]') as HTMLTextAreaElement;
+    expect(own.value).toBe("Leave the fireplace exactly as it is.");
+  });
+
+  it("shows the instruction on Review so nobody pays for unseen input", () => {
+    const doc = document.createElement("div");
+    doc.innerHTML = reviewStepHtml({ items, model, plan: "pro", balance: 40 });
+    expect(doc.textContent).toContain("Leave the fireplace exactly as it is.");
+    expect(doc.querySelectorAll(".rdd-rnote").length).toBe(1);
+  });
+
+  it("counts a note-only photo as a customization", () => {
+    expect(hasCustomization(model, { key: "b" })).toBe(true);
+    expect(hasCustomization(model, { key: "a" })).toBe(false);
+    expect(photoNote(model, { key: "b" })).toBe("Leave the fireplace exactly as it is.");
   });
 });
