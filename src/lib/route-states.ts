@@ -1,4 +1,5 @@
 import { createIcons, icons as lucideIcons } from "lucide";
+import { escapeHtml as esc } from "@/lib/safe-html";
 /**
  * Never render an empty page.
  *
@@ -23,11 +24,6 @@ export type SurfaceCopy = {
   actions: Array<{ id: string; label: string; primary?: boolean }>;
 };
 
-const esc = (s: unknown) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
-  );
 
 /** Default copy per state; callers may override any field. */
 export function surfaceCopy(state: SurfaceState, subject = "This Tool"): SurfaceCopy {

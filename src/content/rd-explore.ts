@@ -15,6 +15,7 @@ import {
 } from "@/lib/style-catalog";
 import { setStudioStyle, applyStudioStyleToControls } from "@/lib/studio-style";
 import { startExploreDraft } from "@/lib/design-draft";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 export { DIRECTIONS } from "@/content/directions";
 
@@ -83,12 +84,6 @@ function write(k, v) {
   try {
     localStorage.setItem(k, JSON.stringify(v));
   } catch (_) {}
-}
-function esc(s) {
-  return String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 }
 
 let saved = read(LS.saved, []);

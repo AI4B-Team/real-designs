@@ -13,6 +13,7 @@
 
 import { createIcons, icons as lucideIcons } from "lucide";
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   ANGLE_SOURCES,
   CAMERA_PRESETS,
   CONTINUITY_LOCK,
@@ -58,12 +59,6 @@ function icons() {
   }
 }
 
-function esc(s: unknown): string {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 /* ------------------------------------------------------------- state */
 

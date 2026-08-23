@@ -19,12 +19,8 @@ import {
   effectiveRatio,
 } from "@/lib/output-ratio";
 import { isCustomCrop } from "@/lib/photo-crop";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 
 export const CROP_WARNING =
   "This format may crop parts of your photos. You can reposition each photo before generation.";

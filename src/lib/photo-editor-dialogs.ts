@@ -8,11 +8,8 @@
 
 import { modalFooterHtml } from "@/lib/modal-footer";
 import { createIcons, icons } from "lucide";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
-const esc = (v: unknown): string =>
-  String(v ?? "").replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
-  );
 
 export type FormDialogOptions = {
   title: string;

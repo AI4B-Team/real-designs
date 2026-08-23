@@ -7,6 +7,7 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   listWatchedSites,
   addWatchedSite,
   removeWatchedSite,
@@ -32,12 +33,6 @@ const S: any = {
 
 function host() {
   return document.getElementById("p-watch") || document.getElementById("v-watch");
-}
-function esc(s: any) {
-  return String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
-  );
 }
 function toast(m: string) {
   try {

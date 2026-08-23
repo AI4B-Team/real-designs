@@ -20,6 +20,7 @@ import {
   type MotionStrength,
 } from "@/lib/video-motion-presets";
 import { PREVIEW_DISCLAIMER, attachMotionPreview } from "@/lib/video-motion-preview";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 const BUCKET = "reveal-videos";
 
@@ -51,12 +52,6 @@ const LENGTHS: Array<[number, string]> = [
 ];
 
 
-function esc(s: any) {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 export type MotionClipInput = {
   title?: string | null;

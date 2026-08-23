@@ -14,6 +14,7 @@
 
 import "@/styles/rd-provider-import.css";
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 export type ProviderId = "drive" | "dropbox";
 
@@ -110,12 +111,6 @@ type Modal = {
 
 let OPEN: Modal | null = null;
 
-function esc(s: unknown): string {
-  return String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 export function closeProviderModal() {
   OPEN?.close();

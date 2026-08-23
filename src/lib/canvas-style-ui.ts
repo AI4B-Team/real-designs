@@ -35,6 +35,7 @@ import {
   type StyleNeed,
 } from "@/lib/canvas-style";
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   applyClear,
   clearPlan,
   undoClear,
@@ -74,17 +75,6 @@ export type CanvasStyleApi = {
 };
 
 
-const esc = (s: unknown): string =>
-  String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) =>
-      (
-        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }) as Record<
-          string,
-          string
-        >
-      )[c] as string,
-  );
 
 function icons(root?: Element | null) {
   try {

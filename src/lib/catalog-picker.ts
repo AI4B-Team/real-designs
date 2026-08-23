@@ -1,4 +1,5 @@
 import { createIcons, icons as lucideIcons } from "lucide";
+import { escapeHtml as esc } from "@/lib/safe-html";
 /**
  * CatalogPickerModal — one shell for every "browse a finite catalog and pick
  * something" modal in the app: rooms and areas, design styles, media,
@@ -58,11 +59,6 @@ export type CatalogPickerOptions = {
   onCustom?: (label: string) => void;
 };
 
-const esc = (s: unknown) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
-  );
 
 function paintIcons(root: HTMLElement) {
   try {

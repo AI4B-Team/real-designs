@@ -13,6 +13,7 @@ import {
   pushToCrm,
 } from "@/lib/crm.functions";
 import { isSignupAdmin, listSignupSurveys, markSignupPushed } from "@/lib/signup-survey.functions";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 const PROVIDERS: Array<{
   id: string;
@@ -164,12 +165,6 @@ async function pushSignup(userId: string) {
   });
 }
 
-function esc(s: any) {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 function host() {
   return document.getElementById("p-crm") || document.getElementById("v-crm");
 }

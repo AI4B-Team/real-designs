@@ -20,6 +20,7 @@ import {
   type MaskAssets,
 } from "@/lib/mask-engine";
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   CLUTTER_CATEGORIES,
   DECLUTTER_MODES,
   EMPTY_ROOM_CONFIRM,
@@ -55,12 +56,6 @@ function icons() {
   }
 }
 
-function esc(s: unknown): string {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 /* --------------------------------------------------------------- state */
 

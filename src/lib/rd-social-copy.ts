@@ -2,6 +2,7 @@
 import { createIcons, icons } from "lucide";
 import { generateSocialCopy } from "@/lib/social-copy.functions";
 import { rdToast } from "@/lib/rd-toast";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 const PLATFORMS: [string, string][] = [
   ["instagram", "Instagram"],
@@ -18,12 +19,6 @@ const TONES: [string, string][] = [
   ["punchy", "Punchy"],
 ];
 
-function esc(s: unknown) {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 export type SocialCopyInput = {
   title?: string | null;

@@ -13,6 +13,7 @@
 
 import { createIcons, icons as lucideIcons } from "lucide";
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   FEATURE_LABEL,
   MLS_DISCLOSURE,
   OCCUPANCY_LEVELS,
@@ -49,12 +50,6 @@ function icons() {
   }
 }
 
-function esc(s: unknown): string {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 /* ------------------------------------------------------------- state */
 

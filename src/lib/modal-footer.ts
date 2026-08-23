@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 /**
  * One modal action system for the whole product.
  *
@@ -42,11 +43,6 @@ export type ModalFooterOptions = {
   stackOnMobile?: boolean;
 };
 
-const esc = (s: unknown) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
-  );
 
 function btn(a: ModalAction, kind: "primary" | "danger" | "ghost" | "outline", loading = false) {
   const label = loading && a.loadingLabel ? a.loadingLabel : a.label;

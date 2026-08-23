@@ -20,12 +20,8 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
-  );
 
 const paint = (root) => {
   try {

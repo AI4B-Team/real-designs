@@ -23,6 +23,7 @@ import { ensureNotEmpty } from "@/lib/route-states";
 import { initAutoRoom, markManualRoom } from "@/lib/canvas-autoroom";
 import { mountStudioResultActions } from "@/lib/canvas-actions";
 import { editorEntry, type ActiveImage } from "@/lib/active-image";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 
 const SETTINGS_KEY = "rd_canvas_workspace";
@@ -72,12 +73,6 @@ export function roomsForSpace(space: string): RoomOption[] {
   return ROOM_OPTIONS.filter((r) => r.space === s);
 }
 
-const esc = (s: unknown) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
-  );
 
 function icons() {
   try {

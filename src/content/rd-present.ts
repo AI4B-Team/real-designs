@@ -13,6 +13,7 @@ import { presentationReadiness } from "@/lib/presentation-publish";
 import { buildApprovalEmail } from "@/lib/approval-link";
 import { productionSafeOrigin } from "@/lib/approval-link";
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   listPackages,
   getPackage,
   savePackage,
@@ -21,11 +22,6 @@ import {
   revokePackageLink,
 } from "@/lib/presentation-packages.functions";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 const paint = () => {
   try {
     createIcons({ icons });

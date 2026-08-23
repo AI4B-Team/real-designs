@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 /* Shared builder chrome.
  *
  * The photo-staging builder and the property-video builder used to draw their
@@ -8,11 +9,6 @@
 /* eslint-disable */
 // @ts-nocheck
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
-  );
 
 /**
  * Progress rail shared by both builders.

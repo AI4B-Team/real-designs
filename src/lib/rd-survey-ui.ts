@@ -8,6 +8,7 @@
  */
 import { createIcons, icons } from "lucide";
 import { getSignupSurvey, saveSignupSurvey } from "@/lib/signup-survey.functions";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 const HOW_HEARD = [
   "Google Search",
@@ -104,11 +105,6 @@ const STEPS: Step[] = [
   },
 ];
 
-const esc = (s: any) =>
-  String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
 
 function toast(msg: string) {
   try {

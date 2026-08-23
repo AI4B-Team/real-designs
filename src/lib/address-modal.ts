@@ -11,6 +11,7 @@ import { createIcons, icons } from "lucide";
    Project Title is deliberately absent: an address never rewrites a title. */
 
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   addressesMatch,
   buildAddress,
   cleanAddressText,
@@ -50,11 +51,6 @@ export type AddressModalOptions = {
   onCancel?: () => void;
 };
 
-const esc = (s: unknown) =>
-  String(s ?? "").replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
-  );
 
 function paint(root: ParentNode) {
   try {

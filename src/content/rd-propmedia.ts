@@ -30,12 +30,8 @@ import {
 } from "@/lib/media-analysis";
 import { openPhotoEditor, openExportDialog } from "@/content/rd-photo-editor";
 import { track } from "@/lib/analytics";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 const paint = () => {
   try {
     createIcons({ icons });

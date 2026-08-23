@@ -9,6 +9,7 @@
  */
 
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   polygonBox,
   polygonCentroid,
   type Box,
@@ -62,12 +63,6 @@ let handlers: Handlers = {};
 
 const HOST_ID = "rdSurfOverlay";
 
-function esc(s: unknown): string {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 function stage(): HTMLElement | null {
   return document.getElementById("cBefore");

@@ -15,6 +15,7 @@ import { buildZip, dataUrlToBytes } from "@/lib/zip-store";
 import { recordExportAudit } from "@/lib/disclosure-audit.functions";
 import { loadDisclosureSettings, saveDisclosureSettings } from "@/lib/disclosure-settings";
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   buildExportAudit,
   captionFor,
   classifyVersion,
@@ -37,10 +38,6 @@ import {
   type ExportScope,
 } from "@/lib/disclosure";
 
-const esc = (v: unknown): string =>
-  String(v ?? "").replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
-  );
 
 const SIZES: { id: string; label: string; maxEdge: number; quality: number }[] = [
   { id: "mls", label: "MLS Standard — 1024px", maxEdge: 1024, quality: 0.85 },

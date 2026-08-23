@@ -32,12 +32,8 @@ import {
   styleName,
 } from "@/lib/staging-design";
 import { styleById } from "@/lib/style-catalog";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 
 /**
  * One card shape for every Design Direction and Finish Grade option.

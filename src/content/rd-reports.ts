@@ -6,12 +6,8 @@
 import { createIcons, icons } from "lucide";
 import { getWorkspaceReport } from "@/lib/reports.functions";
 import { budgetAvailability, budgetsLive } from "@/lib/budget-coming-soon";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 const money = (n) => "$" + Math.round(Number(n) || 0).toLocaleString("en-US");
 const paint = () => {
   try {

@@ -8,6 +8,7 @@
 
 import { createIcons, icons as lucideIcons } from "lucide";
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   INTENSITY_LEVELS,
   LOCK_ELEMENTS,
   REALITY_LOCK_DISCLOSURE,
@@ -178,9 +179,6 @@ export function mountItemTextEntry(
 
 /* ------------------------------------------------------------ the brief */
 
-function esc(s: string): string {
-  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string);
-}
 
 export type BriefReviewResult = "confirm" | "cancel";
 

@@ -11,6 +11,7 @@
 
 import { createIcons, icons as lucideIcons } from "lucide";
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   ASPECT_OPTIONS,
   CLIP_KINDS,
   DURATION_OPTIONS,
@@ -43,12 +44,6 @@ function icons() {
   }
 }
 
-function esc(s: unknown): string {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 /* -------------------------------------------------------------- state */
 

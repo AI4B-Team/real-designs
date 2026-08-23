@@ -3,16 +3,12 @@
 // @ts-nocheck
 import { STYLES, STYLE_CATEGORIES, styleById, applyStyleOverrides } from "@/lib/style-catalog";
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   listStyleOverrides,
   saveStyleOverride,
   deleteStyleOverride,
 } from "@/lib/style-admin.functions";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 const TYPES = ["interior", "exterior", "garden", "virtual-staging", "concept"];
 
 export async function openStyleAdmin(openDrawer, closeDrawer, note, icons_, host) {

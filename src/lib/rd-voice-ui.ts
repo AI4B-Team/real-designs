@@ -3,6 +3,7 @@ import { createIcons, icons as lucideIcons } from "lucide";
    video in that voice. Shared by the design-video and listing-video builders. */
 
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   MY_VOICE,
   VOICE_SCRIPT,
   clearVoiceProfile,
@@ -11,11 +12,6 @@ import {
   type VoiceProfile,
 } from "@/lib/rd-voice";
 
-const esc = (s: unknown) =>
-  String(s ?? "").replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
-  );
 
 export { MY_VOICE };
 

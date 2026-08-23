@@ -149,6 +149,7 @@ import { matchPropertyAddress } from "@/lib/property-address.functions";
 import { suggestAddresses } from "@/lib/property-address.functions";
 import { listMediaProperties, listMediaAssets } from "@/lib/property-media.functions";
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   saveProjectDraft as _saveProjectDraft,
   listProjectDrafts as _listProjectDrafts,
   getProjectDraft as _getProjectDraft,
@@ -158,11 +159,6 @@ const saveProjectDraft = (d) => _saveProjectDraft(d);
 const listProjectDrafts = (d) => _listProjectDrafts({ data: d || {} });
 const getProjectDraft = (d) => _getProjectDraft({ data: d });
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 const paint = () => {
   try {
     createIcons({ icons });

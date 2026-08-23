@@ -62,12 +62,8 @@ import { isFavorite, toggleFavorite, favoriteToast } from "@/lib/favorites";
 import { bootFavorites } from "@/lib/favorites-boot";
 import { beginResume, markResumeConsumed } from "@/lib/resume";
 import { resumeInputForMedia } from "@/lib/media-resume";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 const paint = () => {
   try {
     createIcons({ icons });

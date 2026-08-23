@@ -184,6 +184,7 @@ import {
 /* ------------------------------------------------------------------ model */
 
 import { returnLabel, type ReturnDestination } from "@/lib/active-image";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 export type EditorPhoto = {
   key: string;
@@ -284,13 +285,6 @@ function blankState(): PhotoState {
   };
 }
 
-function esc(s: unknown): string {
-  return String(s ?? "").replace(
-    /[&<>"']/g,
-    (c) =>
-      (({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }) as any)[c] as string,
-  );
-}
 
 function n(v: unknown, d = 0): number {
   const x = Number(v);

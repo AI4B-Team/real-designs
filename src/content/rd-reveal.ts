@@ -207,6 +207,7 @@ import { animateModalHtml, clipCardHtml, clipReviewHtml } from "@/lib/scene-clip
 import { sceneClips } from "@/lib/scene-clip-client";
 import { ANIMATE_CREDITS_PER_CLIP } from "@/lib/scene-enhancement";
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   lookCats,
   fxCats,
   looksForCat,
@@ -249,11 +250,6 @@ function videoCreditBlock(cost) {
 }
 
 const BUCKET = "reveal-videos";
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 const goTo = (v) => {
   const fn = S.go || (typeof window !== "undefined" && window.__rdGo);
   if (fn) fn(v);

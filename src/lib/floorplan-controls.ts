@@ -14,6 +14,7 @@
 
 import { createIcons, icons as lucideIcons } from "lucide";
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   CONCEPT_DISCLAIMER,
   DEFAULT_EYE_HEIGHT_FT,
   FINISH_GRADES,
@@ -69,12 +70,6 @@ function icons() {
   }
 }
 
-function esc(s: unknown): string {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 /* --------------------------------------------------------------- state */
 

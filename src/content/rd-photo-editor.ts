@@ -18,6 +18,7 @@ import { runPhotoEdit, interpretPhotoRequest, analyzePhoto } from "@/lib/photo-e
 import { track } from "@/lib/analytics";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   VFX_LOOKS,
   lookById,
   applyLookAdjust,
@@ -25,11 +26,6 @@ import {
   bakeLook,
 } from "@/lib/rd-vfx-looks";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 
 const paint = () => {
   try {

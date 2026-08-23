@@ -12,12 +12,8 @@ import {
   type AvatarConfig,
 } from "@/lib/rd-avatars";
 import { playAvatarVoice, speakingAvatar, stopAvatarVoice } from "@/lib/rd-avatar-voice";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
-const esc = (s: unknown) =>
-  String(s ?? "").replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
-  );
 
 export { blankAvatarConfig } from "@/lib/rd-avatars";
 

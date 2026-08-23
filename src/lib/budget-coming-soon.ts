@@ -12,6 +12,7 @@ import {
   BUDGET_CTA,
 } from "@/lib/budget-copy";
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   getBudgetAvailability,
   requestBudgetMarket,
   myBudgetRequests,
@@ -46,12 +47,6 @@ export async function budgetAvailability() {
   return cached!;
 }
 
-function esc(s: any) {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 function toast(msg: string) {
   try {

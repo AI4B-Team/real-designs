@@ -11,12 +11,8 @@ import { resolvePhotoUrl } from "@/lib/room-photos";
 import { setHandoff } from "@/lib/handoff";
 import { openStagingReview } from "@/content/rd-staging";
 import { startVideoBuilder } from "@/lib/video-handoff";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
 const paint = () => {
   try {
     createIcons({ icons });

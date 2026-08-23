@@ -8,6 +8,7 @@
  */
 
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   STAGE_TITLE,
   batchTitle,
   countBatch,
@@ -18,16 +19,6 @@ import {
   type Job,
 } from "@/lib/generation-jobs";
 
-function esc(s: unknown): string {
-  return String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) =>
-      (({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }) as Record<
-        string,
-        string
-      >)[c] as string,
-  );
-}
 
 export function statusText(job: Job): string {
   if (job.stage === "complete") return "✓ Complete";

@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from "@/lib/safe-html";
 /**
  * ResultSummaryPanel — shared model + vanilla renderer.
  *
@@ -107,12 +108,6 @@ export function showsDot(tone: StatusTone, plain?: boolean): boolean {
   return !plain && tone !== "neutral";
 }
 
-function esc(s: string): string {
-  return String(s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 /** Values past this length no longer fit a cell at full size. */
 export const LONG_VALUE = 13;

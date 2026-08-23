@@ -17,6 +17,7 @@ import { STYLES, STYLE_CATEGORIES, styleById } from "@/lib/style-catalog";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import { roomSpace } from "@/lib/staging-rooms";
 import { styleFitsSpace } from "@/lib/staging-bulk";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 const PROJECT_TYPE: Record<string, string> = {
   interior: "interior",
@@ -24,11 +25,6 @@ const PROJECT_TYPE: Record<string, string> = {
   landscape: "garden",
 };
 
-const esc = (s: any) =>
-  String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
 
 const INTENSITIES = ["Refresh", "Makeover", "Full Remodel"];
 const GRADES = ["Builder Grade", "Retail Grade", "Designer Grade"];

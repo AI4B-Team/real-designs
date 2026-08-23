@@ -51,6 +51,7 @@ import {
 } from "@/lib/materials-brief";
 
 import {
+import { escapeHtml as esc } from "@/lib/safe-html";
   hoverSurface,
   mountSurfaceOverlay,
   resetSurfaceOverlay,
@@ -117,12 +118,6 @@ function icons() {
   }
 }
 
-function esc(s: unknown): string {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 /* --------------------------------------------------------------- state */
 

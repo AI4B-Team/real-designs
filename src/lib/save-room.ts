@@ -14,6 +14,7 @@ import { modalFooterHtml, setModalButtonLoading } from "@/lib/modal-footer";
 import { ROOM_OPTIONS, ROOM_GROUP_ORDER, roomByLabel, roomSpace } from "@/lib/staging-rooms";
 import { openRoomAreaPicker } from "@/lib/room-area-picker";
 import { saveStudioRoom, listRoomTargets } from "@/lib/rooms.functions";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 export type SaveRoomResult = {
   property_id: string;
@@ -26,11 +27,6 @@ export type SaveRoomResult = {
   created: boolean;
 };
 
-const esc = (s: unknown) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
 
 function toast(msg: string) {
   try {

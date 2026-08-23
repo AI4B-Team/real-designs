@@ -50,6 +50,7 @@ import {
   type MaskAssets,
 } from "@/lib/mask-engine";
 import { materialGroups, surfacesForSpace, surfaceLabel } from "@/lib/materials-catalog";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 
 const byId = (id: string) => document.getElementById(id);
@@ -62,12 +63,6 @@ function icons() {
   }
 }
 
-function esc(s: unknown): string {
-  return String(s ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
-  );
-}
 
 const COLORS = [
   "Warm White",

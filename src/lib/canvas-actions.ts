@@ -9,6 +9,7 @@ import { createIcons, icons as lucideIcons } from "lucide";
  */
 import { startVideoBuilder, videoHandoffIssue } from "@/lib/video-handoff";
 import { IMAGE_ACTIONS, recordImageAction, type ImageActionId } from "@/lib/image-actions";
+import { escapeHtml as esc } from "@/lib/safe-html";
 
 export type ResultContext = {
   /** Display URL of the result on screen. May be a data: URL before saving. */
@@ -76,12 +77,6 @@ const BAR: { id: ResultAction; icon: string; label: string }[] = (
   ] as ResultAction[]
 ).map((id) => ({ id, icon: spec(id).icon, label: spec(id).label }));
 
-const esc = (s: unknown) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
-  );
 
 function icons() {
   try {
