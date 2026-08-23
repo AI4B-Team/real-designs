@@ -68,9 +68,9 @@ describe("room catalog", () => {
 
 describe("room / area picker", () => {
   it("titles itself for the active space and lists only that space", () => {
-    expect(roomPickerTitle("exterior")).toBe("Choose an exterior area");
+    expect(roomPickerTitle("exterior")).toBe("Choose An Exterior Area");
     openRoomAreaPicker({ space: "exterior", onApply: () => {} });
-    expect(modal()!.textContent).toContain("Choose an exterior area");
+    expect(modal()!.textContent).toContain("Choose An Exterior Area");
     const labels = cards().map((c) => c.textContent);
     expect(labels.some((l) => l?.includes("Front Exterior"))).toBe(true);
     expect(labels.some((l) => l?.includes("Kitchen"))).toBe(false);
