@@ -400,6 +400,9 @@ function ensureSaver() {
 
 function saveDraft() {
   if (!S) return;
+  /* The canonical draft is updated even before anything is durable, so a
+     refresh restores the exact step and settings either way. */
+  syncCanonicalDraft();
   /* Nothing durable to write until at least one photo has a storage path. */
   if (!S.items.some((i) => i.path)) return;
   ensureSaver().queue(draftPayload());
