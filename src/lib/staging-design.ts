@@ -297,19 +297,30 @@ export function clearCategoryStyle(model, space) {
  * shown beside the button, so a disabled state is never unexplained.
  */
 export function reviewBlockers(input) {
-  const { items, model, balance, uploading } = input || {};
+  const { items, model, balance, uploading, plan, remainingToday } = input || {};
   const out = photosBlockers((items || []).map((i) => ({ ...i, selected: true })));
   designBlockers(items, model).forEach((m) => {
     if (out.indexOf(m) === -1) out.push(m);
   });
   if (uploading) out.push("Wait for every upload to finish.");
   const cost = creditCost(items);
-  if (typeof balance === "number" && balance < cost) {
+  /* The free plan spends a daily design allowance, not the credit balance, so
+     a zero balance is not a blocker there — running out of the day's designs is. */
+  if (plan === "free") {
+    if (typeof remainingToday === "number" && remainingToday < cost) {
+      out.push(
+        remainingToday > 0
+          ? `Only ${remainingToday} free design${remainingToday === 1 ? "" : "s"} left today. Remove ${cost - remainingToday} photo${cost - remainingToday === 1 ? "" : "s"} or upgrade.`
+          : "You've used all 5 free designs for today. They reset tomorrow, or upgrade for a credit balance.",
+      );
+    }
+  } else if (typeof balance === "number" && balance < cost) {
     const short = cost - balance;
     out.push(`You need ${short} more credit${short === 1 ? "" : "s"} to generate ${cost === 1 ? "this design" : cost + " designs"}.`);
   }
   return out.filter((m, i) => out.indexOf(m) === i);
 }
+
 
 export function canEnterDesign(items) {
   return photosBlockers(items).length === 0;
