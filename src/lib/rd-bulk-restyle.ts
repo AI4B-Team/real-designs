@@ -14,6 +14,14 @@ import { renderDesign } from "@/lib/design-render.functions";
 import { addMediaVersion } from "@/lib/property-media.functions";
 import { STYLES, STYLE_CATEGORIES, styleById } from "@/lib/style-catalog";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
+import { roomSpace } from "@/lib/staging-rooms";
+import { styleFitsSpace } from "@/lib/staging-bulk";
+
+const PROJECT_TYPE: Record<string, string> = {
+  interior: "interior",
+  exterior: "exterior",
+  landscape: "garden",
+};
 
 const esc = (s: any) =>
   String(s ?? "").replace(
@@ -195,16 +203,22 @@ export function openBulkRestyle(input: BulkRestyleInput) {
       stat.textContent = `Redesigning Photo ${i + 1} Of ${items.length} In ${style.displayName}`;
       fill.style.width = Math.round((i / items.length) * 100) + "%";
       try {
+        const known = it.room && it.room !== "Needs Review" ? it.room : "";
+        const space = known ? roomSpace(known) : "interior";
+        if (known && !styleFitsSpace(style.id, space)) {
+          failed++;
+          continue;
+        }
         const src = await resolvePhotoUrl(it.path);
         if (!src) throw new Error("Could not open that photo.");
         const image = await toDataUrl(src, 1100);
         const r = await renderDesign({
           data: {
             image,
-            room_type: it.room && it.room !== "Needs Review" ? it.room : "living room",
+            room_type: known || (space === "interior" ? "living room" : "front exterior"),
             direction: style.displayName,
             style_id: style.id,
-            project_type: "interior",
+            project_type: PROJECT_TYPE[space] || "interior",
             intensity: state.intensity,
             grade: state.grade,
             notes: null,
