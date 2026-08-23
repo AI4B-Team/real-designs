@@ -123,6 +123,8 @@ export const buildScope = createServerFn({ method: "POST" })
     const { charge, chargeErrorMessage } = await import("@/lib/credits.server");
     const billing = await charge(context.userId, "scope", "priced scope");
     if (!billing.ok) throw new Error(chargeErrorMessage(billing));
+    try {
+
 
     const laborFactor = num(market.labor_factor) || 1;
     const materialFactor = num(market.material_factor) || 1;
@@ -272,7 +274,14 @@ export const buildScope = createServerFn({ method: "POST" })
       disclaimer:
         "Planning range, Tampa Bay market, from our own project data. Not a bid or an engineering determination.",
     };
+    } catch (err) {
+      // The scope could not be priced after we charged for it: give it back.
+      const { refund } = await import("@/lib/credits.server");
+      await refund(context.userId, billing.charged, "Priced scope failed");
+      throw err;
+    }
   });
+
 
 /** Read back a computed scope with its audited lines. */
 export const getScope = createServerFn({ method: "GET" })
