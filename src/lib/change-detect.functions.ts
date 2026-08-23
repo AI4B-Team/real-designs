@@ -32,6 +32,8 @@ export const detectChanges = createServerFn({ method: "POST" })
     const { charge, chargeErrorMessage } = await import("@/lib/credits.server");
     const billing = await charge(context.userId, "design", "change detection");
     if (!billing.ok) throw new Error(chargeErrorMessage(billing));
+    try {
+
 
     // Cost mappings are internal pricing data: privileged read only.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
