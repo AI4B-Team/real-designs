@@ -90,7 +90,7 @@ describe("photo format reshapes the review grid", () => {
     await chooseFormat("16:9");
     expect(tileClasses()).toEqual(["rt-169", "rt-169", "rt-169"]);
     expect(addClass()).toBe("none");
-  }, 20000);
+  });
 
 
   it("keeps the selected button and the card shapes in agreement", async () => {
