@@ -93,7 +93,8 @@ export const renderDeclutter = createServerFn({ method: "POST" })
     const { EMPTY_ROOM_CONFIRM, classificationFor, disclosureFor } = await import(
       "@/lib/declutter-brief"
     );
-    const { charge, refund, chargeErrorMessage } = await import("@/lib/credits.server");
+    const { runGenerationItem } = await import("@/lib/generation-run.server");
+    const { imageIdentity } = await import("@/lib/generation-identity");
 
     /* The destructive mode is re-checked on the server: a client that skipped
        the confirmation dialog still cannot empty a room. */
