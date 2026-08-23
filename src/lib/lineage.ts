@@ -154,7 +154,7 @@ export type SaveAction = "save_changes" | "save_as_new_version";
  */
 export function saveActionFor(target: SaveTarget): SaveAction {
   if (target.role === "source") return "save_as_new_version";
-  return isImmutableVersion(target.version, { published: target.published })
+  return isImmutableVersion(target.version, { published: target.published === true })
     ? "save_as_new_version"
     : "save_changes";
 }
