@@ -72,16 +72,16 @@ export interface AppErrorContext {
 }
 
 export interface AppErrorInit {
-  code?: string;
-  category?: ErrorCategory;
-  severity?: ErrorSeverity;
+  code?: string | undefined;
+  category?: ErrorCategory | undefined;
+  severity?: ErrorSeverity | undefined;
   operation: string;
-  userMessage?: string;
-  technicalMessage?: string;
-  retryable?: boolean;
+  userMessage?: string | undefined;
+  technicalMessage?: string | undefined;
+  retryable?: boolean | undefined;
   cause?: unknown;
-  context?: AppErrorContext;
-  correlationId?: string;
+  context?: AppErrorContext | undefined;
+  correlationId?: string | undefined;
 }
 
 /* ------------------------------------------------------------------ copy */
@@ -265,12 +265,12 @@ export function isAppError(value: unknown): value is AppError {
 
 interface ClassifyDefaults {
   operation: string;
-  category?: ErrorCategory;
-  severity?: ErrorSeverity;
-  code?: string;
-  userMessage?: string;
-  context?: AppErrorContext;
-  correlationId?: string;
+  category?: ErrorCategory | undefined;
+  severity?: ErrorSeverity | undefined;
+  code?: string | undefined;
+  userMessage?: string | undefined;
+  context?: AppErrorContext | undefined;
+  correlationId?: string | undefined;
 }
 
 /**
