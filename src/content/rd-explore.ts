@@ -597,7 +597,8 @@ export function mountExplore(go, ctx) {
           <div><b>${esc(style.displayName)}</b><p>${esc(reason)}</p>
             <div class="xp-acts"><button class="btn btn-ghost btn-xs" data-open="${style.id}">Preview</button>
               <button class="btn btn-primary btn-xs" data-use="${style.id}">Try This Style</button></div></div>
-        </article>`,
+        </article>`;
+          },
         )
         .join("")}</div>`;
   }
