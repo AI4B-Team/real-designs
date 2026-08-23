@@ -138,6 +138,7 @@ import {
 import { PHOTOS } from "@/content/rd-photos";
 import { cleanAddressText } from "@/lib/property-address";
 import { openStagingReview } from "@/content/rd-staging";
+import { draftStyle, removeDraftStyle, setDraftStyle, ensureDraft } from "@/lib/design-draft";
 
 const SAMPLE_KEYS: Array<{
   key: string;
@@ -313,6 +314,19 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   let styleChoice: StudioStyleChoice | null = getStudioStyle();
   if (styleChoice) state.style = styleChoice.name;
 
+  /**
+   * Send dropped or picked design photos into the canonical Prepare Photos
+   * workflow. Returns true when it took ownership of the files.
+   */
+  function toStaging(files: File[]): boolean {
+    const list = (files || []).filter(Boolean);
+    if (!list.length) return false;
+    if (state.door === "video") return false;
+    if (state.method === "describe") return false;
+    openStagingReview({ files: list, address: state.property || state.address || "" });
+    return true;
+  }
+
   function refreshStyleChoice() {
     styleChoice = getStudioStyle();
     if (styleChoice) state.style = styleChoice.name;
@@ -358,8 +372,10 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       escLocal(styleChoice.name) +
       "</b>" +
       "<span>Choose a source below to start designing in this style.</span></div>" +
-      '<button type="button" class="btn btn-primary btn-xs" data-sts="c-upload">Upload A File</button>' +
-      '<button type="button" class="sts-link" data-sts="changestyle">Change</button>' +
+      /* No second upload button here: the source row directly below owns
+         upload, so repeating it would be duplicate navigation. */
+      '<button type="button" class="sts-link" data-sts="changestyle">Change Style</button>' +
+      '<button type="button" class="sts-link" data-sts="removestyle">Remove Style</button>' +
       "</div>"
     );
   }
@@ -373,7 +389,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   filePick.addEventListener("change", () => {
     const f = filePick.files && filePick.files[0];
     filePick.value = "";
-    if (f) takeFile(f);
+    if (!f) return;
+    /* One photo is simply a one-item draft: it uses the same Photos ->
+       Design -> Review workflow as many photos, never a separate wizard. */
+    if (toStaging([f])) return;
+    takeFile(f);
   });
 
   const inspoPick = document.createElement("input");
@@ -1698,10 +1718,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       );
       drop.addEventListener("drop", (ev: any) => {
         const files: File[] = Array.from(ev.dataTransfer?.files || []);
-        if (files.length > 1) {
-          openStagingReview({ files, address: state.property || state.address || "" });
-          return;
-        }
+        if (toStaging(files)) return;
         if (files[0]) takeFile(files[0]);
       });
     }
@@ -1857,9 +1874,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       return;
     }
     if (k === "changestyle") {
-      clearStudioStyle();
-      styleChoice = null;
       ctx.go("explore");
+      return;
+    }
+    if (k === "removestyle") {
+      clearStudioStyle();
+      removeDraftStyle();
+      styleChoice = null;
+      state.style = "";
+      render();
       return;
     }
     if (k === "changetype") {
