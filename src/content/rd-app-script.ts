@@ -337,6 +337,13 @@ import { summaryHTML, metric } from "@/lib/result-summary";
 import { mountExplore } from "@/content/rd-explore";
 import { mountWatch } from "@/content/rd-watch";
 import { STYLES, STYLE_CATEGORIES, resolveStyle } from "@/lib/style-catalog";
+import { roomSpace as rdRoomSpace } from "@/lib/staging-rooms";
+
+const RD_PROJECT_TYPE: Record<string, string> = {
+  interior: "interior",
+  exterior: "exterior",
+  landscape: "garden",
+};
 import { getStudioStyle, applyStudioStyleToControls } from "@/lib/studio-style";
 import { mountCanvasStyle } from "@/lib/canvas-style-ui";
 import { styleNeedForTool, sectionTitle } from "@/lib/canvas-style";
