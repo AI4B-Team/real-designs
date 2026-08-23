@@ -1988,12 +1988,40 @@
 }
 
 /* ---- Property Photos filmstrip inside the Canvas workspace ---------------
-   Sits between the image viewport and the permanent bottom action bar. */
+   Floating overlay anchored to the bottom of the image viewport. It is taken
+   out of flow on purpose: expanding or collapsing it must never resize the
+   viewport, move the image, or change the bottom action bar. */
 .rds-strip.rds-film {
   display: block;
   margin: 12px 0 0;
   padding: 6px 10px 8px;
 }
+.rd-app .rds-strip.rds-film.rds-film-float {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 8;
+  margin: 0;
+  max-height: calc(100% - 16px);
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(16, 16, 18, 0.82);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  color: #f4f4f6;
+}
+.rd-app .rds-film-float .rds-film-t,
+.rd-app .rds-film-float .rds-film-cur,
+.rd-app .rds-film-float .rds-film-t svg {
+  color: #f4f4f6;
+}
+.rd-app .rds-film-float .rds-film-n {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f4f4f6;
+}
+
 .rds-film-h {
   display: flex;
   align-items: center;
