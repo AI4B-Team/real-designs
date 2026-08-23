@@ -311,6 +311,8 @@ import {
   markPresentationReminded,
   listShareableVersions,
 } from "@/lib/presentations.functions";
+import { resolveShareBranding, brandingPreviewLine } from "@/lib/share-branding";
+import { EXISTING_LINK_MESSAGE } from "@/lib/approval-link";
 import { buildSocialReel } from "@/lib/social-reel";
 import { track } from "@/lib/analytics";
 import { mountFirstUse } from "@/content/rd-firstuse";
