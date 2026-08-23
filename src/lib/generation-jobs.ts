@@ -139,7 +139,7 @@ export function historicalEstimate(): string | null {
   const h = readHistory();
   if (h.length < MIN_SAMPLES) return null;
   const sorted = h.slice().sort((a, b) => a - b);
-  const median = sorted[Math.floor(sorted.length / 2)];
+  const median = sorted[Math.floor(sorted.length / 2)] ?? sorted[0] ?? 0;
   const secs = Math.round(median / 1000);
   if (secs < 45) return `about ${Math.max(10, Math.round(secs / 5) * 5)} seconds`;
   const mins = Math.round(secs / 30) / 2;
