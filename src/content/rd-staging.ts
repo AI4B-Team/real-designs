@@ -3128,19 +3128,25 @@ function mountStrip() {
 
   strip = document.createElement("div");
   strip.className = "rds-strip rds-film";
-  /* The filmstrip lives INSIDE the Canvas workspace: directly under the image
-     viewport and directly above the permanent bottom action bar (Version
-     History / Save Room), which it never replaces. */
+  /* The filmstrip is a FLOATING OVERLAY anchored to the bottom of the image
+     viewport. It is absolutely positioned inside #rdwStage so it never takes
+     a layout row: opening or closing it cannot change the Canvas shell, the
+     viewport bounds, or the image geometry by a single pixel. */
+  const stageEl = document.getElementById("rdwStage");
   const cardBody = document.querySelector(
     "#v-studio .canvas-card > .card-b",
   ) as HTMLElement | null;
   const bottomBar = document.getElementById("rdwVers");
-  if (cardBody && bottomBar && bottomBar.parentElement === cardBody) {
+  if (stageEl) {
+    strip.classList.add("rds-film-float");
+    stageEl.appendChild(strip);
+  } else if (cardBody && bottomBar && bottomBar.parentElement === cardBody) {
     cardBody.insertBefore(strip, bottomBar);
   } else if (cardBody) cardBody.appendChild(strip);
   else if (view && board && board.nextSibling) view.insertBefore(strip, board.nextSibling);
   else if (view) view.appendChild(strip);
   else document.body.appendChild(strip);
+
 
 
   /* Autosave already persists every edit, so the menu only navigates. */
