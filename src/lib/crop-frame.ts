@@ -16,8 +16,7 @@ import {
   MAX_CROP_ZOOM as MODEL_MAX_ZOOM,
   clampCropModel,
   fromFrameState,
-  normalizeCropModel,
-  wheelZoom,
+  wheelZoomFactor,
 } from "./crop-model";
 
 export type CropRatioId = string;
@@ -181,10 +180,10 @@ export function zoomTo(state: CropState, base: Box, view: Box, scale: number): C
 
 /** Wheel/pinch delta into a scale multiplier — magnitude aware, never per-tick. */
 export function wheelScale(state: CropState, deltaY: number, deltaMode = 0): number {
-  /* One exponential curve for every surface: the canonical model owns it. */
-  const model = normalizeCropModel({ zoom: 1, sourceW: 1000, sourceH: 1000 });
-  const factor = wheelZoom(model, deltaY, deltaMode, 1).zoom;
-  return state.scale * factor;
+  /* One exponential curve for every surface: the canonical model owns it.
+     The multiplier is unclamped here because the caller's minimum scale is its
+     own cover scale, not the model's zoom of 1. */
+  return state.scale * wheelZoomFactor(deltaY, deltaMode);
 }
 
 /**

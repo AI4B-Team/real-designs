@@ -200,14 +200,18 @@ export function zoomCropBy(model: CropModel, factor: number, aspect?: number | n
  * trackpad flick slam the zoom to its limit, so the delta drives the exponent
  * and `deltaMode` is normalized (Firefox reports lines, not pixels).
  */
+export function wheelZoomFactor(deltaY: number, deltaMode = 0): number {
+  const dy = num(deltaY, 0) * (deltaMode === 1 ? 16 : deltaMode === 2 ? 100 : 1);
+  return Math.exp(-dy * 0.0015);
+}
+
 export function wheelZoom(
   model: CropModel,
   deltaY: number,
   deltaMode = 0,
   aspect?: number | null,
 ): CropModel {
-  const dy = num(deltaY, 0) * (deltaMode === 1 ? 16 : deltaMode === 2 ? 100 : 1);
-  return zoomCropBy(model, Math.exp(-dy * 0.0015), aspect);
+  return zoomCropBy(model, wheelZoomFactor(deltaY, deltaMode), aspect);
 }
 
 /** Drag, in fractions of the frame — the same for mouse, touch and keyboard. */
