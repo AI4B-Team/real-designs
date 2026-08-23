@@ -160,3 +160,82 @@ wrong-content-type responses, header leakage).
 
 **Status:** rendering, SSRF and upload-boundary items — Fixed. Full removal of
 template-string rendering — deferred to Phase 1.
+
+---
+
+## Phase 0D — Structured error handling (complete)
+
+Silent failure was the largest correctness risk left after 0C: a survey of the
+codebase found **1,243 `catch` blocks, 521 of them empty or comment-only**, with
+the highest density in the imperative runtime (`src/content/rd-app-script.ts`,
+286; `src/content/rd-staging.ts`, 57). The consequence was not just poor
+support: an upload could fail, a draft could stop saving, and a refund could
+fail to post, all without a single line anywhere.
+
+### The canonical model
+
+`src/lib/errors/app-error.ts` defines `AppError`, the single shape every failure
+takes on both sides of the wire:
+
+- `code`, `category` (13 categories), `severity` (`critical | high | medium | low`),
+  `operation`, `retryable`;
+- `userMessage` — plain, specific, actionable, and the only string a user ever
+  sees; `"Something went wrong"` is now reachable only for a genuinely
+  unclassifiable failure;
+- `technicalMessage` — redacted at construction, so no later call site can
+  forget to redact it;
+- `correlationId`, `timestamp`, and job identity (`jobId`, `batchId`, `draftId`,
+  `assetId`, `versionId`) for tracing;
+- `toRecord()` for logs and `toUserFacing()` for the wire — the latter carries no
+  stack, no cause chain and no provider text.
+
+`toAppError` classifies unknown throws by status and message (401 → session
+expired, 403 → permission, 429 → rate limited, 402/insufficient → credits,
+timeout/fetch → network, 5xx → provider) and preserves an existing `AppError`
+untouched.
+
+### Reporting and notification
+
+- `src/lib/errors/report.ts` — one structured line per failure, severity-mapped
+  console level, an in-memory ring buffer, and a pluggable sink. `tolerate()`
+  replaces the "optional work, empty catch" idiom.
+- `src/lib/errors/notify.ts` — the single user-facing path. It reports once,
+  shows at most one message per `code + operation` inside a 6-second window
+  (the duplicate-toast storm is gone), suppresses low-severity noise entirely,
+  appends the correlation reference only to critical failures, and offers Retry
+  only when the failure is retryable and the caller supplied a safe retry.
+- `src/features/errors/RouteErrorBoundary.tsx` — mounted in `__root.tsx`; a
+  render throw now yields a recoverable screen with a reference, not a blank
+  page.
+- `src/lib/errors/mount-guard.ts` — `guardMount` / `guardMountAsync` isolate each
+  imperative module in `LegacyPrototypeView`. One module failing no longer
+  empties the shell; required modules escalate, optional ones stay quiet but
+  recorded.
+
+### Critical paths wired
+
+| Path | Before | After |
+| --- | --- | --- |
+| Refund after failed generation (`generation-run.server.ts`) | A throwing refund replaced the original error; the user stayed charged with no record | Refund failure is isolated, credit state becomes `disputed`, and a **critical** record with job + user + amount is emitted; the original failure still propagates |
+| Generation failure | Message-only rethrow | Structured record with job id, key, action and credit state |
+| Credit charge / account read (`credits.server.ts`) | `new Error("Credit charge failed: …")` leaked driver text | `AppError` (`credit_charge_failed`, `credit_account_unavailable`) — "Nothing was charged", retryable |
+| Per-file upload (`upload-manager.ts`) | Raw driver message shown in the row | User-facing sentence in the row, structured record with job, file and property |
+| Asset filing after upload | Raw message in job state | Critical record; the job says the photos are safe in storage and shows the reference |
+| Draft autosave (`project-draft.ts`) | `"Couldn't save"` and empty catches around the recovery cache | `draft_save_failed` (escalating to critical once retries are exhausted) and a recorded cache failure |
+
+### Coverage
+
+`src/lib/__tests__/error-handling.test.ts` — 23 tests covering message hygiene,
+secret redaction in technical detail, classification and retryability, wire-safe
+failure shape, single-record reporting, sink resilience, dedupe within and
+across operations, low-severity suppression, correlation reference on critical
+failures only, retry affordance rules, and mount isolation for optional,
+required, sync and async modules.
+
+Suite: **1086 passing / 5 skipped, 95 files** (was 1063).
+
+**Status:** canonical model, notification, boundary and critical-path wiring —
+Fixed. Bulk conversion of the remaining ~500 legacy empty catches inside
+`rd-app-script.ts` / `rd-staging.ts` is deliberately deferred: those files are
+scheduled for decomposition in Phase 1, and rewriting their catch blocks now
+would be thrown away with them.

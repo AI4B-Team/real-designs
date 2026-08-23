@@ -7,6 +7,7 @@ import { initTooltips } from "@/lib/tooltips";
 import { gateFeatureMarkup } from "@/content/feature-markup-gate";
 import { overlaysHtml, viewsHtml } from "@/content/rd-app-html";
 import { initApp } from "@/content/rd-app-script";
+import { guardMount } from "@/lib/errors/mount-guard";
 
 /* Hidden features are cut out of the markup once, at module scope, so they can
    never reach the DOM — not even for a frame, and not even when the rest of
@@ -38,15 +39,19 @@ export function LegacyOverlays() {
  */
 export function LegacyRuntime() {
   useEffect(() => {
-    const cleanup = initApp();
-    const stopTips = initTooltips(document);
-    const stopSelects = initSelects(document);
-    const stopLists = initDatalists(document);
+    /* Each initializer is isolated: before this guard, one throw anywhere in
+       the imperative controller left the user on an empty shell with nothing
+       in the console but a raw stack. Now a failure is classified, reported
+       with a correlation reference, and the surviving modules still run. */
+    const app = guardMount("legacy.initApp", initApp, { required: true });
+    const tips = guardMount("legacy.tooltips", () => initTooltips(document));
+    const selects = guardMount("legacy.selects", () => initSelects(document));
+    const lists = guardMount("legacy.datalists", () => initDatalists(document));
     return () => {
-      stopLists();
-      stopSelects();
-      stopTips();
-      cleanup();
+      guardMount("legacy.datalists.cleanup", () => lists.value?.());
+      guardMount("legacy.selects.cleanup", () => selects.value?.());
+      guardMount("legacy.tooltips.cleanup", () => tips.value?.());
+      guardMount("legacy.initApp.cleanup", () => app.value?.());
     };
   }, []);
   return null;

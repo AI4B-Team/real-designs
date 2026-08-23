@@ -12,6 +12,7 @@ import { uploadRoomPhoto } from "@/lib/room-photos";
 import { measureImage, classify, groupSets } from "@/lib/media-analysis";
 import { createMediaAssets } from "@/lib/property-media.functions";
 import { track } from "@/lib/analytics";
+import { reportError } from "@/lib/errors/report";
 
 export type JobState =
   | "Preparing"
@@ -84,8 +85,10 @@ function persist() {
       files: j.files.map((f) => ({ name: f.name, size: f.size, state: f.state, error: f.error })),
     }));
     localStorage.setItem(LS_KEY, JSON.stringify(slim));
-  } catch {
-    /* storage full or blocked — the queue still runs in memory */
+  } catch (e) {
+    /* storage full or blocked — the queue still runs in memory, but the loss of
+       resume history is recorded rather than swallowed. */
+    reportError(e, { operation: "upload.persistQueue", category: "storage", severity: "low" });
   }
 }
 
@@ -108,8 +111,8 @@ function hydrate() {
         })),
       });
     }
-  } catch {
-    /* ignore unreadable history */
+  } catch (e) {
+    reportError(e, { operation: "upload.hydrateQueue", category: "storage", severity: "low" });
   }
 }
 
@@ -290,8 +293,16 @@ async function run(job: Job) {
         entry.file = undefined;
         job.uploaded++;
       } catch (err: any) {
+        /* Per-file failure is diagnosable and honest: the row keeps the
+           user-facing sentence, and one structured record carries the detail. */
+        const app = reportError(err, {
+          operation: "upload.file",
+          category: "upload",
+          severity: "high",
+          context: { jobId: job.id, fileName: entry.name, propertyId: job.propertyId },
+        });
         entry.state = "failed";
-        entry.error = String(err?.message || err || "Upload failed");
+        entry.error = app.userMessage;
         job.failed++;
       }
       emit();
@@ -341,8 +352,15 @@ async function run(job: Job) {
         job.assetIds.push(...(out as any[]).map((r) => r.id));
       }
     } catch (err: any) {
+      const app = reportError(err, {
+        operation: "upload.fileAssets",
+        category: "persistence",
+        severity: "critical",
+        userMessage: "Some photos uploaded but couldn't be filed. They're safe in storage — retry filing.",
+        context: { jobId: job.id, propertyId: job.propertyId, rows: rows.length },
+      });
       job.state = "Partially Complete";
-      job.current = String(err?.message || "Some photos could not be filed.");
+      job.current = `${app.userMessage} (Ref ${app.correlationId})`;
       job.finishedAt = Date.now();
       emit();
       return;

@@ -19,6 +19,7 @@
 
 import { claim, fingerprint, idempotencyKey, release } from "@/lib/obs/idempotency.server";
 import type { CreditAction } from "@/lib/credits.server";
+import { reportError } from "@/lib/errors/report";
 
 /* ------------------------------------------------------------------ states */
 
@@ -341,8 +342,15 @@ export async function runGeneration<T extends object>(
       try {
         const encoded = JSON.stringify(result);
         if (encoded.length <= MAX_REPLAY_BYTES) replay = JSON.parse(encoded);
-      } catch {
-        /* Unserializable results simply are not replayed. */
+      } catch (e) {
+        /* Unserializable results simply are not replayed — recorded so a
+           silently non-replayable job kind is discoverable. */
+        reportError(e, {
+          operation: "generation.encodeReplay",
+          category: "generation",
+          severity: "low",
+          context: { jobId, kind: req.kind },
+        });
       }
     }
     await deps.saveRecord(key, { state: "done", result: replay, credit_state: creditState });
@@ -362,10 +370,32 @@ export async function runGeneration<T extends object>(
     /* One refund, ever, for this key: the record is marked before the key is
        released, so a retry starts a fresh, separately-charged attempt. */
     if (req.action && creditState === "charged") {
-      await deps.refund(req.userId, charged, `${req.note ?? req.kind} failed [${jobId}]`);
-      creditState = charged > 0 ? "refunded" : "released";
+      try {
+        await deps.refund(req.userId, charged, `${req.note ?? req.kind} failed [${jobId}]`);
+        creditState = charged > 0 ? "refunded" : "released";
+      } catch (refundErr) {
+        /* The single worst failure in the product: the user paid and the work
+           failed. It is never swallowed, never merged into the original error,
+           and it leaves the record in a state a human can find and settle. */
+        creditState = "disputed";
+        reportError(refundErr, {
+          operation: "generation.refund",
+          category: "credits",
+          severity: "critical",
+          code: "credit_refund_failed",
+          userMessage:
+            "Generation failed and the automatic credit refund didn't go through. Support can see this and will settle it.",
+          context: { jobId, key, userId: req.userId, action: req.action, charged },
+        });
+      }
     }
     const message = err instanceof Error ? err.message : String(err);
+    reportError(err, {
+      operation: `generation.${req.kind}`,
+      category: "generation",
+      severity: "high",
+      context: { jobId, key, action: req.action ?? null, creditState },
+    });
     await deps.saveRecord(key, { state: "failed", credit_state: creditState });
     await deps.setJobStage(jobId, "failed", message);
     await deps.release(key);

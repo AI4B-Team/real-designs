@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { RouteErrorBoundary } from "../features/errors/RouteErrorBoundary";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { initAnalytics, trackPageview } from "../lib/analytics";
 import {
@@ -316,8 +317,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      {/* A render throw inside any route now yields a recoverable screen with a
+          correlation reference instead of a blank page. */}
+      <RouteErrorBoundary area="root">
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </RouteErrorBoundary>
     </QueryClientProvider>
   );
 }
