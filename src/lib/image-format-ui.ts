@@ -2,9 +2,9 @@
  * The Image Format control for the Photos step.
  *
  * Image Format is the aspect ratio a design is generated at. It is chosen
- * here — visibly, before the grid — never invented later by Review. Anything
- * other than Original can crop a photo, so the control says so and offers
- * per-photo positioning.
+ * here — visibly, before the grid — never invented later by Review. Original
+ * is the canonical default; anything else can crop a photo, so the control
+ * says so and offers per-photo positioning.
  */
 /* eslint-disable */
 // @ts-nocheck
@@ -40,12 +40,14 @@ const shapeStyle = (id) =>
         return `width:${ww}px;height:${hh}px`;
       })();
 
+/** Every card is one radio in the same group, and every card is the same box. */
 function cardHtml(o, value) {
   const on = o.id === value;
-  return `<button type="button" class="rif-card${on ? " on" : ""}" data-ratio="${esc(o.id)}" aria-pressed="${on ? "true" : "false"}">
+  return `<button type="button" class="rif-card${on ? " on" : ""}" role="radio" data-ratio="${esc(o.id)}"
+    aria-checked="${on ? "true" : "false"}" aria-pressed="${on ? "true" : "false"}" tabindex="${on ? "0" : "-1"}">
     <span class="rif-shape"><i style="${shapeStyle(o.id)}"></i></span>
-    <span class="rif-t"><b>${esc(o.label)}</b><em>${esc(o.note || (o.id === "original" ? "" : o.id))}</em></span>
-    ${on ? '<span class="rif-ck" aria-hidden="true"><i data-lucide="check"></i></span>' : ""}
+    <span class="rif-t"><b>${esc(o.label)}</b><em>${esc(o.note || (o.id === "original" ? "Keep Current Shape" : o.id))}</em></span>
+    <span class="rif-ck" aria-hidden="true">${on ? '<i data-lucide="check"></i>' : ""}</span>
   </button>`;
 }
 
@@ -74,17 +76,24 @@ function perPhotoRow(it, project) {
   </div>`;
 }
 
+/** "Review Crop Position" for one photo, "Review 4 Crop Positions" for many. */
+export function cropReviewLabel(count) {
+  const n = Number(count) || 0;
+  return n <= 1 ? "Review Crop Position" : `Review ${n} Crop Positions`;
+}
+
 /**
- * ctx: { value, items, id }
+ * ctx: { value, items, id, selected }
  */
 export function imageFormatSectionHtml(ctx = {}) {
   const value = normalizeOutputRatio(ctx.value);
   const items = ctx.items || [];
+  const selected = Number(ctx.selected) || items.length;
   const fixed = value !== "original" || items.some((i) => normalizeOverride(i.ratio) && i.ratio !== "original");
   const cards = IMAGE_FORMAT_CARDS.map((o) => cardHtml(o, value)).join("");
   const customCard = isPrimaryRatio(value)
     ? ""
-    : `<button type="button" class="rif-card on" data-ratiomore aria-pressed="true">
+    : `<button type="button" class="rif-card on" role="radio" data-ratiomore aria-checked="true" aria-pressed="true">
         <span class="rif-shape"><i style="${shapeStyle(value)}"></i></span>
         <span class="rif-t"><b>Custom</b><em>${esc(ratioLabel(value))}</em></span>
         <span class="rif-ck" aria-hidden="true"><i data-lucide="check"></i></span>
@@ -94,17 +103,18 @@ export function imageFormatSectionHtml(ctx = {}) {
       <h3 id="rifLbl">Image Format</h3>
       <p>The shape every design is generated at. Original keeps each photo exactly as shot.</p>
     </div>
-    <div class="rif-cards" role="group" aria-labelledby="rifLbl">
+    <div class="rif-cards" role="radiogroup" aria-labelledby="rifLbl">
       ${cards}${customCard}
       <button type="button" class="rif-card rif-more" data-ratiomore>
-        <span class="rif-shape"><i data-lucide="ellipsis"></i></span>
-        <span class="rif-t"><b>More</b><em>Other Supported Ratios</em></span>
+        <span class="rif-shape"><i data-lucide="frame"></i></span>
+        <span class="rif-t"><b>More Formats</b><em>4:3, 3:2, 4:5 And More</em></span>
+        <span class="rif-ck" aria-hidden="true"></span>
       </button>
     </div>
     ${
       fixed
         ? `<p class="rif-warn"><i data-lucide="crop"></i><span>${CROP_WARNING}</span>
-           <button type="button" class="btn btn-ghost btn-sm" data-cropall><i data-lucide="move"></i>Review Crop Positions</button></p>`
+           <button type="button" class="btn btn-secondary btn-sm rif-cropall" data-cropall><i data-lucide="move"></i>${esc(cropReviewLabel(selected))}</button></p>`
         : ""
     }
     <details class="rif-per"${ctx.open ? " open" : ""}>

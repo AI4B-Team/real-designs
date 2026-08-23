@@ -392,7 +392,8 @@ export function reviewStepHtml(ctx) {
   return `<div class="rdd-page rdd-review">
     <dl class="rdd-facts">
       ${ctx.address ? factHtml("Property", ctx.address) : ""}
-      ${factHtml("Image Format", ctx.ratioLabel || "Original", "format")}
+      ${factHtml("Image Format", ctx.ratioLabel || "Original · Keep Source Proportions", "format")}
+      ${ctx.cropCount ? factHtml("Crop Positions", `${ctx.cropCount} confirmed`, "format") : ""}
       ${factHtml("Photos", String(items.length), "photos")}
       ${factHtml("Design Direction", directionLabel(model.direction), "design")}
       ${factHtml("Finish Grade", gradeLabel(model.grade), "design")}

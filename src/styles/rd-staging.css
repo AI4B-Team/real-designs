@@ -2599,27 +2599,60 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
-  min-height: 52px;
+  padding: 10px 12px;
+  /* Every card is the same box: only the ratio glyph inside it changes. */
+  width: 196px;
+  height: 64px;
+  box-sizing: border-box;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: transparent;
+  background: #fff;
   color: inherit;
   cursor: pointer;
+  text-align: left;
 }
 .rif-card:hover {
   border-color: var(--brand);
 }
 .rif-card.on {
   border-color: var(--brand);
-  box-shadow: inset 0 0 0 1px var(--brand);
+  border-width: 2px;
+  padding: 9px 11px;
+  background: rgba(204, 0, 0, 0.05);
 }
 .rif-shape {
   display: grid;
   place-items: center;
   width: 30px;
-  height: 26px;
+  height: 30px;
   flex: none;
+}
+.rif-shape svg {
+  width: 18px;
+  height: 18px;
+  opacity: 0.7;
+}
+.rif-ck {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin-left: auto;
+  border-radius: 999px;
+}
+.rif-card.on .rif-ck {
+  background: var(--brand);
+  color: #fff;
+}
+.rif-t {
+  min-width: 0;
+}
+.rif-t b,
+.rif-t em {
+  display: block;
+  max-width: 118px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .rif-shape i {
   display: block;
@@ -2876,4 +2909,18 @@
   outline: none;
   border-color: var(--brand);
   box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.18);
+}
+
+/* A rail badge may say "Needs Review": progress must be explainable, not a
+   bare number nobody can interpret. */
+.rd-app .rv-rail .bx-badge {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 10.5px;
+  line-height: 1.5;
+  white-space: nowrap;
+  border-radius: 999px;
+  padding: 1px 7px;
+  background: rgba(204, 0, 0, 0.1);
+  color: var(--brand);
 }

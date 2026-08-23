@@ -195,6 +195,8 @@ function newSession(seed = {}) {
     /* Project-level Photo Design output ratio. "original" keeps every photo's
        native aspect; a photo may still carry its own override. */
     outputRatio: normalizeOutputRatio(seed.outputRatio),
+    /* A new draft always opens on Original until the user chooses otherwise. */
+    outputRatioExplicit: false,
   };
 }
 
@@ -235,7 +237,7 @@ function mkItem(file) {
 const WORK_STATES = {
   generating: { label: "Generating", cls: "run", icon: "loader" },
   complete: { label: "Complete", cls: "ok", icon: "check" },
-  failed: { label: "Failed", cls: "bad", icon: "alert-triangle" },
+  failed: { label: "Design Failed", cls: "bad", icon: "alert-triangle" },
   draft: { label: "Draft", cls: "dim", icon: "pencil-line" },
 };
 
@@ -300,6 +302,9 @@ function draftPayload() {
       /* Style choices are part of the draft, so Design survives a refresh. */
       design: S.design || S.bulkSettings || null,
       output_ratio: normalizeOutputRatio(S.outputRatio),
+      /* Only a deliberate choice is restored: an ambiguous legacy draft opens
+         on Original rather than inheriting a format nobody picked. */
+      output_ratio_explicit: !!S.outputRatioExplicit,
       rooms: S.items.reduce((m, i) => {
         m[i.key] = {
           room: i.room || null,
@@ -628,7 +633,10 @@ function hydrate(draft) {
   /* Restore the style choices so Design reopens exactly as it was left. */
   S.design = normalizeDesignModel(draft.settings && draft.settings.design);
   S.bulkSettings = S.design;
-  S.outputRatio = normalizeOutputRatio(draft.settings && draft.settings.output_ratio);
+  const savedFormat = draft.settings && draft.settings.output_ratio;
+  const explicitFormat = !!(draft.settings && draft.settings.output_ratio_explicit);
+  S.outputRatioExplicit = explicitFormat;
+  S.outputRatio = explicitFormat ? normalizeOutputRatio(savedFormat) : "original";
   S.items = assets.map((a) => {
     const saved = rooms[a.key] || {};
     return {
@@ -1278,6 +1286,7 @@ function formatSectionHtml() {
   return imageFormatSectionHtml({
     value: normalizeOutputRatio(S.outputRatio),
     items: formatItems(),
+    selected: S.items.filter((i) => i.selected).length,
     open: !!S.formatOpen,
   });
 }
@@ -1359,10 +1368,20 @@ function stepRailHtml(active) {
   const has = S.items.length > 0;
   const st = stepState();
   const done = st.completed.length;
+  /* Progress tells the truth about validity, never about visits: Photos is
+     complete when its own requirements pass, Design when every selected photo
+     has the settings it needs, and Review only opens after both. */
+  const photosOk = canEnterDesign(S.items);
+  const designOk = photosOk && canEnterReview(S.items, designModel());
+  const designTouched = !!(S.design || S.bulkSettings);
   const extra = {
-    review: { ready: has, badge: has ? String(selectedCount()) : "" },
-    design: { ready: has, done: !!done },
-    final: { ready: !!done, badge: done ? String(done) : "" },
+    review: { ready: has, done: photosOk },
+    design: {
+      ready: has && photosOk,
+      done: designOk,
+      badge: designTouched && !designOk ? "Needs Review" : "",
+    },
+    final: { ready: designOk, badge: done ? String(done) : "" },
   };
   const steps = PHOTO_RAIL.map((s) => ({ ...s, ...(extra[s.key] || {}) }));
   return builderRailHtml({
@@ -1446,7 +1465,6 @@ function render() {
           <label class="rv-selall"><input type="checkbox" id="rdsSelAll" ${all ? "checked" : ""}><b id="rdsSelCount">${sel} of ${S.items.length} selected</b></label>
           <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}</div>
           <div class="rv-utility-a" id="rdsBulkBar"${sel > 0 ? "" : ' hidden'}>
-            <button class="btn btn-primary btn-sm" id="rdsBulk"${sel > 0 ? "" : " disabled"}><i data-lucide="wand-sparkles"></i>Set Design Style · ${sel}</button>
             <button class="btn btn-ghost btn-sm" id="rdsSetRoom"${sel > 0 ? "" : " disabled"} title="${sel > 1 ? `Applies one room type to all ${sel} selected photos` : "Sets the room type for the selected photo"}"><i data-lucide="tag"></i>Set Room Type${sel > 1 ? ` · ${sel}` : ""}</button>
             <button class="btn btn-ghost btn-sm" data-act="none" id="rdsDeselect">${all ? "Deselect All" : "Deselect"}</button>
             <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
@@ -1536,6 +1554,12 @@ function designHeadHtml(title, sub) {
     </div>`;
 }
 
+/** Review restates the exact stored format — it never substitutes a default. */
+function reviewFormatLabel() {
+  const r = normalizeOutputRatio(S.outputRatio);
+  return r === "original" ? "Original · Keep Source Proportions" : ratioLabel(r).replace(" ", " · ");
+}
+
 function renderDesignFlow(el) {
   const items = designSelection();
   /* A room-type change can invalidate a style. Only the impossible choice is
@@ -1549,7 +1573,8 @@ function renderDesignFlow(el) {
         items,
         model,
         address: S.address || "",
-        ratioLabel: ratioLabel(S.outputRatio),
+        ratioLabel: reviewFormatLabel(),
+        cropCount: items.filter((it) => tileRatio(it) !== "original").length,
         balance: typeof S.creditBalance === "number" ? S.creditBalance : null,
         photoLabel,
         photoFormat: (it) => ratioLabel(tileRatio(it)),
@@ -1757,18 +1782,15 @@ function syncSelection() {
         : "Sets the room type for the selected photo";
   }
 
-  const bulk = wrap.querySelector("#rdsBulk");
-  if (bulk) {
-    bulk.disabled = sel < 1 || S.busy;
-    const lab = bulk.lastChild;
-    if (lab && lab.nodeType === 3) lab.textContent = `Set Design Style · ${sel}`;
-  }
   const count = wrap.querySelector("#rdsSelCount");
   if (count) count.textContent = `${sel} of ${S.items.length} selected`;
   const foot = wrap.querySelector("#rdsFootCount");
   if (foot) foot.textContent = `${sel} ${sel === 1 ? "photo" : "photos"} selected`;
   const all = wrap.querySelector("#rdsSelAll");
-  if (all) all.checked = S.items.length > 0 && sel === S.items.length;
+  if (all) {
+    all.checked = S.items.length > 0 && sel === S.items.length;
+    all.indeterminate = sel > 0 && sel < S.items.length;
+  }
   const badge = wrap.querySelector('.rv-rail-i[data-step="review"] .bx-badge');
   if (badge) badge.textContent = String(sel);
   patchStatus();
@@ -1860,6 +1882,8 @@ async function setProjectRatio(next) {
     if (choice === "all") overrides.forEach((i) => (i.ratio = null));
   }
   S.outputRatio = ratio;
+  /* A format only sticks across sessions once the user picked it here. */
+  S.outputRatioExplicit = true;
   saveDraft();
   applyRatiosLive();
   renderFormatSection(host());
@@ -2209,8 +2233,6 @@ function bindReview(el) {
 
   el.querySelector("#rdsSetRoom").onclick = (e) => applyRoomToSelected(e.currentTarget);
   el.querySelector("#rdsGo").onclick = startDesigning;
-  const bulk = el.querySelector("#rdsBulk");
-  if (bulk) bulk.onclick = () => startBulkDesign();
 
   /* Cards are re-rendered in place as uploads and detection land, so the card
      controls are delegated from the page instead of bound per element. The
