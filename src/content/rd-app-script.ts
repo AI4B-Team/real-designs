@@ -8126,10 +8126,12 @@ ${picks
           const r = await renderDesign({
             data: {
               image,
-              room_type: room.room_type || "living room",
+              room_type:
+                room.room_type ||
+                (rdRoomSpace(room.room_type) === "interior" ? "living room" : "front exterior"),
               direction,
               style_id: resolveStyle(direction).id,
-              project_type: "interior",
+              project_type: RD_PROJECT_TYPE[rdRoomSpace(room.room_type)] || "interior",
               intensity: "Makeover",
               grade: "Retail Grade",
               notes: null,
