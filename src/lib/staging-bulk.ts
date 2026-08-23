@@ -14,6 +14,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { renderDesign } from "@/lib/design-render.functions";
+import { clampCrop, ratioValue } from "@/lib/photo-crop";
 import { effectiveRatio } from "@/lib/output-ratio";
 import { uploadRenderDataUrl, roomPhotoUrl } from "@/lib/room-photos";
 import { roomSpace } from "@/lib/staging-rooms";
@@ -106,6 +107,37 @@ async function toDataUrl(src, max = 1100) {
   return c.toDataURL("image/jpeg", 0.92);
 }
 
+/**
+ * Bake the chosen Image Format and focal point into the pixels we send, so
+ * the generated design matches the framing previewed on the card exactly.
+ */
+async function cropToRatio(dataUrl, ratio, crop) {
+  const frame = ratioValue(ratio);
+  if (!frame) return dataUrl;
+  const img = await new Promise((res, rej) => {
+    const i = new Image();
+    i.onload = () => res(i);
+    i.onerror = () => rej(new Error("Could not read that photo."));
+    i.src = dataUrl;
+  });
+  const sw = img.naturalWidth || 1;
+  const sh = img.naturalHeight || 1;
+  const c = clampCrop(crop, sw / sh, frame);
+  /* The visible slice of the source, at the requested zoom. */
+  const cover = Math.max(frame / (sw / sh), 1) && sw / sh > frame ? sh : sw / frame;
+  const baseH = sw / sh > frame ? sh : sw / frame;
+  const baseW = baseH * frame;
+  const w = baseW / c.scale;
+  const h = baseH / c.scale;
+  const x = Math.max(0, Math.min(sw - w, c.x * sw - w / 2));
+  const y = Math.max(0, Math.min(sh - h, c.y * sh - h / 2));
+  const out = document.createElement("canvas");
+  out.width = Math.round(w);
+  out.height = Math.round(h);
+  out.getContext("2d").drawImage(img, x, y, w, h, 0, 0, out.width, out.height);
+  return out.toDataURL("image/jpeg", 0.92);
+}
+
 async function sourceUrl(it) {
   if (it.signed) return it.signed;
   if (it.path) {
@@ -132,9 +164,9 @@ export async function runBulkDesign(items, direction, hooks = {}) {
       it.err = "";
       hooks.onUpdate && hooks.onUpdate(it);
       try {
-        const image = await toDataUrl(await sourceUrl(it));
         /* Project default unless this photo carries its own override. */
         const ratio = effectiveRatio(direction.outputRatio, it.ratio);
+        const image = await cropToRatio(await toDataUrl(await sourceUrl(it)), ratio, it.crop);
         const space = it.room ? roomSpace(it.room) : "interior";
         /* A space the shared style cannot carry uses the style the user picked
            for that group, so an exterior never gets an interior-only look. */

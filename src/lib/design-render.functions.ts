@@ -42,7 +42,7 @@ const Input = z.object({
     .default("interior"),
   preserve_architecture: z.boolean().default(true),
   /* Photo Design output ratio. "original" keeps the source aspect ratio. */
-  aspect_ratio: z.enum(["original", "4:3", "4:5", "1:1"]).default("original"),
+  aspect_ratio: z.enum(["original", "1:1", "4:3", "3:2", "16:9", "5:4", "4:5", "2:3", "9:16"]).default("original"),
 });
 
 const MODEL = "google/gemini-2.5-flash-image";
