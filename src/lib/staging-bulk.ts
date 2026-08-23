@@ -124,7 +124,6 @@ async function cropToRatio(dataUrl, ratio, crop) {
   const sh = img.naturalHeight || 1;
   const c = clampCrop(crop, sw / sh, frame);
   /* The visible slice of the source, at the requested zoom. */
-  const cover = Math.max(frame / (sw / sh), 1) && sw / sh > frame ? sh : sw / frame;
   const baseH = sw / sh > frame ? sh : sw / frame;
   const baseW = baseH * frame;
   const w = baseW / c.scale;
