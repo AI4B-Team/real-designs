@@ -32,13 +32,13 @@ vi.mock("heic2any", () => ({
 
 import { mountSourcePicker } from "@/lib/source-picker";
 import {
-
-/* The staging module is heavy in jsdom; keep headroom under parallel load. */
-vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 });
   attachUploadAssets,
   acceptVideoPhotos,
   initialWizardStep,
 } from "@/lib/video-upload-intake";
+
+/* The staging module is heavy in jsdom; keep headroom under parallel load. */
+vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 });
 
 const jpeg = (name = "a.jpg", mb = 1) =>
   new File([new Uint8Array(mb * 1024)], name, { type: "image/jpeg" });
