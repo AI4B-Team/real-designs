@@ -1743,8 +1743,12 @@ async function loadCreditBalance() {
   try {
     const c = await getMyCredits();
     const next = c && typeof c.balance === "number" ? c.balance : null;
-    if (S && next !== S.creditBalance) {
+    const plan = (c && c.plan) || null;
+    const left = c && typeof c.remainingToday === "number" ? c.remainingToday : null;
+    if (S && (next !== S.creditBalance || plan !== S.creditPlan || left !== S.creditRemaining)) {
       S.creditBalance = next;
+      S.creditPlan = plan;
+      S.creditRemaining = left;
       if (S.step === "final") render();
     }
   } catch (_) {
@@ -1752,6 +1756,7 @@ async function loadCreditBalance() {
     if (S) S.creditLoading = false;
   }
 }
+
 
 /* Every rail step is a real destination: nothing in the rail is decorative. */
 function bindRail(el) {
