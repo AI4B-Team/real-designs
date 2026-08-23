@@ -25,6 +25,9 @@ import {
   effectiveStyleId,
   gradeLabel,
   hasOverride,
+  hasCustomization,
+  photoNote,
+
   spaceOf,
   styleName,
 } from "@/lib/staging-design";
