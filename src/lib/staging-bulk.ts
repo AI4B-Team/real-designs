@@ -18,7 +18,6 @@ import { clampCrop, ratioValue } from "@/lib/photo-crop";
 import { effectiveRatio } from "@/lib/output-ratio";
 import { uploadRenderDataUrl, roomPhotoUrl } from "@/lib/room-photos";
 import { roomSpace } from "@/lib/staging-rooms";
-import { combineNotes } from "@/lib/staging-design";
 import { STYLES } from "@/lib/style-catalog";
 
 
@@ -29,6 +28,15 @@ const SPACE_LABEL = {
   unassigned: "Unassigned",
 };
 const PROJECT_TYPE = { interior: "interior", exterior: "exterior", landscape: "garden" };
+
+/**
+ * Shared instructions and a per-photo instruction are additive: the photo note
+ * refines the shared one instead of silently replacing it.
+ */
+export function combineNotes(shared, perPhoto) {
+  const parts = [shared, perPhoto].map((v) => String(v || "").trim()).filter(Boolean);
+  return parts.length ? parts.join(" ") : null;
+}
 
 export const BULK_CREDIT_PER_PHOTO = 1;
 

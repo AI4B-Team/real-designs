@@ -14,7 +14,9 @@
 // @ts-nocheck
 import { roomSpace } from "@/lib/staging-rooms";
 import { STYLES, styleById } from "@/lib/style-catalog";
-import { BULK_CREDIT_PER_PHOTO, styleFitsSpace } from "@/lib/staging-bulk";
+import { BULK_CREDIT_PER_PHOTO, combineNotes, styleFitsSpace } from "@/lib/staging-bulk";
+/* Re-exported so instruction merging has one home for callers of this module. */
+export { combineNotes };
 
 export const SPACE_LABEL = {
   interior: "Interior",
@@ -437,13 +439,4 @@ export function directionFromPayload(payload) {
   const inv = (map) =>
     Object.keys(map).find((k) => map[k] === (payload || {})[map === INTENSITY_TEXT ? "intensity" : "grade"]) || null;
   return { direction: inv(INTENSITY_TEXT), grade: inv(GRADE_TEXT) };
-}
-
-/**
- * Shared instructions and a per-photo instruction are additive: the photo note
- * refines the shared one instead of silently replacing it.
- */
-export function combineNotes(shared, perPhoto) {
-  const parts = [shared, perPhoto].map((v) => String(v || "").trim()).filter(Boolean);
-  return parts.length ? parts.join(" ") : null;
 }
