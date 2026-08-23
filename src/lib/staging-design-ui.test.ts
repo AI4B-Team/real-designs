@@ -25,15 +25,16 @@ const items = [
   { key: "d", room: "Front Exterior", selected: true },
 ];
 
+type Style = { id: string; displayName: string };
 type Model = ReturnType<typeof newDesignModel> & {
-  styleBySpace: Record<string, string>;
-  overrides: Record<string, string>;
+  styleBySpace: { interior?: string; exterior?: string };
+  overrides: { a?: string };
 };
-const model0 = () => newDesignModel() as Model as Model;
-const pool = (space: string): Array<{ id: string; displayName: string }> =>
-  compatibleStyles(space) as Array<{ id: string; displayName: string }>;
-const interiorId = () => pool("interior")[0].id;
-const exteriorId = () => pool("exterior")[0].id;
+const model0 = () => newDesignModel() as Model;
+const pool = (space: string) => compatibleStyles(space) as Style[];
+const pick = (space: string, i: number) => pool(space)[i] as Style;
+const interiorId = () => pick("interior", 0).id;
+const exteriorId = () => pick("exterior", 0).id;
 
 const count = (html: string, needle: string) => html.split(needle).length - 1;
 
@@ -55,10 +56,9 @@ describe("design step selection state", () => {
 
   it("replaces the previous selection instead of adding one", () => {
     const model = model0();
-    const list = pool("interior");
-    model.styleBySpace.interior = list[0].id;
-    model.styleBySpace.interior = list[1].id;
-    expect(model.styleBySpace.interior).toBe(list[1].id);
+    model.styleBySpace.interior = pick("interior", 0).id;
+    model.styleBySpace.interior = pick("interior", 1).id;
+    expect(model.styleBySpace.interior).toBe(pick("interior", 1).id);
     expect(count(designStepHtml({ items, model }), 'aria-selected="true"')).toBe(1);
   });
 
@@ -143,7 +143,7 @@ describe("clearing and overrides", () => {
   it("keeps individual overrides from touching other photos", () => {
     const model = model0();
     model.styleBySpace.interior = interiorId();
-    const other = pool("interior")[2].id;
+    const other = pick("interior", 2).id;
     model.overrides.a = other;
     expect(effectiveStyleId(model, items[0])).toBe(other);
     expect(effectiveStyleId(model, items[1])).toBe(model.styleBySpace.interior);
@@ -160,7 +160,7 @@ describe("clearing and overrides", () => {
   it("labels inherited and overridden photos in plain words", () => {
     const model = model0();
     model.styleBySpace.interior = interiorId();
-    model.overrides.a = pool("interior")[2].id;
+    model.overrides.a = pick("interior", 2).id;
     const html = designStepHtml({ items, model });
     expect(html).toContain("Uses Interior Style:");
     expect(html).toContain("Custom Style:");
