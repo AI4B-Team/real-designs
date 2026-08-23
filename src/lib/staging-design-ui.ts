@@ -18,6 +18,8 @@ import {
   compatibleStyles,
   creditCost,
   designBlockers,
+  assertDesignState,
+  readDesignSelection,
   designGroups,
   directionLabel,
   effectiveStyleId,
@@ -33,6 +35,24 @@ const esc = (s) =>
     /[&<>"]/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
   );
+
+/**
+ * One card shape for every Design Direction and Finish Grade option.
+ *
+ * Every option is a full, equal-height card with a real border and a full-card
+ * click target, so an unselected option never reads as plain text. Radio
+ * semantics keep exactly one selection per group and make the group keyboard
+ * navigable.
+ */
+export function optionCardHtml(attr, o, value) {
+  const on = o.id === value;
+  return `<button type="button" class="design-option-card${on ? " on" : ""}" role="radio"
+    tabindex="${on ? "0" : "-1"}" aria-checked="${on ? "true" : "false"}" data-${attr}="${esc(o.id)}">
+    <span class="doc-h"><b>${esc(o.label)}</b>${o.badge ? `<em class="doc-badge">${esc(o.badge)}</em>` : ""}</span>
+    <span class="doc-n">${esc(o.note)}</span>
+    <span class="doc-ck" aria-hidden="true"><i data-lucide="check"></i></span>
+  </button>`;
+}
 
 export function paintIcons(root) {
   try {
@@ -186,12 +206,8 @@ export function designStepHtml(ctx) {
     <section class="rdd-shared">
       <div class="rdd-block-s">
         <h3>Design Direction</h3>
-        <div class="rdd-opts" role="radiogroup" aria-label="Design direction">
-          ${DESIGN_DIRECTIONS.map(
-            (d) => `<button type="button" class="rdd-opt${model.direction === d.id ? " on" : ""}" role="radio"
-              aria-checked="${model.direction === d.id ? "true" : "false"}" data-dir="${esc(d.id)}">
-              <b>${esc(d.label)}</b><em>${esc(d.note)}</em></button>`,
-          ).join("")}
+        <div class="design-option-grid" role="radiogroup" aria-label="Design Direction">
+          ${DESIGN_DIRECTIONS.map((d) => optionCardHtml("dir", d, model.direction)).join("")}
         </div>
       </div>
 
@@ -203,12 +219,8 @@ export function designStepHtml(ctx) {
 
       <div class="rdd-block-s">
         <h3>Finish Grade</h3>
-        <div class="rdd-opts grade" role="radiogroup" aria-label="Finish grade">
-          ${FINISH_GRADES.map(
-            (g) => `<button type="button" class="rdd-opt${model.grade === g.id ? " on" : ""}" role="radio"
-              aria-checked="${model.grade === g.id ? "true" : "false"}" data-grade="${esc(g.id)}">
-              <b>${esc(g.label)}</b><em>${esc(g.note)}</em></button>`,
-          ).join("")}
+        <div class="design-option-grid" role="radiogroup" aria-label="Finish Grade">
+          ${FINISH_GRADES.map((g) => optionCardHtml("grade", g, model.grade)).join("")}
         </div>
       </div>
 
@@ -289,18 +301,29 @@ export function bindDesignStep(root, ctx) {
       changed();
     };
   });
-  root.querySelectorAll("[data-dir]").forEach((b) => {
-    b.onclick = () => {
-      model.direction = b.getAttribute("data-dir");
-      changed();
-    };
-  });
-  root.querySelectorAll("[data-grade]").forEach((b) => {
-    b.onclick = () => {
-      model.grade = b.getAttribute("data-grade");
-      changed();
-    };
-  });
+  const bindRadioGroup = (attr, apply) => {
+    const cards = [...root.querySelectorAll(`[data-${attr}]`)];
+    cards.forEach((b, i) => {
+      b.onclick = () => {
+        apply(b.getAttribute(`data-${attr}`));
+        changed();
+      };
+      /* Arrow keys move between options the way a radio group should. */
+      b.onkeydown = (e) => {
+        const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
+        if (!step) return;
+        e.preventDefault();
+        const next = cards[(i + step + cards.length) % cards.length];
+        next.focus();
+        apply(next.getAttribute(`data-${attr}`));
+        changed();
+      };
+    });
+  };
+  bindRadioGroup("dir", (v) => (model.direction = v));
+  bindRadioGroup("grade", (v) => (model.grade = v));
+  /* The rendered selection and the draft must never drift apart. */
+  assertDesignState("the Design page", model, readDesignSelection(root));
   const pres = root.querySelector("#rddPreserve");
   if (pres) pres.onchange = () => {
     model.preserve = pres.checked;
