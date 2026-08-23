@@ -69,7 +69,7 @@ export function addSourceCardHtml(opts: { id: string; ratio?: string; pad?: bool
   /* ratio and pad are accepted for backward compatibility but ignored. */
   void opts.ratio;
   void opts.pad;
-  return `<div class="rv-addcard" data-addcard="${escHtml(id)}">
+  return `<div class="rv-addcard" id="${escHtml(id)}" data-addcard="${escHtml(id)}">
     <button type="button" class="rv-addcard-face" data-addface
       aria-label="Add More Photos" aria-haspopup="menu" aria-expanded="false">
       <span class="rv-addcard-plus"><i data-lucide="plus"></i></span>
