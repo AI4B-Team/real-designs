@@ -23,12 +23,12 @@ vi.mock("@/lib/photo-classify.functions", () => ({
   })),
 }));
 vi.mock("@/lib/photo-classify", async (orig) => {
-
-/* The staging module is heavy in jsdom; keep headroom under parallel load. */
-vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 });
   const real: any = await (orig as any)();
   return { ...real, thumbDataUrl: async () => "data:image/jpeg;base64,AA" };
 });
+
+/* The staging module is heavy in jsdom; keep headroom under parallel load. */
+vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 });
 
 const jpeg = (name: string) => new File([new Uint8Array(1024)], name, { type: "image/jpeg" });
 const settle = async (n = 30) => {
