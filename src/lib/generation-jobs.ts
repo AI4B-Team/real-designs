@@ -401,7 +401,7 @@ export function batchTitle(counts: Counts): string {
   if (!counts.active && counts.total)
     return counts.failed
       ? `${counts.complete} Of ${counts.total} Designs Ready`
-      : `${counts.total} Design${counts.total === 1 ? "" : "s"} Are Ready`;
+      : `${counts.total} Design${counts.total === 1 ? " Is" : "s Are"} Ready`;
   return `Creating ${counts.total} Design${counts.total === 1 ? "" : "s"}`;
 }
 

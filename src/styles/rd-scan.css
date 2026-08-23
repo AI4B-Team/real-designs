@@ -289,11 +289,16 @@
 /* -------------------------------------------------------- batch progress */
 
 .rd-batch {
+  /* Local copies so the panel stays readable even when it is mounted outside
+     the .rd-app token scope (the global --muted is a surface colour). */
+  --muted: #6b6b6b;
+  --line: #e5e5e5;
   position: fixed;
   right: 18px;
   bottom: 18px;
   z-index: 60;
   width: 340px;
+
   max-height: 62vh;
   display: flex;
   flex-direction: column;
@@ -371,4 +376,33 @@
   justify-content: flex-end;
   padding: 10px 12px;
   border-top: 1px solid var(--line, #ececec);
+}
+
+/* Batch panel text stacking: force normal flow so the title, subtitle and
+   status line never collapse on top of each other. */
+.rd-batch-h > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.rd-batch-h b,
+.rd-batch-h span,
+.rd-batch-row b,
+.rd-batch-row em {
+  position: static;
+  line-height: 1.35;
+}
+.rd-batch-row > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+/* Secondary lines in the batch panel must never inherit the global (shadcn)
+   --muted surface token, which renders as near-white text on white. */
+.rd-batch .rd-batch-h span,
+.rd-batch .rd-batch-row em {
+  color: #6b6b6b;
 }

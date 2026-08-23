@@ -87,14 +87,19 @@ export function mountBatchPanel(
   root: HTMLElement = document.body,
 ): BatchPanel {
   const doc = root.ownerDocument || document;
+  /* The design tokens live on `.rd-app`. Mounting on <body> drops them and the
+     secondary lines inherit the shadcn `--muted` surface colour, which renders
+     as near-white text on white. Prefer the app shell as the mount point. */
+  const host = (root === doc.body ? (doc.querySelector(".rd-app") as HTMLElement | null) : null) || root;
   let el = doc.querySelector(".rd-batch") as HTMLElement | null;
   if (!el) {
     el = doc.createElement("div");
     el.className = "rd-batch";
     el.setAttribute("role", "region");
     el.setAttribute("aria-label", "Design generation progress");
-    root.appendChild(el);
+    host.appendChild(el);
   }
+
   const node = el;
   const destroy = () => node.remove();
   node.onclick = (ev) => {
