@@ -12,7 +12,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { featureState, isFeatureVisible } from "@/features/app-shell/feature-availability";
-import { stripHiddenFeatures } from "@/content/feature-markup-gate";
+import { gateFeatureMarkup } from "@/content/feature-markup-gate";
 import { CREDIT_COSTS } from "@/lib/credits.functions";
 import * as draft from "@/lib/design-draft";
 import * as jobs from "@/lib/generation-jobs";
@@ -20,7 +20,12 @@ import * as session from "@/lib/canvas-session";
 import * as route from "@/lib/canvas-route";
 import * as design from "@/lib/staging-design";
 import { primarySaveLabel, defaultGenerationSource } from "@/lib/photo-editor-context";
-import { presentationReadiness, publicPresentationState } from "@/lib/presentation-publish";
+import {
+  EMPTY_MESSAGE,
+  RECIPIENT_UNAVAILABLE,
+  presentationReadiness,
+  publicPresentationState,
+} from "@/lib/presentation-publish";
 import { canonicalHash, isStudioRoute, needsNormalize } from "@/lib/studio-context";
 
 function photo(over: Record<string, unknown> = {}) {
@@ -128,7 +133,7 @@ describe("characterization: Photos → Design → Review", () => {
     const items = [photo()];
     expect(design.canEnterReview(items, design.newDesignModel())).toBe(false);
     const model = design.newDesignModel();
-    model.styleBySpace["interior"] = "warm-minimal";
+    (model.styleBySpace as Record<string, string>)["interior"] = "warm-minimal";
     expect(design.canEnterReview(items, model)).toBe(true);
   });
 
@@ -149,7 +154,7 @@ describe("characterization: Generate and credits", () => {
 
   it("blocks Generate on a paid plan when the balance is short", () => {
     const model = design.newDesignModel();
-    model.styleBySpace["interior"] = "warm-minimal";
+    (model.styleBySpace as Record<string, string>)["interior"] = "warm-minimal";
     const items = [photo(), photo()];
     const out = design.reviewBlockers({ items, model, balance: 1, plan: "pro" });
     expect(out.some((m: string) => /more credit/.test(m))).toBe(true);
@@ -157,7 +162,7 @@ describe("characterization: Generate and credits", () => {
 
   it("uses the daily allowance, not the balance, on the free plan", () => {
     const model = design.newDesignModel();
-    model.styleBySpace["interior"] = "warm-minimal";
+    (model.styleBySpace as Record<string, string>)["interior"] = "warm-minimal";
     const items = [photo()];
     expect(
       design.reviewBlockers({ items, model, balance: 0, plan: "free", remainingToday: 3 }),
@@ -283,12 +288,14 @@ describe("characterization: Edit Photo save", () => {
 /* 15. Public presentation access ------------------------------------------- */
 describe("characterization: public presentation access", () => {
   it("refuses to publish an empty presentation", () => {
-    const readiness = presentationReadiness([], undefined as never);
-    expect(readiness.ready).toBe(false);
+    const readiness = presentationReadiness([]);
+    expect(readiness.canPublish).toBe(false);
+    expect(readiness.message).toBe(EMPTY_MESSAGE);
   });
 
   it("shows recipients an unavailable notice rather than an empty page", () => {
-    expect(publicPresentationState([]).available).toBe(false);
+    expect(publicPresentationState([]).visible).toBe(false);
+    expect(publicPresentationState([]).message).toBe(RECIPIENT_UNAVAILABLE);
   });
 });
 
@@ -308,7 +315,7 @@ describe("characterization: suppressed features", () => {
 
   it("removes suppressed markup before it can reach the DOM", () => {
     const html = '<div id="app"><section id="v-scope">Budget</section><main id="keep"></main></div>';
-    const out = stripHiddenFeatures(html);
+    const out = gateFeatureMarkup(html);
     expect(out).not.toContain('id="v-scope"');
     expect(out).toContain('id="keep"');
   });
