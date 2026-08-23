@@ -252,8 +252,10 @@ describe("regression: design workflow", () => {
     const zoomed = zoomCropTo(normalizeCropModel(null), 2);
     const panned = panCropBy(zoomed, 5, 5, 1);
     const clamped = clampCropModel(panned, 1);
-    expect(Math.abs(clamped.x)).toBeLessThanOrEqual(1);
-    expect(Math.abs(clamped.y)).toBeLessThanOrEqual(1);
+    expect(clamped.focalX).toBeGreaterThanOrEqual(0);
+    expect(clamped.focalX).toBeLessThanOrEqual(1);
+    expect(clamped.focalY).toBeGreaterThanOrEqual(0);
+    expect(clamped.focalY).toBeLessThanOrEqual(1);
     updateDraftPhoto("a", { crop: clamped });
     const stored = getDraft()!.photos.find((p) => p.key === "a")!.crop!;
     expect(isCustomCropModel(stored)).toBe(true);
