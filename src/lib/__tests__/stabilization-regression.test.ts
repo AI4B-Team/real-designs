@@ -616,9 +616,17 @@ describe("regression: canvas identity across tools", () => {
  * ================================================================== */
 
 describe("regression: photo editor saves", () => {
-  it("editing a source photo saves as a new version; editing a version saves changes", () => {
-    expect(saveLabelFor("source")).toBe("Save As New Version");
-    expect(saveLabelFor("version")).toBe("Save Changes");
+  it("editing a source photo saves as a new version; editing an open version saves changes", () => {
+    expect(saveLabelFor({ role: "source", asset })).toBe("Save as New Version");
+    expect(saveLabelFor({ role: "version", asset, version: versions[1]! })).toBe("Save Changes");
+  });
+
+  it("an approved or published version can only branch, never be overwritten", () => {
+    const published = { ...versions[1]!, approved: true };
+    expect(saveLabelFor({ role: "version", asset, version: published })).toBe("Save as New Version");
+    expect(
+      saveLabelFor({ role: "version", asset, version: versions[1]!, published: true }),
+    ).toBe("Save as New Version");
   });
 
   it("the primary save label follows the editor mode", () => {
@@ -632,17 +640,11 @@ describe("regression: photo editor saves", () => {
   });
 
   it("an edit never overwrites the immutable original", () => {
-    const saved = withLineage(
-      { id: "v9", asset_id: "asset-1", storage_path: "u/asset-1/v9.png", created_at: "2026-02-01T00:00:00Z" } as VersionRow,
-      {
-        sourceAssetId: "asset-1",
-        parent: { kind: "asset", id: "asset-1", path: asset.storage_path },
-        operation: "edit",
-        outputAssetId: "asset-1",
-        outputVersionId: "v9",
-        outputPath: "u/asset-1/v9.png",
-        userId: "u1",
-      },
+    const saved = mkVersion(
+      "v9",
+      "2026-02-01T00:00:00Z",
+      { kind: "asset", id: "asset-1", path: asset.storage_path },
+      "edit",
     );
     expect(saved.storage_path).not.toBe(asset.storage_path);
     expect(durableVersions([saved]).length).toBe(1);
