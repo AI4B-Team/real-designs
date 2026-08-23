@@ -17,58 +17,20 @@ export type CleanupReport = {
   staleJobs: number;
 };
 
-/** Every storage path this user has recorded anywhere in the database. */
+/**
+ * Every storage path this user still needs. Delegated to the canonical
+ * reference index so cleanup and the orphan diagnostic can never disagree
+ * about what is referenced.
+ */
 async function referencedPaths(userId: string): Promise<Set<string>> {
-  const refs = new Set<string>();
-  const add = (v: unknown) => {
-    if (typeof v === "string" && v && !/^(https?:|blob:|data:|\/)/.test(v)) refs.add(v);
-  };
-
-  const [versions, media, scenes, clips, frames] = await Promise.all([
-    supabaseAdmin.from("versions").select("before_path, after_path").limit(5000),
-    supabaseAdmin
-      .from("property_media_assets")
-      .select("storage_path")
-      .eq("user_id", userId)
-      .limit(5000),
-    supabaseAdmin
-      .from("video_scenes")
-      .select("source_path, compare_path, original_path")
-      .eq("user_id", userId)
-      .limit(5000),
-    supabaseAdmin
-      .from("scene_clips")
-      .select("storage_path, source_path, thumbnail_path")
-      .eq("user_id", userId)
-      .limit(5000),
-    supabaseAdmin
-      .from("scene_start_end")
-      .select("start_path, end_path, clip_path")
-      .eq("user_id", userId)
-      .limit(5000),
-  ]);
-
-  for (const row of versions.data ?? []) {
-    add((row as Record<string, unknown>)["before_path"]);
-    add((row as Record<string, unknown>)["after_path"]);
+  const { buildReferenceIndex } = await import("./lineage.server");
+  const index = await buildReferenceIndex(supabaseAdmin as never, userId);
+  if (index.incomplete.length) {
+    /* An incomplete index would make referenced files look unreferenced, so
+       cleanup stops rather than deleting on a partial picture. */
+    throw new Error("Couldn't read every reference, so no files were removed.");
   }
-  for (const row of media.data ?? []) add((row as Record<string, unknown>)["storage_path"]);
-  for (const row of scenes.data ?? []) {
-    add((row as Record<string, unknown>)["source_path"]);
-    add((row as Record<string, unknown>)["compare_path"]);
-    add((row as Record<string, unknown>)["original_path"]);
-  }
-  for (const row of clips.data ?? []) {
-    add((row as Record<string, unknown>)["storage_path"]);
-    add((row as Record<string, unknown>)["source_path"]);
-    add((row as Record<string, unknown>)["thumbnail_path"]);
-  }
-  for (const row of frames.data ?? []) {
-    add((row as Record<string, unknown>)["start_path"]);
-    add((row as Record<string, unknown>)["end_path"]);
-    add((row as Record<string, unknown>)["clip_path"]);
-  }
-  return refs;
+  return index.paths;
 }
 
 export async function cleanupAbandonedUploads(
