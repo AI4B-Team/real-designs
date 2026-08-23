@@ -459,12 +459,17 @@ describe("regression: generation", () => {
   });
 
   it("a partly failed batch reports per-item outcomes and keeps the successes", async () => {
+    const h = harness();
     const outcomes = await Promise.all(
       ["ok-1", "bad", "ok-2"].map((id) =>
-        runGenerationItem(id, async () => {
-          if (id === "bad") throw new Error("render failed");
-          return id;
-        }),
+        runGenerationItem(
+          request({ parts: ["batch", id] }),
+          async () => {
+            if (id === "bad") throw new Error("render failed");
+            return id;
+          },
+          h.deps,
+        ),
       ),
     );
     const good = outcomes.filter((o) => o.ok);
