@@ -1996,6 +1996,10 @@
   margin: 12px 0 0;
   padding: 6px 10px 8px;
 }
+.rd-app .rds-strip.rds-film.hide {
+  display: none;
+}
+
 .rd-app .rds-strip.rds-film.rds-film-float {
   position: absolute;
   left: 8px;
