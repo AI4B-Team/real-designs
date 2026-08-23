@@ -102,7 +102,8 @@ export const renderMaterials = createServerFn({ method: "POST" })
     );
     const { MATERIALS_CLASSIFICATION, MATERIALS_DISCLOSURE } = await import("@/lib/materials-brief");
     const { isCompatible } = await import("@/lib/materials-catalog");
-    const { charge, refund, chargeErrorMessage } = await import("@/lib/credits.server");
+    const { runGenerationItem } = await import("@/lib/generation-run.server");
+    const { imageIdentity } = await import("@/lib/generation-identity");
 
     /* The single-surface promise is re-checked on the server: a client that
        skipped the panel still cannot ask for a whole-room refinish. */
@@ -117,39 +118,37 @@ export const renderMaterials = createServerFn({ method: "POST" })
     let charges = 0;
 
     for (const run of data.runs) {
-      const charged = await charge(
-        context.userId,
-        "design",
-        `Materials, ${data.payload.surface_label} to ${data.payload.material_name} (${run.label})`,
-      );
-      if (!charged.ok) {
-        if (!results.length) throw new Error(chargeErrorMessage(charged));
-        results.push({ id: run.id, label: run.label, image: null, error: chargeErrorMessage(charged) });
-        break;
-      }
-      charges += charged.charged;
-      balance = charged.balance;
-      remainingToday = charged.remainingToday ?? null;
-      try {
-        const image = await renderMaterialSwap(
+      const outcome = await runGenerationItem(
+        {
+          userId: context.userId,
+          action: "design",
+          kind: "materials.render",
+          note: `Materials, ${data.payload.surface_label} to ${data.payload.material_name} (${run.label})`,
+          requestId: `${data.request_id ?? ""}:${run.id}`,
+          parts: [imageIdentity(data.image), imageIdentity(data.mask), run.id, run.label, run.directive, data.payload.surface_label, data.payload.material_name],
+        },
+        async () => renderMaterialSwap(
           buildMaterialsPrompt(data.payload as any, run.directive ? run : null),
           data.image,
           data.overlay,
           data.mask,
           apiKey,
-        );
-        results.push({ id: run.id, label: run.label, image, error: null });
-      } catch (err) {
-        /* Exactly one refund for exactly one failed charge. */
-        await refund(context.userId, charged.charged, "Material swap failed");
-        charges -= charged.charged;
-        results.push({
-          id: run.id,
-          label: run.label,
-          image: null,
-          error: (err as Error)?.message || "That option did not finish.",
-        });
+        ),
+      );
+
+      if (!outcome.ok) {
+        /* A refused charge stops the batch; a failed render fails only its own
+           item, and its credit was already refunded exactly once. */
+        if (outcome.blocked && !results.length) throw new Error(outcome.error);
+        results.push({ id: run.id, label: run.label, image: null, error: outcome.error });
+        if (outcome.blocked) break;
+        continue;
       }
+
+      charges += outcome.charged;
+      balance = outcome.balance;
+      remainingToday = outcome.remainingToday;
+      results.push({ id: run.id, label: run.label, image: outcome.value, error: null });
     }
 
     if (!results.some((r) => r.image))

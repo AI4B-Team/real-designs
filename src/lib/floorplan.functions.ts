@@ -150,7 +150,8 @@ export const renderFloorplan = createServerFn({ method: "POST" })
     const { buildFloorplanPrompt, renderFloorplanView, IMAGE_MODEL } = await import(
       "@/lib/floorplan.server"
     );
-    const { charge, refund, chargeErrorMessage } = await import("@/lib/credits.server");
+    const { runGenerationItem } = await import("@/lib/generation-run.server");
+    const { imageIdentity } = await import("@/lib/generation-identity");
     const { FLOORPLAN_CLASSIFICATION, CONCEPT_DISCLAIMER } = await import("@/lib/floorplan-brief");
 
     const results: Array<{
@@ -168,45 +169,37 @@ export const renderFloorplan = createServerFn({ method: "POST" })
     let reference: string | null = data.reference;
 
     for (const run of data.runs) {
-      const charged = await charge(
-        context.userId,
-        "plan_3d",
-        `Floorplan, ${data.payload.output_label} (${run.label})`,
-      );
-      if (!charged.ok) {
-        if (!results.length) throw new Error(chargeErrorMessage(charged));
-        results.push({
-          id: run.id,
-          label: run.label,
-          roomId: run.roomId,
-          image: null,
-          error: chargeErrorMessage(charged),
-        });
-        break;
-      }
-      charges += charged.charged;
-      balance = charged.balance;
-      remainingToday = charged.remainingToday ?? null;
-      try {
-        const image = await renderFloorplanView(
+      const outcome = await runGenerationItem(
+        {
+          userId: context.userId,
+          action: "plan_3d",
+          kind: "floorplan",
+          note: `Floorplan, ${data.payload.output_label} (${run.label})`,
+          requestId: `${data.request_id ?? ""}:${run.id}`,
+          parts: [imageIdentity(data.image), run.id, run.label, run.roomId, run.directive, data.payload.output_label],
+        },
+        async () => renderFloorplanView(
           buildFloorplanPrompt(data.payload as any, run.directive ? (run as any) : null),
           data.image,
           reference,
           apiKey,
-        );
-        if (!reference) reference = image;
-        results.push({ id: run.id, label: run.label, roomId: run.roomId, image, error: null });
-      } catch (err) {
-        await refund(context.userId, charged.charged, "Floorplan render failed");
-        charges -= charged.charged;
-        results.push({
-          id: run.id,
-          label: run.label,
-          roomId: run.roomId,
-          image: null,
-          error: (err as Error)?.message || "That view did not finish.",
-        });
+        ),
+      );
+
+      if (!outcome.ok) {
+        /* A refused charge stops the batch; a failed render fails only its own
+           item, and its credit was already refunded exactly once. */
+        if (outcome.blocked && !results.length) throw new Error(outcome.error);
+        results.push({ id: run.id, label: run.label, roomId: run.roomId, image: null, error: outcome.error });
+        if (outcome.blocked) break;
+        continue;
       }
+
+      charges += outcome.charged;
+      balance = outcome.balance;
+      remainingToday = outcome.remainingToday;
+      if (!reference) reference = outcome.value;
+      results.push({ id: run.id, label: run.label, roomId: run.roomId, image: outcome.value, error: null });
     }
 
     if (!results.some((r) => r.image))

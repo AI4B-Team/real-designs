@@ -102,7 +102,8 @@ export const renderAngleSet = createServerFn({ method: "POST" })
     if (!apiKey) throw new Error("AI is not configured.");
 
     const { buildAnglePrompt, renderAngleView, IMAGE_MODEL } = await import("@/lib/angles.server");
-    const { charge, refund, chargeErrorMessage } = await import("@/lib/credits.server");
+    const { runGenerationItem } = await import("@/lib/generation-run.server");
+    const { imageIdentity } = await import("@/lib/generation-identity");
 
     const results: Array<{
       id: string;
@@ -118,38 +119,37 @@ export const renderAngleSet = createServerFn({ method: "POST" })
     let reference: string | null = data.reference;
 
     for (const run of data.runs) {
-      const charged = await charge(
-        context.userId,
-        "design",
-        `Angles, ${data.payload.output_set} (${run.label})`,
-      );
-      if (!charged.ok) {
-        if (!results.length) throw new Error(chargeErrorMessage(charged));
-        results.push({ id: run.id, label: run.label, image: null, error: chargeErrorMessage(charged) });
-        break;
-      }
-      charges += charged.charged;
-      balance = charged.balance;
-      remainingToday = charged.remainingToday ?? null;
-      try {
-        const image = await renderAngleView(
+      const outcome = await runGenerationItem(
+        {
+          userId: context.userId,
+          action: "design",
+          kind: "angles.render",
+          note: `Angles, ${data.payload.output_set} (${run.label})`,
+          requestId: `${data.request_id ?? ""}:${run.id}`,
+          parts: [imageIdentity(data.image), run.id, run.label, data.payload.output_set],
+        },
+        async () => renderAngleView(
           buildAnglePrompt(data.payload as any, run as any, !!reference),
           data.image,
           reference,
           apiKey,
-        );
-        if (!reference) reference = image;
-        results.push({ id: run.id, label: run.label, image, error: null });
-      } catch (err) {
-        await refund(context.userId, charged.charged, "Angles render failed");
-        charges -= charged.charged;
-        results.push({
-          id: run.id,
-          label: run.label,
-          image: null,
-          error: (err as Error)?.message || "That angle did not finish.",
-        });
+        ),
+      );
+
+      if (!outcome.ok) {
+        /* A refused charge stops the batch; a failed render fails only its own
+           item, and its credit was already refunded exactly once. */
+        if (outcome.blocked && !results.length) throw new Error(outcome.error);
+        results.push({ id: run.id, label: run.label, image: null, error: outcome.error });
+        if (outcome.blocked) break;
+        continue;
       }
+
+      charges += outcome.charged;
+      balance = outcome.balance;
+      remainingToday = outcome.remainingToday;
+      if (!reference) reference = outcome.value;
+      results.push({ id: run.id, label: run.label, image: outcome.value, error: null });
     }
 
     if (!results.some((r) => r.image))
