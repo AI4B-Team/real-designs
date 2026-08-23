@@ -2142,10 +2142,27 @@
   text-transform: uppercase;
 }
 .rdd-shared h3 {
-  margin: 18px 0 10px;
+  margin: 0 0 10px;
 }
-.rdd-shared h3:first-child {
+/* Each setting is its own labelled block with a clear separator. */
+.rdd-block-s {
+  padding-top: 18px;
+  margin-top: 18px;
+  border-top: 1px solid var(--line, #e5e5e5);
+}
+.rdd-block-s:first-of-type {
+  padding-top: 0;
   margin-top: 0;
+  border-top: 0;
+}
+/* Sticky workflow header: the step title stays with the content it labels. */
+.rds-page > .rv-head {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  background: var(--surface, #fff);
+  padding: 10px 0 12px;
+  margin-bottom: 6px;
 }
 .rdd-optional {
   font-style: normal;
