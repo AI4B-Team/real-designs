@@ -8375,7 +8375,7 @@
   margin: 0;
   font-size: 0.8rem;
   color: var(--muted);
-  max-width: 74ch;
+  white-space: nowrap;
   line-height: 1.5;
 }
 .cs-filters {
