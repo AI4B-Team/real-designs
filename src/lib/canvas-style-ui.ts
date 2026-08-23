@@ -67,7 +67,12 @@ export type CanvasStyleApi = {
   /** Null when the active tool needs no style. */
   need: () => StyleNeed | null;
   open: () => void;
+  /** Clears the style at its own scope; false when nothing was cleared. */
+  clear: () => boolean;
+  /** Restores the last cleared style at the scope it was cleared from. */
+  undo: () => boolean;
 };
+
 
 const esc = (s: unknown): string =>
   String(s == null ? "" : s).replace(
