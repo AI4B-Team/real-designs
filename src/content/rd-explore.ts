@@ -587,9 +587,13 @@ export function mountExplore(go, ctx) {
     sec.innerHTML = `<div class="xp-sec-h"><h3>Recommended For Your Space</h3><span>Based On Your Last Upload</span></div>
       <div class="xp-recrow">${recs
         .map(
-          ({ style, reason }) => `
+          ({ style, reason }) => {
+            const on = saved.indexOf(style.id) > -1;
+            return `
         <article class="xp-reccard" data-d="${style.id}">
-          <img src="${style.previewImage}" alt="${esc(style.displayName)}" loading="lazy">
+          <div class="xp-recimg"><img src="${style.previewImage}" alt="${esc(style.displayName)}" loading="lazy">
+            <button class="xp-save${on ? " on" : ""}" data-save="${style.id}" aria-pressed="${on}" aria-label="${on ? "Remove From Saved" : "Save Style"}" title="${on ? "Saved" : "Save Style"}"><i data-lucide="bookmark"></i></button>
+          </div>
           <div><b>${esc(style.displayName)}</b><p>${esc(reason)}</p>
             <div class="xp-acts"><button class="btn btn-ghost btn-xs" data-open="${style.id}">Preview</button>
               <button class="btn btn-primary btn-xs" data-use="${style.id}">Try This Style</button></div></div>
