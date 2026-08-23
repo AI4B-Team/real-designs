@@ -14,6 +14,7 @@ import {
   buildStylePayload,
 } from "@/lib/style-catalog";
 import { setStudioStyle, applyStudioStyleToControls } from "@/lib/studio-style";
+import { startExploreDraft } from "@/lib/design-draft";
 
 export { DIRECTIONS } from "@/content/directions";
 
@@ -482,8 +483,11 @@ export function mountExplore(go, ctx) {
   let applying = false;
   function applyToStudio(s, btn) {
     if (applying) return;
-    const choice = setStudioStyle(s && s.id);
-    if (!choice) {
+    /* One canonical draft owns the choice from here on: the loose global is
+       only a recovery cache, never the source of truth. */
+    const draft = startExploreDraft(s && s.id);
+    const choice = draft ? setStudioStyle(s && s.id) : null;
+    if (!draft || !choice) {
       note("This Style Could Not Be Loaded. Please Choose Another Style.");
       return;
     }
@@ -499,7 +503,7 @@ export function mountExplore(go, ctx) {
     closeDrawer();
     try {
       go("studio");
-      note(choice.name + " Selected. Choose A Source Below To Start.");
+      note("Style Selected: " + choice.name + ". Choose Photos To Start Designing In This Style.");
     } catch (err) {
       note("Studio Could Not Be Opened. Please Try Again.");
     } finally {

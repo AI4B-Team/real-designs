@@ -41,9 +41,9 @@ export function normalizeSpace(space: unknown): RoomSpace {
 }
 
 export function roomPickerTitle(space: RoomSpace): string {
-  if (space === "exterior") return "Choose an exterior area";
-  if (space === "garden") return "Choose a garden area";
-  return "Choose a room";
+  if (space === "exterior") return "Choose An Exterior Area";
+  if (space === "garden") return "Choose A Garden Area";
+  return "Choose A Room";
 }
 
 function toItem(r: RoomCatalogEntry): CatalogItem {
@@ -103,7 +103,7 @@ export function openRoomAreaPicker(o: RoomAreaPickerOptions) {
     selected: current ? [current] : [],
     searchPlaceholder: space === "interior" ? "Search rooms" : "Search areas",
     emptyText: "Nothing matches that search. Try a different word.",
-    applyLabel: "Apply selection",
+    applyLabel: "Apply Selection",
     extras,
     ...(o.allowCustom ? { allowCustom: true } : {}),
     customHint: (q) => 'Use "' + q + '"',

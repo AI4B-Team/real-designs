@@ -49,7 +49,8 @@ import {
   roomSpace,
 } from "@/lib/staging-rooms";
 import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
-import { runBulkDesign } from "@/lib/staging-bulk";
+import { runBulkDesign, styleFitsSpace } from "@/lib/staging-bulk";
+import { claimDraftStyle, setDraftStep, draftStyle, patchDraft } from "@/lib/design-draft";
 import {
   createBatch,
   completeJob,
@@ -175,6 +176,9 @@ let saver = null; /* DraftAutosaver, created with the first stored photo */
 
 function newSession(seed = {}) {
   return {
+    /* Identifies this workflow session to the canonical design draft, so an
+       Explore style is taken exactly once per project. */
+    sid: "s" + Math.random().toString(36).slice(2, 10),
     step: "review",
     items: [],
     address: seed.address || "",
@@ -387,6 +391,9 @@ function railForStep() {
 
 function show() {
   host();
+  try {
+    setDraftStep(DRAFT_STEP[(S && S.step) || "review"] || "photos");
+  } catch (_) {}
   /* Navigating through the router keeps the hash, the browser history and a
      refresh all pointing at the same page. */
   try {
@@ -1461,6 +1468,7 @@ function render() {
     <div class="rv-layout rv-railed">
       ${stepRailHtml("review")}
       <div class="rv-wiz bx-work">
+        ${styleSummaryHtml()}
         ${formatSectionHtml()}
         <div class="rv-utility">
 
@@ -1522,6 +1530,40 @@ function designModel() {
   return S.design;
 }
 
+/**
+ * Take the style chosen on Explore into this project's design model, once.
+ * It is only applied to space categories it is actually compatible with, so
+ * an interior style is never silently forced onto an exterior or garden
+ * photo — those still ask for an explicit choice.
+ */
+function adoptDraftStyle(items) {
+  if (!S) return null;
+  const style = claimDraftStyle(S.sid);
+  if (!style) return null;
+  const model = designModel();
+  let changed = false;
+  (items || []).forEach((it) => {
+    const space = spaceOf(it);
+    if (space === "unassigned") return;
+    if (model.styleBySpace[space]) return;
+    if (!styleFitsSpace(style.id, space)) return;
+    model.styleBySpace[space] = style.id;
+    changed = true;
+  });
+  if (changed) persistDesign();
+  return style;
+}
+
+/** Compact, persistent reminder of the style already chosen on Explore. */
+function styleSummaryHtml() {
+  const style = draftStyle();
+  if (!style) return "";
+  return `<div class="rds-stylenote">
+    ${style.thumb ? `<img src="${style.thumb}" alt="${style.name} style preview">` : ""}
+    <div><b>${style.name} Selected</b><span>Applied to all compatible photos unless overridden. No credits are used until you generate.</span></div>
+  </div>`;
+}
+
 /** The photos the design applies to: the current selection. */
 function designSelection() {
   const sel = ordered().filter((i) => i.selected && i.status !== "uploading");
@@ -1534,8 +1576,13 @@ function persistDesign() {
 }
 
 /** Move between builder steps, keeping the rail, the draft and history in sync. */
+const DRAFT_STEP = { add: "source", review: "photos", design: "design", final: "review" };
+
 function goStep(step) {
   S.step = step;
+  try {
+    setDraftStep(DRAFT_STEP[step] || "photos");
+  } catch (_) {}
   saveDraft();
   render();
 }
@@ -1564,6 +1611,7 @@ function reviewFormatLabel() {
 
 function renderDesignFlow(el) {
   const items = designSelection();
+  adoptDraftStyle(items);
   /* A room-type change can invalidate a style. Only the impossible choice is
      dropped, and the user is told exactly what to pick again. */
   const pruned = pruneIncompatible(designModel(), items);
@@ -2425,6 +2473,11 @@ function runBatch(batch, direction, opts = {}) {
       thumb: it.previewUrl || null,
     })),
   );
+  /* The draft records the one batch it produced, so a remount reattaches to
+     it instead of ever creating a second charged batch. */
+  try {
+    patchDraft({ generationBatchId: rec.id, step: "generating" });
+  } catch (_) {}
   const jobIdOf = (it) => `${rec.id}:${it.key}`;
   const panel = mountBatchPanel(rec, {
     onRetry: (jobId) => {
