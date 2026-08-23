@@ -388,7 +388,17 @@ export function reviewStepHtml(ctx) {
   const groups = designGroups(items);
   const overrides = items.filter((it) => hasOverride(model, it)).length;
   const balance = typeof ctx.balance === "number" ? ctx.balance : null;
-  const short = balance !== null && balance < cost ? cost - balance : 0;
+  const freePlan = ctx.plan === "free";
+  const remainingToday = typeof ctx.remainingToday === "number" ? ctx.remainingToday : null;
+  /* Free plan draws on the daily design allowance, not the credit balance. */
+  const short = freePlan
+    ? remainingToday !== null && remainingToday < cost
+      ? cost - remainingToday
+      : 0
+    : balance !== null && balance < cost
+      ? cost - balance
+      : 0;
+
   return `<div class="rdd-page rdd-review">
     <dl class="rdd-facts">
       ${ctx.address ? factHtml("Property", ctx.address) : ""}
