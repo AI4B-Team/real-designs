@@ -333,6 +333,51 @@ function draftPayload() {
   };
 }
 
+/**
+ * Mirror the live session into the one canonical Studio draft.
+ *
+ * The canonical draft is what Review renders and what Generate submits, so
+ * every meaningful change to photos, order, rooms, formats, crops, styles or
+ * instructions is written here — never left in DOM controls or globals.
+ */
+function syncCanonicalDraft() {
+  if (!S) return null;
+  const model = S.design || S.bulkSettings || null;
+  const photos = ordered().map((i) => ({
+    key: i.key,
+    sourceId: i.sourceId || null,
+    path: i.path || null,
+    name: i.name || "Photo",
+    room: i.room || null,
+    roomSource: i.roomSource || "none",
+    confidence: Number(i.confidence || 0),
+    selected: !!i.selected,
+    ratio: normalizeOverride(i.ratio),
+    crop: cropForDraft(i.crop),
+    rotation: normalizeRotation(i.rotation),
+    styleId: (model && model.styleByPhoto && model.styleByPhoto[i.key]) || null,
+    instructions: (model && model.notesByPhoto && model.notesByPhoto[i.key]) || "",
+  }));
+  try {
+    return patchDraft({
+      origin: S.origin || "studio",
+      projectId: S.draftId || null,
+      propertyId: S.propertyId || null,
+      photos,
+      order: photos.map((p) => p.key),
+      outputRatio: normalizeOutputRatio(S.outputRatio),
+      outputRatioExplicit: !!S.outputRatioExplicit,
+      designDirection: (model && model.direction) || null,
+      finishGrade: (model && model.grade) || null,
+      structureProtection: (model && (model.structure || model.protection)) || null,
+      instructions: (model && model.notes) || "",
+    });
+  } catch (_) {
+    return null;
+  }
+}
+
+
 function setSaveState(state) {
   if (!S) return;
   S.saveState = state;
