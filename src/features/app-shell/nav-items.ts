@@ -1,59 +1,15 @@
-/** Sidebar navigation model for the authenticated shell. */
-export type NavItem = {
-  /** Legacy view key (`data-v`), also used for the `#v-<key>` deep link. */
-  view: string;
-  label: string;
-  icon: string;
-  /** Id of the live counter badge the workspace loader writes into. */
-  countId?: string;
-};
+/**
+ * Compatibility surface over the one navigation registry.
+ *
+ * Older call sites import NAV_GROUPS / SEARCH_SCOPES from here. The data now
+ * comes from `navigation.ts`, evaluated against the feature registry, so there
+ * is exactly one place that decides what the shell advertises.
+ */
+import { navigationFor, type NavDestination, type NavSection } from "./navigation";
 
-export type NavGroup = {
-  /** Group heading, omitted for the first (ungrouped) item. */
-  title?: string;
-  items: NavItem[];
-};
+export type NavItem = NavDestination;
+export type NavGroup = NavSection;
 
-export const NAV_GROUPS: NavGroup[] = [
-  { items: [{ view: "dash", label: "Dashboard", icon: "home" }] },
-  {
-    title: "Create",
-    items: [
-      { view: "studio", label: "Studio", icon: "panels-top-left" },
-      { view: "explore", label: "Explore", icon: "compass" },
-    ],
-  },
-  {
-    title: "Manage",
-    items: [
-      { view: "props", label: "Properties", icon: "map-pin", countId: "cntProps" },
-      { view: "designs", label: "Designs", icon: "images", countId: "cntDesigns" },
-      { view: "media", label: "Media", icon: "image-plus" },
-      { view: "listings", label: "Batch", icon: "building-2" },
-    ],
-  },
-  {
-    title: "Plan",
-    items: [
-      /* Budget is `hidden` in the feature registry: no sidebar entry, no
-         search scope, no dashboard card until verified cost data exists. */
-      { view: "products", label: "Products", icon: "shopping-bag" },
-      { view: "reports", label: "Reports", icon: "bar-chart-3" },
-    ],
-  },
+export const NAV_GROUPS: NavGroup[] = navigationFor();
 
-  {
-    title: "Share",
-    items: [{ view: "present", label: "Presentations", icon: "presentation" }],
-  },
-];
-
-/** Scopes offered by the topbar search caret menu. */
-export const SEARCH_SCOPES = [
-  { scope: "All", label: "Everything", icon: "search", meta: "Default" },
-  { scope: "Properties", label: "Properties", icon: "map-pin", meta: "0" },
-  { scope: "Rooms", label: "Rooms", icon: "sofa", meta: "0" },
-  { scope: "Designs", label: "Designs", icon: "images", meta: "0" },
-  { scope: "Products", label: "Products", icon: "shopping-bag", meta: "0" },
-  { scope: "Presentations", label: "Presentations", icon: "presentation", meta: "0" },
-];
+export { navigationFor, navigationViews, SEARCH_SCOPES } from "./navigation";
