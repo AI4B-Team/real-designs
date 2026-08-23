@@ -1720,6 +1720,15 @@ function renderDesignFlow(el) {
   mountPhotoImages(el);
 
   if (review) {
+    /* Review renders the canonical draft and records the revision it showed,
+       so Generate can refuse a snapshot the user has since changed. */
+    syncCanonicalDraft();
+    try {
+      const snap = openReview();
+      S.reviewedRev = snap ? snap.rev : null;
+    } catch (_) {
+      S.reviewedRev = null;
+    }
     void loadCreditBalance();
     bindReviewStep(el, {
       onEditPhotos: () => goStep("review"),
