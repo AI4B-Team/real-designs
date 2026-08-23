@@ -79,7 +79,8 @@ export type VersionRow = {
   kind?: string | null;
   modification_class?: string | null;
   storage_path: string;
-  ops?: Record<string, unknown> | null;
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any -- jsonb payload crosses the RPC boundary */
+  ops?: Record<string, any> | null;
   approved?: boolean | null;
   archived?: boolean | null;
   created_at?: string | null;
@@ -305,7 +306,7 @@ export const LINEAGE_KEY = "lineage";
 export function withLineage(
   ops: Record<string, unknown> | null | undefined,
   rec: LineageRecord,
-): Record<string, unknown> {
+): Record<string, any> {
   return { ...(ops ?? {}), [LINEAGE_KEY]: rec };
 }
 
