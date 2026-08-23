@@ -9,6 +9,9 @@ import { getPropertyTree, listSavedEstimates } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
 import { listVideos } from "@/lib/reveal.functions";
 import { budgetsLive, budgetAvailability } from "@/lib/budget-coming-soon";
+import { presentationReadiness } from "@/lib/presentation-publish";
+import { buildApprovalEmail } from "@/lib/approval-link";
+import { productionSafeOrigin } from "@/lib/approval-link";
 import {
   listPackages,
   getPackage,
@@ -94,7 +97,7 @@ function ago(iso) {
 }
 
 function shareUrl(token) {
-  return location.origin + "/pkg/" + token;
+  return productionSafeOrigin(location.origin) + "/pkg/" + token;
 }
 
 function activeLink(row) {
@@ -853,6 +856,15 @@ async function onClick(e) {
     return renderBuilder();
   }
 
+  if (a === "more") {
+    const menu = t.parentNode.querySelector(".pk-menu");
+    document.querySelectorAll(".pk-menu").forEach((m) => {
+      if (m !== menu) m.hidden = true;
+    });
+    if (menu) menu.hidden = !menu.hidden;
+    return;
+  }
+  if (t.disabled || t.getAttribute("aria-disabled") === "true") return;
   if (a === "new") return openBuilder(null);
   if (a === "close") {
     S.draft = null;
@@ -894,7 +906,27 @@ async function onClick(e) {
   if (a === "save") return saveDraft();
   if (a === "open" && id) return openDetail(id);
   if (a === "edit" && id) return openBuilder(id);
-  if (a === "pdf" && id) return exportPdf(id);
+  if (a === "pdf" && id) {
+    const row = S.rows.find((x) => x.id === id);
+    if (row && !presentationReadiness(Array.from({ length: row.asset_count || 0 }, (_, i) => ({ id: "i" + i }))).canExportPdf)
+      return toast("Add at least one design before exporting a PDF.");
+    return exportPdf(id);
+  }
+  if (a === "send" && id) return sendPresentation(id);
+  if (a === "dup" && id) return duplicatePresentation(id);
+  if (a === "revokerow" && id) {
+    const row = S.rows.find((x) => x.id === id);
+    const lk = row && activeLink(row);
+    if (!lk) return toast("There is no active link to revoke.");
+    try {
+      await revokePackageLink({ data: { id: lk.id } });
+      toast("Link Revoked.");
+      await refresh();
+    } catch (err) {
+      toast(err?.message || "Could not revoke that link.");
+    }
+    return;
+  }
   if (a === "copytok") {
     try {
       await navigator.clipboard.writeText(shareUrl(t.getAttribute("data-tok")));
