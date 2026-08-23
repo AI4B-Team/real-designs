@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { checkUrl, safeFetch } from "@/lib/safe-fetch.server";
 
 /**
  * Site Watch — listing site monitoring, gated on a written ownership
@@ -66,6 +65,7 @@ function isPortal(host: string) {
 /** Politely ask the target whether we may read it. Absent robots means yes. */
 async function robotsAllows(origin: string) {
   try {
+    const { safeFetch } = await import("@/lib/safe-fetch.server");
     const res = await safeFetch(
       origin + "/robots.txt",
       { maxBytes: 512 * 1024, timeoutMs: 8000 },
@@ -102,6 +102,7 @@ export const checkWatchSite = createServerFn({ method: "POST" })
         reason: "That Does Not Look Like A Web Address. Try Something Like https://your-site.com.",
       };
     }
+    const { checkUrl, safeFetch } = await import("@/lib/safe-fetch.server");
     const policy = checkUrl(parsed.url, { allowHttp: false });
     if (!policy.ok) {
       return { ok: false, reason: policy.message };
