@@ -2729,11 +2729,20 @@
 .rif-row-s select {
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 5px 8px;
+  /* Reserve room on the right for the native dropdown caret so the
+     "Group Image Format · …" text never overlaps it. */
+  padding: 5px 28px 5px 10px;
   font: inherit;
   font-size: 12px;
   background: #fff;
   color: #111;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  cursor: pointer;
 }
 .rif-row-b {
   font-size: 11px;
