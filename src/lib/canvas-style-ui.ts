@@ -34,6 +34,18 @@ import {
   type ResolvedDirection,
   type StyleNeed,
 } from "@/lib/canvas-style";
+import {
+  applyClear,
+  clearPlan,
+  undoClear,
+  styleHeaderActions,
+  CHOOSE_STYLE_SUMMARY,
+  CLEAR_A11Y,
+  CLEAR_LABEL,
+  type HeaderAction,
+  type StyleUndo,
+} from "@/lib/style-clear";
+
 
 export type CanvasStyleContext = {
   tool: string;
