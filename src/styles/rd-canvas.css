@@ -3197,3 +3197,13 @@
     animation: none;
   }
 }
+
+/* Header actions: View All stays the prominent action, Clear stays secondary. */
+.rd-app .cs-sec-a .cs-browse {
+  font-weight: 700;
+  color: var(--ink, #111);
+}
+.rd-app .cs-sec-a .cs-clear {
+  font-weight: 500;
+  font-size: 0.78rem;
+}
