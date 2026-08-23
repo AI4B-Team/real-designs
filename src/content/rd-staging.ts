@@ -208,6 +208,8 @@ function mkItem(file) {
     err: "",
     /* null = follow the project default. */
     ratio: null,
+    /* Placement inside a fixed Image Format frame; null = centred default. */
+    crop: null,
     /* The ratio a finished design was actually rendered at. */
     resultRatio: null,
     /* Non-destructive orientation, in degrees clockwise. */
@@ -292,6 +294,7 @@ function draftPayload() {
           result_path: i.resultPath || null,
           error: i.err || "",
           ratio: normalizeOverride(i.ratio),
+          crop: cropForDraft(i.crop),
           result_ratio: i.resultRatio || null,
           rotation: normalizeRotation(i.rotation),
         };
@@ -637,6 +640,7 @@ function hydrate(draft) {
       resultPath: saved.result_path || null,
       resultUrl: null,
       ratio: normalizeOverride(saved.ratio),
+      crop: cropForDraft(saved.crop),
       resultRatio: saved.result_ratio || null,
       rotation: normalizeRotation(saved.rotation),
       err: saved.state === "generating" ? "That render was interrupted." : saved.error || "",
@@ -1462,6 +1466,10 @@ function render() {
   mountUploadRetries(el);
   mountRotations(el);
   mountFloatingAdd(el);
+  if (S.focusFormat) {
+    S.focusFormat = false;
+    focusImageFormat(el);
+  }
 }
 
 /* ------------------------------------------------- design + review pages
@@ -1846,7 +1854,7 @@ function applyRatiosLive() {
   const sel = el.querySelector("[data-ratiosel]");
   if (sel && sel.value !== project) sel.value = project;
   /* A ratio outside the three primaries shows as the compact custom chip. */
-  if (!isPrimaryRatio(project)) renderHeaderFormat(el, project);
+  if (el.querySelector(".bx-fmtsel") && !isPrimaryRatio(project)) renderHeaderFormat(el, project);
   paint();
 }
 
@@ -2094,7 +2102,7 @@ function bindReview(el) {
       }
     }),
   );
-  bindRatioControls(el);
+  bindFormatSection(el);
   bindAddress(el);
 
   /* Add Photos stays on this page: the picker adds straight into the grid. */
