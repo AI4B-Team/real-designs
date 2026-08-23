@@ -1309,22 +1309,12 @@ function render() {
     <div class="rv-head">
       <div>
         <h2>Prepare Your Photos</h2>
-        <p>Choose the photos you want to design, confirm their room types, and select an output format.</p>
+        <p>Choose the photos you want to design, confirm their room types, and set the image format.</p>
       </div>
       <div class="rv-head-tools">
-        ${formatSelectorHtml({
-          label: "Photo Format",
-          options: PRIMARY_OUTPUT_RATIOS,
-          value: normalizeOutputRatio(S.outputRatio),
-          attr: "ratio",
-          id: "rds-ratio",
-          more: { label: "More Ratios", value: "__more" },
-          customLabel: ratioLabel(S.outputRatio),
-        })}
         <input type="file" id="rdsFile" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif" multiple hidden>
         <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
           <div class="rv-more-m">
-            <button data-act="moreratios">More Ratios</button>
             <button data-act="all">Select All</button>
             <button data-act="none">Deselect All</button>
             <button data-act="del">Remove Selected</button>
@@ -1338,7 +1328,9 @@ function render() {
     <div class="rv-layout rv-railed">
       ${stepRailHtml("review")}
       <div class="rv-wiz bx-work">
+        ${formatSectionHtml()}
         <div class="rv-utility">
+
           <label class="rv-selall"><input type="checkbox" id="rdsSelAll" ${all ? "checked" : ""}><b id="rdsSelCount">${sel} of ${S.items.length} selected</b></label>
           <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}</div>
           <div class="rv-utility-a" id="rdsBulkBar"${sel > 0 ? "" : ' hidden'}>
