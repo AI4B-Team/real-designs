@@ -1368,10 +1368,20 @@ function stepRailHtml(active) {
   const has = S.items.length > 0;
   const st = stepState();
   const done = st.completed.length;
+  /* Progress tells the truth about validity, never about visits: Photos is
+     complete when its own requirements pass, Design when every selected photo
+     has the settings it needs, and Review only opens after both. */
+  const photosOk = canEnterDesign(S.items);
+  const designOk = photosOk && canEnterReview(S.items, designModel());
+  const designTouched = !!(S.design || S.bulkSettings);
   const extra = {
-    review: { ready: has, badge: has ? String(selectedCount()) : "" },
-    design: { ready: has, done: !!done },
-    final: { ready: !!done, badge: done ? String(done) : "" },
+    review: { ready: has, done: photosOk },
+    design: {
+      ready: has && photosOk,
+      done: designOk,
+      badge: designTouched && !designOk ? "Needs Review" : "",
+    },
+    final: { ready: designOk, badge: done ? String(done) : "" },
   };
   const steps = PHOTO_RAIL.map((s) => ({ ...s, ...(extra[s.key] || {}) }));
   return builderRailHtml({
