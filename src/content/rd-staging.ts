@@ -51,7 +51,15 @@ import {
 } from "@/lib/staging-rooms";
 import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
 import { runBulkDesign, styleFitsSpace } from "@/lib/staging-bulk";
-import { claimDraftStyle, setDraftStep, draftStyle, patchDraft } from "@/lib/design-draft";
+import {
+  claimDraftStyle,
+  setDraftStep,
+  draftStyle,
+  patchDraft,
+  openReview,
+  snapshotForGeneration,
+  recordGeneration,
+} from "@/lib/studio-draft";
 import {
   createBatch,
   completeJob,
@@ -325,6 +333,51 @@ function draftPayload() {
   };
 }
 
+/**
+ * Mirror the live session into the one canonical Studio draft.
+ *
+ * The canonical draft is what Review renders and what Generate submits, so
+ * every meaningful change to photos, order, rooms, formats, crops, styles or
+ * instructions is written here — never left in DOM controls or globals.
+ */
+function syncCanonicalDraft() {
+  if (!S) return null;
+  const model = S.design || S.bulkSettings || null;
+  const photos = ordered().map((i) => ({
+    key: i.key,
+    sourceId: i.sourceId || null,
+    path: i.path || null,
+    name: i.name || "Photo",
+    room: i.room || null,
+    roomSource: i.roomSource || "none",
+    confidence: Number(i.confidence || 0),
+    selected: !!i.selected,
+    ratio: normalizeOverride(i.ratio),
+    crop: cropForDraft(i.crop),
+    rotation: normalizeRotation(i.rotation),
+    styleId: (model && model.styleByPhoto && model.styleByPhoto[i.key]) || null,
+    instructions: (model && model.notesByPhoto && model.notesByPhoto[i.key]) || "",
+  }));
+  try {
+    return patchDraft({
+      origin: S.origin || "studio",
+      projectId: S.draftId || null,
+      propertyId: S.propertyId || null,
+      photos,
+      order: photos.map((p) => p.key),
+      outputRatio: normalizeOutputRatio(S.outputRatio),
+      outputRatioExplicit: !!S.outputRatioExplicit,
+      designDirection: (model && model.direction) || null,
+      finishGrade: (model && model.grade) || null,
+      structureProtection: (model && (model.structure || model.protection)) || null,
+      instructions: (model && model.notes) || "",
+    });
+  } catch (_) {
+    return null;
+  }
+}
+
+
 function setSaveState(state) {
   if (!S) return;
   S.saveState = state;
@@ -347,6 +400,9 @@ function ensureSaver() {
 
 function saveDraft() {
   if (!S) return;
+  /* The canonical draft is updated even before anything is durable, so a
+     refresh restores the exact step and settings either way. */
+  syncCanonicalDraft();
   /* Nothing durable to write until at least one photo has a storage path. */
   if (!S.items.some((i) => i.path)) return;
   ensureSaver().queue(draftPayload());
@@ -1664,6 +1720,15 @@ function renderDesignFlow(el) {
   mountPhotoImages(el);
 
   if (review) {
+    /* Review renders the canonical draft and records the revision it showed,
+       so Generate can refuse a snapshot the user has since changed. */
+    syncCanonicalDraft();
+    try {
+      const snap = openReview();
+      S.reviewedRev = snap ? snap.rev : null;
+    } catch (_) {
+      S.reviewedRev = null;
+    }
     void loadCreditBalance();
     bindReviewStep(el, {
       onEditPhotos: () => goStep("review"),
@@ -1696,6 +1761,19 @@ function renderDesignFlow(el) {
           cmToast("Select At Least One Photo First.");
           return release();
         }
+        /* Generate always submits the reviewed revision. If the draft moved
+           on — another tab, a late upload — Review refreshes first. */
+        syncCanonicalDraft();
+        let snapRev = null;
+        try {
+          const snap = snapshotForGeneration(S.reviewedRev || null);
+          if (!snap.ok) {
+            cmToast("This Project Changed. Review Refreshed — Check It, Then Generate.");
+            render();
+            return;
+          }
+          snapRev = snap.snapshot.rev;
+        } catch (_) {}
         /* Review, the saved draft and the request must agree before spending. */
         assertDesignState("the Review summary", S.design, {
           direction: S.design.direction,
@@ -1703,6 +1781,7 @@ function renderDesignFlow(el) {
         });
         const payload = toDirection(S.design, items, normalizeOutputRatio(S.outputRatio));
         assertDesignState("the generation request", S.design, directionFromPayload(payload));
+        S.snapshotRev = snapRev;
         try {
           runBatch(items, payload);
         } catch (err) {
@@ -2484,7 +2563,7 @@ function runBatch(batch, direction, opts = {}) {
   /* The draft records the one batch it produced, so a remount reattaches to
      it instead of ever creating a second charged batch. */
   try {
-    patchDraft({ generationBatchId: rec.id, step: "generating" });
+    recordGeneration(rec.id, S.snapshotRev == null ? undefined : S.snapshotRev);
   } catch (_) {}
   const jobIdOf = (it) => `${rec.id}:${it.key}`;
   const panel = mountBatchPanel(rec, {
