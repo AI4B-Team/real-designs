@@ -508,11 +508,7 @@ export function mountCanvasStyle(
     }
     el.innerHTML =
       '<div class="cs-sec">' +
-      '<div class="cs-sec-h"><label>' +
-      esc(title) +
-      '</label><button type="button" class="fb-link cs-browse">View All</button><span class="cs-scope">' +
-      esc(scopeLabel(sel.scope)) +
-      "</span></div>" +
+      sectionHeader(title, true, scopeLabel(sel.scope), el.clientWidth) +
       '<div class="cs-picked">' +
       '<span class="cs-picked-th">' +
       (s.previewImage
@@ -526,15 +522,13 @@ export function mountCanvasStyle(
       "</em></span>" +
       "</div>" +
       quickGrid(pool, s.id) +
-      '<div class="cs-picked-act">' +
-      '<button class="fb-link cs-clear" type="button">Clear</button>' +
-      "</div>" +
       (sel.scope !== "photo" && c.photoKey
         ? '<p class="cs-inherit">Inherited from ' +
           esc(scopeLabel(sel.scope)) +
           ". Choosing a different style here only changes this photo.</p>"
         : "") +
       "</div>";
+
 
     icons(el);
     onChange?.(sel);
