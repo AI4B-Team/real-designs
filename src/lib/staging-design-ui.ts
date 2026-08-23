@@ -410,7 +410,7 @@ export function reviewStepHtml(ctx) {
   const cost = creditCost(items);
   const blockers = ctx.blockers || [];
   const groups = designGroups(items);
-  const overrides = items.filter((it) => hasOverride(model, it)).length;
+  const overrides = items.filter((it) => hasCustomization(model, it)).length;
   const balance = typeof ctx.balance === "number" ? ctx.balance : null;
   const freePlan = ctx.plan === "free";
   const remainingToday = typeof ctx.remainingToday === "number" ? ctx.remainingToday : null;
