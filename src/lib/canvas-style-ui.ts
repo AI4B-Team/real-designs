@@ -78,8 +78,59 @@ function icons(root?: Element | null) {
 }
 
 /* ------------------------------------------------------------------ */
+/* section header                                                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * DESIGN STYLE on the left; Clear, View All and the scope chip on the right.
+ * Clear only exists while a style is selected and drops into the overflow
+ * menu on a narrow inspector rather than being clipped.
+ */
+export function sectionHeader(
+  title: string,
+  selected: boolean,
+  scopeText?: string | null,
+  width?: number | null,
+): string {
+  const layout = styleHeaderActions({ selected, scopeLabel: scopeText ?? null, width: width ?? 0 });
+  const clearBtn = (extra: string) =>
+    '<button type="button" class="fb-link cs-clear' +
+    extra +
+    '" title="' +
+    esc(CLEAR_A11Y) +
+    '" aria-label="' +
+    esc(CLEAR_A11Y) +
+    '">' +
+    esc(CLEAR_LABEL) +
+    "</button>";
+  const inline = layout.inline
+    .map((a) => {
+      if (a.id === "clear") return clearBtn("");
+      if (a.id === "browse")
+        return '<button type="button" class="fb-link cs-browse">' + esc(a.label) + "</button>";
+      return '<span class="cs-scope">' + esc(a.label) + "</span>";
+    })
+    .join("");
+  const overflow = layout.overflow.length
+    ? '<span class="cs-ovf"><button type="button" class="cs-ovf-b" aria-haspopup="menu" aria-expanded="false" aria-label="More Design Style Actions"><i data-lucide="more-horizontal"></i></button>' +
+      '<span class="cs-ovf-m" role="menu" hidden>' +
+      layout.overflow.map(() => clearBtn(" cs-ovf-i")).join("") +
+      "</span></span>"
+    : "";
+  return (
+    '<div class="cs-sec-h"><label>' +
+    esc(title) +
+    '</label><span class="cs-sec-a">' +
+    inline +
+    overflow +
+    "</span></div>"
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* quick picks                                                         */
 /* ------------------------------------------------------------------ */
+
 
 /** Popular styles offered inline in the Setup panel, in priority order. */
 export const QUICK_STYLE_IDS = [
