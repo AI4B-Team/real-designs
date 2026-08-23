@@ -82,7 +82,8 @@ export const renderStaging = createServerFn({ method: "POST" })
     if (!apiKey) throw new Error("AI is not configured.");
 
     const { buildStagePrompt, renderStagedImage } = await import("@/lib/stage.server");
-    const { charge, refund, chargeErrorMessage } = await import("@/lib/credits.server");
+    const { runGenerationItem } = await import("@/lib/generation-run.server");
+    const { imageIdentity } = await import("@/lib/generation-identity");
 
     const results: Array<{
       id: string;
@@ -95,37 +96,43 @@ export const renderStaging = createServerFn({ method: "POST" })
     let charges = 0;
 
     for (const run of data.runs) {
-      const charged = await charge(
-        context.userId,
-        "design",
-        `Virtual Stage, ${data.payload.room_type || "room"} (${run.label})`,
+      const outcome = await runGenerationItem(
+        {
+          userId: context.userId,
+          action: "design",
+          kind: "stage.render",
+          note: `Virtual Stage, ${data.payload.room_type || "room"} (${run.label})`,
+          requestId: `${data.request_id ?? ""}:${run.id}`,
+          parts: [
+            imageIdentity(data.image),
+            run.id,
+            run.label,
+            run.directive,
+            data.payload.room_type,
+            data.payload.mode,
+          ],
+        },
+        async () =>
+          renderStagedImage(
+            buildStagePrompt(data.payload as any, run.directive ? run : null),
+            data.image,
+            apiKey,
+          ),
       );
-      if (!charged.ok) {
-        /* Out of credits partway through: stop, keep what already succeeded. */
-        if (!results.length) throw new Error(chargeErrorMessage(charged));
-        results.push({ id: run.id, label: run.label, image: null, error: chargeErrorMessage(charged) });
-        break;
+
+      if (!outcome.ok) {
+        /* Out of credits stops the batch and keeps what already succeeded; a
+           failed render fails only its own item and was refunded exactly once. */
+        if (outcome.blocked && !results.length) throw new Error(outcome.error);
+        results.push({ id: run.id, label: run.label, image: null, error: outcome.error });
+        if (outcome.blocked) break;
+        continue;
       }
-      charges += charged.charged;
-      balance = charged.balance;
-      remainingToday = charged.remainingToday ?? null;
-      try {
-        const image = await renderStagedImage(
-          buildStagePrompt(data.payload as any, run.directive ? run : null),
-          data.image,
-          apiKey,
-        );
-        results.push({ id: run.id, label: run.label, image, error: null });
-      } catch (err) {
-        await refund(context.userId, charged.charged, "Virtual Stage failed");
-        charges -= charged.charged;
-        results.push({
-          id: run.id,
-          label: run.label,
-          image: null,
-          error: (err as Error)?.message || "That staging run did not finish.",
-        });
-      }
+
+      charges += outcome.charged;
+      balance = outcome.balance;
+      remainingToday = outcome.remainingToday;
+      results.push({ id: run.id, label: run.label, image: outcome.value, error: null });
     }
 
     if (!results.some((r) => r.image))
