@@ -324,23 +324,33 @@ export function bindDesignStep(root, ctx) {
 
 /* ------------------------------------------------------------------ review */
 
-function reviewGroupHtml(model, group) {
+function reviewGroupHtml(ctx, model, group) {
   return `<section class="rdd-rgroup">
     <h3>${esc(group.label)} · ${group.items.length} Photo${group.items.length === 1 ? "" : "s"}</h3>
     <p class="rdd-rstyle">Style: <b>${esc(styleName(model.styleBySpace[group.space]) || "Not chosen")}</b></p>
     <div class="rdd-rlist">${group.items
-      .map((it, i) => {
+      .map((it) => {
         const id = effectiveStyleId(model, it);
         const own = hasOverride(model, it);
+        const n = (ctx.items || []).indexOf(it) + 1;
+        const label = (ctx.photoLabel && ctx.photoLabel(it, n)) || `${it.room || "Photo"} · Photo ${n}`;
+        const fmt = (ctx.photoFormat && ctx.photoFormat(it)) || "";
+        const custom = ctx.photoCustomCrop && ctx.photoCustomCrop(it);
         return `<div class="rdd-rrow">
-          <span class="rdd-rn">${i + 1}</span>
-          <span class="rdd-photo-th"><img src="${esc(it.signed || it.previewUrl || "")}" alt="${esc(it.room || "Photo")}" loading="lazy"></span>
-          <span class="rdd-photo-m"><b>${esc(it.room || "Room type needed")}</b>
-            <em>${esc(styleName(id) || "No style")}${own ? " · Own style" : ""}</em></span>
+          <span class="rdd-rn">${n}</span>
+          <span class="rdd-photo-th"><img src="${esc(it.signed || it.previewUrl || "")}" alt="${esc(label)}" loading="lazy"></span>
+          <span class="rdd-photo-m"><b>${esc(label)}</b>
+            <em>${esc(styleName(id) || "No style")}${own ? " · Own Style" : ""}${fmt ? " · " + esc(fmt) : ""}${custom ? " · Custom Position" : ""}</em></span>
         </div>`;
       })
       .join("")}</div>
   </section>`;
+}
+
+function factHtml(term, value, edit) {
+  return `<div><dt>${esc(term)}${
+    edit ? `<button type="button" class="rdd-factedit" data-reviewedit="${esc(edit)}">Edit</button>` : ""
+  }</dt><dd>${esc(value)}</dd></div>`;
 }
 
 /** The full Review page body. */
@@ -350,34 +360,46 @@ export function reviewStepHtml(ctx) {
   const cost = creditCost(items);
   const blockers = ctx.blockers || [];
   const groups = designGroups(items);
+  const overrides = items.filter((it) => hasOverride(model, it)).length;
+  const balance = typeof ctx.balance === "number" ? ctx.balance : null;
+  const short = balance !== null && balance < cost ? cost - balance : 0;
   return `<div class="rdd-page rdd-review">
-    <div class="rdd-intro">
-      <h2>Review and Generate</h2>
-      <p>This is exactly what will be generated. Nothing is charged until you generate.</p>
-    </div>
-
     <dl class="rdd-facts">
-      ${ctx.address ? `<div><dt>Property Address</dt><dd>${esc(ctx.address)}</dd></div>` : ""}
-      <div><dt>Output Format</dt><dd>${esc(ctx.ratioLabel || "Original")}</dd></div>
-      <div><dt>Photos</dt><dd>${items.length}</dd></div>
-      <div><dt>Design Direction</dt><dd>${esc(directionLabel(model.direction))}</dd></div>
-      <div><dt>Finish Grade</dt><dd>${esc(gradeLabel(model.grade))}</dd></div>
-      <div><dt>Structure Protection</dt><dd>${model.preserve !== false ? "On — walls, windows and layout kept" : "Off"}</dd></div>
-      <div><dt>Total Credit Cost</dt><dd>${cost} credit${cost === 1 ? "" : "s"}</dd></div>
+      ${ctx.address ? factHtml("Property", ctx.address) : ""}
+      ${factHtml("Image Format", ctx.ratioLabel || "Original", "format")}
+      ${factHtml("Photos", String(items.length), "photos")}
+      ${factHtml("Design Direction", directionLabel(model.direction), "design")}
+      ${factHtml("Finish Grade", gradeLabel(model.grade), "design")}
+      ${factHtml(
+        "Structure Protection",
+        model.preserve !== false
+          ? "On · Preserve walls, windows, doors, and layout"
+          : "Off · Structure may change",
+        "design",
+      )}
+      ${factHtml("Shared Instructions", (model.notes || "").trim() || "None", "design")}
+      ${factHtml("Individual Overrides", overrides ? `${overrides} photo${overrides === 1 ? "" : "s"}` : "None", "design")}
+      ${factHtml("Credit Cost", `${cost} credit${cost === 1 ? "" : "s"}`)}
+      ${factHtml("Available Balance", balance === null ? "Checking…" : `${balance} credit${balance === 1 ? "" : "s"}`)}
     </dl>
+    ${
+      short
+        ? `<p class="rdd-short"><i data-lucide="alert-circle"></i>You need ${short} more credit${short === 1 ? "" : "s"} to generate these ${items.length} design${items.length === 1 ? "" : "s"}.</p>`
+        : ""
+    }
     ${
       (model.notes || "").trim()
         ? `<p class="rdd-rnotes"><b>Shared Instructions</b><span>${esc(model.notes)}</span></p>`
         : ""
     }
 
-    <div class="rdd-rgroups">${groups.map((g) => reviewGroupHtml(model, g)).join("")}</div>
+    <div class="rdd-rgroups">${groups.map((g) => reviewGroupHtml(ctx, model, g)).join("")}</div>
 
     <div class="rv-gridfoot">
       <div class="rv-count">${
         blockers.length
           ? `<ul class="rdd-blocks">${blockers.map((b) => `<li><i data-lucide="alert-circle"></i>${esc(b)}</li>`).join("")}</ul>`
-          : `<span>${items.length} photo${items.length === 1 ? "" : "s"} · ${cost} credit${cost === 1 ? "" : "s"}</span>`
+          : `<span>Generates one design for each of ${items.length} photo${items.length === 1 ? "" : "s"} · ${cost} credit${cost === 1 ? "" : "s"}</span>`
       }</div>
       <div class="rv-gridfoot-a">
         <button class="btn btn-ghost" id="rddEditPhotos">Edit Photos</button>
@@ -393,6 +415,14 @@ export function bindReviewStep(root, ctx) {
   if (p) p.onclick = () => ctx.onEditPhotos && ctx.onEditPhotos();
   const d = root.querySelector("#rddEditDesign");
   if (d) d.onclick = () => ctx.onEditDesign && ctx.onEditDesign();
+  root.querySelectorAll("[data-reviewedit]").forEach((b) => {
+    b.onclick = () => {
+      const what = b.getAttribute("data-reviewedit");
+      if (what === "design") ctx.onEditDesign && ctx.onEditDesign();
+      else if (what === "format") ctx.onEditFormat && ctx.onEditFormat();
+      else ctx.onEditPhotos && ctx.onEditPhotos();
+    };
+  });
   const g = root.querySelector("#rddGenerate");
   if (g)
     g.onclick = () => {
@@ -401,3 +431,4 @@ export function bindReviewStep(root, ctx) {
       ctx.onGenerate && ctx.onGenerate();
     };
 }
+
