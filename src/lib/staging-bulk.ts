@@ -178,8 +178,9 @@ export async function runBulkDesign(items, direction, hooks = {}) {
         const perSpace = (direction.styleBySpace || {})[space];
         /* A photo may override its group style; the override always wins. */
         const perPhoto = (direction.styleByPhoto || {})[it.key];
-        const note =
-          ((direction.notesByPhoto || {})[it.key] || "").trim() || direction.notes || null;
+        /* Shared instructions apply to every photo; a per-photo note adds to
+           them rather than replacing them, which is what the labels promise. */
+        const note = combineNotes(direction.notes, (direction.notesByPhoto || {})[it.key]);
         stage("preparing");
         stage("generating");
         const r = await renderDesign({
