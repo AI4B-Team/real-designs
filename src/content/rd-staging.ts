@@ -195,6 +195,8 @@ function newSession(seed = {}) {
     /* Project-level Photo Design output ratio. "original" keeps every photo's
        native aspect; a photo may still carry its own override. */
     outputRatio: normalizeOutputRatio(seed.outputRatio),
+    /* A new draft always opens on Original until the user chooses otherwise. */
+    outputRatioExplicit: false,
   };
 }
 
@@ -1863,6 +1865,8 @@ async function setProjectRatio(next) {
     if (choice === "all") overrides.forEach((i) => (i.ratio = null));
   }
   S.outputRatio = ratio;
+  /* A format only sticks across sessions once the user picked it here. */
+  S.outputRatioExplicit = true;
   saveDraft();
   applyRatiosLive();
   renderFormatSection(host());
