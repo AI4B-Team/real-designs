@@ -2563,7 +2563,7 @@ function runBatch(batch, direction, opts = {}) {
   /* The draft records the one batch it produced, so a remount reattaches to
      it instead of ever creating a second charged batch. */
   try {
-    patchDraft({ generationBatchId: rec.id, step: "generating" });
+    recordGeneration(rec.id, S.snapshotRev == null ? undefined : S.snapshotRev);
   } catch (_) {}
   const jobIdOf = (it) => `${rec.id}:${it.key}`;
   const panel = mountBatchPanel(rec, {
