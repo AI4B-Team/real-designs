@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { assertUploadAllowed, buildObjectPath } from "@/lib/storage-paths";
+import { verifyUploadedObject } from "@/lib/upload-guard.functions";
 
 /**
  * Room photo storage (private bucket "room-photos").
@@ -64,6 +65,14 @@ export async function uploadRoomPhoto(file: File): Promise<string> {
     .from(BUCKET)
     .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
   if (error) throw new Error(error.message);
+
+  // The client-side checks above are a fast fail, not the authority. The
+  // server re-reads the stored bytes, sniffs the real format and deletes the
+  // object if the declared type was a lie.
+  const verdict = await verifyUploadedObject({
+    data: { bucket: BUCKET, path, declared_type: file.type || undefined },
+  });
+  if (!verdict.ok) throw new Error(verdict.message);
 
   return path;
 }
