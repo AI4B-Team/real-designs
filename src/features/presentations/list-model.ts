@@ -40,7 +40,9 @@ export interface PresentationActivity {
 
 export type PresentationFilter = "all" | "due" | PresentationStatus;
 
-export const PRES_STATUS_META: Record<string, { cls: string; label: string }> = {
+const PRES_STATUS_FALLBACK = { cls: "p-info", label: "Sent" } as const;
+
+export const PRES_STATUS_META: Record<string, { cls: string; label: string } | undefined> = {
   sent: { cls: "p-info", label: "Sent" },
   viewed: { cls: "p-amb", label: "Opened" },
   approved: { cls: "p-ok", label: "Approved" },
@@ -61,7 +63,7 @@ export const PRES_TABS: Array<{ key: PresentationFilter; label: string }> = [
 export const PRES_NUDGE_MS = 3 * 86400000;
 
 export function presentationStatusMeta(status?: string | null) {
-  return PRES_STATUS_META[status || ""] || PRES_STATUS_META.sent;
+  return PRES_STATUS_META[status || ""] || PRES_STATUS_FALLBACK;
 }
 
 export function presentationAgo(iso?: string | null, now: number = Date.now()): string {
@@ -157,7 +159,9 @@ export function presentationRowCopy(
   };
 }
 
-export const PRES_HISTORY_META: Record<string, { icon: string; label: string }> = {
+const PRES_HISTORY_FALLBACK = { icon: "eye", label: "Opened" } as const;
+
+export const PRES_HISTORY_META: Record<string, { icon: string; label: string } | undefined> = {
   created: { icon: "plus-circle", label: "Link Created" },
   viewed: { icon: "eye", label: "Opened" },
   approved: { icon: "check-circle-2", label: "Approved" },
@@ -180,7 +184,7 @@ export function presentationHistoryWhen(iso?: string | null): string {
 }
 
 export function presentationHistoryCopy(ev: PresentationActivity) {
-  const meta = PRES_HISTORY_META[ev.kind || ""] || PRES_HISTORY_META.viewed;
+  const meta = PRES_HISTORY_META[ev.kind || ""] || PRES_HISTORY_FALLBACK;
   const extras: string[] = [];
   if (ev.excluded_count)
     extras.push(ev.excluded_count + " line" + (ev.excluded_count === 1 ? "" : "s") + " removed");
