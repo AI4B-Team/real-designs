@@ -13,8 +13,10 @@ import {
   type StylePayload,
   type StyleRecord,
 } from "@/lib/style-catalog";
+import { getDraft, setDraftStyle, removeDraftStyle } from "@/lib/studio-draft";
 
-const KEY = "rd_style_choice";
+/* The style is not a separate record: it lives on the canonical Studio draft
+   so it stays scoped to one project and can never leak into the next one. */
 
 export type StudioStyleChoice = {
   styleId: string;
@@ -49,30 +51,18 @@ function build(rec: StyleRecord): StudioStyleChoice {
   };
 }
 
-/** Validates the id against the catalog and persists it. Returns null when unknown. */
+/** Validates the id against the catalog and stores it on the draft. */
 let announcing = false;
 export function setStudioStyle(id?: string | null): StudioStyleChoice | null {
   const rec = styleById(id);
   if (!rec) return null;
   const choice = build(rec);
-  /* Re-selecting the style already stored is a no-op. Listeners re-read the
-     choice when they hear the event, and some of them write it back, so
+  /* Re-selecting the style already on the draft is a no-op. Listeners re-read
+     the choice when they hear the event, and some of them write it back, so
      announcing an unchanged selection would loop forever. */
-  let same = false;
-  try {
-    const prev = JSON.parse(localStorage.getItem(KEY) || "null");
-    same = !!prev && prev.styleId === choice.styleId;
-  } catch (_) {
-    same = false;
-  }
-  if (same) return choice;
-  try {
-    localStorage.setItem(KEY, JSON.stringify(choice));
-  } catch (_) {
-    /* storage may be blocked */
-  }
-  /* Listeners re-read (and sometimes re-write) the choice, so the
-     announcement is never allowed to re-enter itself. */
+  const prev = getDraft();
+  if (prev && prev.styleId === choice.styleId) return choice;
+  setDraftStyle(rec.id);
   if (announcing) return choice;
   announcing = true;
   try {
@@ -85,23 +75,16 @@ export function setStudioStyle(id?: string | null): StudioStyleChoice | null {
 }
 
 
-/** Reads the stored choice, re-validated against the current catalog. */
+/** Reads the draft's style, re-validated against the current catalog. */
 export function getStudioStyle(): StudioStyleChoice | null {
-  let raw: any = null;
-  try {
-    raw = JSON.parse(localStorage.getItem(KEY) || "null");
-  } catch (_) {
-    return null;
-  }
-  const rec = raw && styleById(raw.styleId);
+  const d = getDraft();
+  const rec = d && styleById(d.styleId);
   if (!rec) return null;
-  return { ...build(rec), ts: raw.ts || Date.now() };
+  return build(rec);
 }
 
 export function clearStudioStyle(): void {
-  try {
-    localStorage.removeItem(KEY);
-  } catch (_) {}
+  removeDraftStyle();
   try {
     window.dispatchEvent(new CustomEvent("rd:style-cleared"));
   } catch (_) {}
