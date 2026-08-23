@@ -499,3 +499,71 @@ features, plan-gated features, admin-only features, active features and public
 pages. Full suite: 1164 passing.
 
 No shell redesign was performed in this phase.
+
+## Phase 2A — Token layer and layout contracts (complete)
+
+Layout used to be decided in many small places: literal hex values and pixel
+sizes repeated across `rd-app.css`, `rd-modal.css`, `rd-canvas.css` and inline
+styles, with structure emerging from whatever happened to be nested where. That
+is why a long room name could push a card taller than its neighbours, why an
+inspector could grow a second scrollbar, and why a modal could exceed the
+viewport on a short screen. This phase gave those decisions one home each. It
+changed no product design.
+
+### The token layer
+
+`src/styles/rd-tokens.css` defines on `:root` the complete vocabulary: brand
+red and its dark variant, ink, muted and disabled text, background, surface and
+elevated surface, border, focus, and semantic success/warning/error; an
+11-step spacing scale (2 → 64px); named dimensions for the sidebar in both
+states, navigation icon and target, tool rail, inspector, header, canvas action
+bar, modal bounds, card radius and control height; the DM Sans / DM Mono
+families with a heading-to-caption type scale; and radii, shadows, the focus
+ring, overlay colour and motion durations. A single
+`prefers-reduced-motion: reduce` block neutralises animation globally.
+
+### Aliases, not a second palette
+
+Existing variables (`--red`, `--ink`, `--line`, `--mute`, `--sh`, and the modal
+equivalents) were repointed at the tokens rather than replaced, so every
+existing rule keeps working and the rendered result is unchanged. The values
+were chosen to match what was already shipping, which is why the visual check
+shows no pixel movement.
+
+### Layout contracts
+
+`src/styles/rd-contracts.css` states, per surface, who owns width, height and
+scrolling:
+
+- **Shell** — a two-column grid whose first column is the sidebar token in
+  either state; the content column is `minmax(0, 1fr)` so it can shrink instead
+  of forcing the page wide. Collapsed navigation keeps a 20px glyph centred in a
+  44px target.
+- **Canvas** — a flexible viewport row plus a fixed-height action band. Optional
+  rows (save warning, version strip) are additive and cannot squeeze the image.
+- **Inspector** — fixed header, one scrolling body, footer pinned by grid
+  placement rather than `position: sticky`. Nested scroll containers are
+  neutralised; the single intentional exception (the declutter batch list) opts
+  in with `rdw-scroll-own`.
+- **Cards** — a fixed media aspect box and reserved text rows, so a card's
+  height does not depend on its content. Long names truncate.
+- **List rows** — fixed thumbnail box, flexible text column, fixed action
+  column.
+- **Modals** — bounded in both dimensions, scrolling owned by the body, footer
+  always reachable.
+- **Accordions** — a 52px trigger, content in normal flow.
+
+Contracts are imported last so they win by source order; no `!important` was
+added.
+
+### Verification
+
+`src/styles/__tests__/tokens.test.ts` (57 tests) asserts the token vocabulary,
+the spacing scale, the reduced-motion rule, that legacy aliases resolve through
+tokens, that the shell root holds no literal colours, and that each contract
+still expresses its invariant. A browser pass at 1280, 1366, 1440, 1920, 834 and
+390 wide, expanded and collapsed, found no horizontal page overflow, no nested
+inspector scrollers, uniform card heights, and no console errors. Full suite:
+1221 passing.
+
+No componentization was performed in this phase.
