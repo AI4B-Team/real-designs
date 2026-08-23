@@ -115,34 +115,52 @@ function libraryHtml() {
   }
   return S.rows
     .map((r) => {
-      const [cls, lab] = STATUS[r.status] || STATUS.draft;
+      const ready = presentationReadiness(
+        Array.from({ length: r.asset_count || 0 }, (_, i) => ({ id: "i" + i })),
+      );
+      const [cls, lab] = ready.isDraft ? ["p-gray", "Draft"] : STATUS[r.status] || STATUS.draft;
       const link = activeLink(r);
-      const ctx = [r.property_label, r.client_name ? "For " + r.client_name : null]
+      const ctx = [
+        r.property_label,
+        r.client_name ? "For " + r.client_name : "No recipient",
+      ]
         .filter(Boolean)
         .map(esc)
         .join(" · ");
+      const dis = (ok) => (ok ? "" : " disabled aria-disabled=\"true\"");
       return `<div class="pk-row" data-id="${r.id}">
         <div class="pk-row-t">
           <b>${esc(r.title)}</b>
-          <span>${ctx ? ctx + " · " : ""}${r.asset_count} Item${r.asset_count === 1 ? "" : "s"} · ${r.view_count || 0} View${
-            (r.view_count || 0) === 1 ? "" : "s"
+          <span>${ctx ? ctx + " · " : ""}${r.asset_count} Item${r.asset_count === 1 ? "" : "s"} · ${
+            ready.isDraft ? "Not Shared" : (r.view_count || 0) + " View" + ((r.view_count || 0) === 1 ? "" : "s")
           } · ${esc(r.last_activity || "Created")} ${ago(r.last_activity_at || r.created_at)}</span>
+          ${ready.isDraft ? `<span class="pk-note">${esc(ready.message)}</span>` : ""}
         </div>
         <span class="pill ${cls}">${lab}</span>
         <div class="pk-row-a">
-          <button class="btn btn-ghost btn-xs" data-pk="open" title="Open Presentation"><i data-lucide="eye"></i>Open</button>
-          <button class="btn btn-ghost btn-xs" data-pk="edit" title="Edit Presentation"><i data-lucide="pencil"></i>Edit</button>
-          <button class="btn btn-ghost btn-xs" data-pk="${link ? "copy" : "link"}" title="${link ? "Copy Client Link" : "Create Client Link"}"><i data-lucide="${
+          <button class="btn btn-ghost btn-xs" data-pk="open" title="Open Presentation" aria-label="Open Presentation"><i data-lucide="eye"></i>Open</button>
+          <button class="btn btn-ghost btn-xs" data-pk="send" title="Send To Client" aria-label="Send To Client"${dis(ready.canSend)}><i data-lucide="send"></i>Send</button>
+          <button class="btn btn-ghost btn-xs" data-pk="${link ? "copy" : "link"}" title="${link ? "Copy Client Link" : "Create Client Link"}" aria-label="${link ? "Copy Client Link" : "Create Client Link"}"${dis(ready.canCopyLink)}><i data-lucide="${
             link ? "copy" : "link"
           }"></i>${link ? "Copy Link" : "Client Link"}</button>
-          <button class="btn btn-ghost btn-xs" data-pk="pdf" title="Export PDF"><i data-lucide="file-text"></i>PDF</button>
-          <button class="btn btn-ghost btn-xs" data-pk="del" title="Delete Presentation"><i data-lucide="trash-2"></i>Delete</button>
+          <div class="pk-more">
+            <button class="icon-btn xs" data-pk="more" title="More Actions" aria-label="More Actions" aria-haspopup="menu"><i data-lucide="more-horizontal"></i></button>
+            <div class="pk-menu" role="menu" hidden>
+              <button role="menuitem" data-pk="open"><i data-lucide="activity"></i>View Activity</button>
+              <button role="menuitem" data-pk="pdf"${dis(ready.canExportPdf)}><i data-lucide="file-text"></i>Download PDF</button>
+              <button role="menuitem" data-pk="edit"><i data-lucide="pencil"></i>Edit Details</button>
+              <button role="menuitem" data-pk="dup"><i data-lucide="copy-plus"></i>Duplicate</button>
+              <button role="menuitem" data-pk="revokerow"${dis(!!link)}><i data-lucide="ban"></i>Revoke</button>
+              <button role="menuitem" data-pk="del"><i data-lucide="trash-2"></i>Delete</button>
+            </div>
+          </div>
         </div>
 
       </div>`;
     })
     .join("");
 }
+
 
 async function refresh() {
   const el = document.getElementById("pkList");
