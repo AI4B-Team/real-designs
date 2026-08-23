@@ -62,7 +62,7 @@ describe("canonical error model", () => {
   it("carries a correlation id on every error and repeats it in the record", () => {
     const err = new AppError({ operation: "credits.charge", category: "credits" });
     expect(err.correlationId).toMatch(/^RD/);
-    expect(err.toRecord().correlationId).toBe(err.correlationId);
+    expect(err.toRecord()['correlationId']).toBe(err.correlationId);
     expect(err.toUserFacing().correlationId).toBe(err.correlationId);
   });
 
@@ -73,8 +73,8 @@ describe("canonical error model", () => {
       context: { jobId: "job_1", batchId: "batch_9", authToken: "sb_secret_zzz" },
     });
     const record = err.toRecord();
-    expect(record.jobId).toBe("job_1");
-    expect(record.batchId).toBe("batch_9");
+    expect(record['jobId']).toBe("job_1");
+    expect(record['batchId']).toBe("batch_9");
     expect(JSON.stringify(record)).not.toContain("sb_secret_zzz");
   });
 
