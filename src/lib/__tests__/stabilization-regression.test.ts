@@ -481,6 +481,7 @@ describe("regression: generation", () => {
   });
 
   it("a job interrupted by a page close comes back as a failure with retry, never restarted", () => {
+    jobs.__resetJobs();
     localStorage.setItem(
       "rd.gen.jobs.v1",
       JSON.stringify({
