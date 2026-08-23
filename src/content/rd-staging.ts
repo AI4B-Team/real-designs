@@ -1226,8 +1226,97 @@ function gridHtml() {
     .join("")}${addCardHtml()}</div>`;
 }
 
-/* The counts live in the selection bar and the footer, so the only thing left
-   to say beside the address is whether the work is safely stored. */
+/* ------------------------------------------------------------ image format
+   Image Format is chosen here, in the Photos step, and nowhere else. Review
+   only ever displays the stored choice. */
+
+/**
+ * A label no two photos can share, so a four-kitchen batch is still readable:
+ * "Kitchen · Photo 2".
+ */
+function photoLabel(it, n) {
+  const seq = Number(n) || ordered().findIndex((x) => x.key === it.key) + 1;
+  const room = (it && it.room) || "Room Type Needed";
+  return `${room} · Photo ${seq}`;
+}
+
+/** The photos the format control lists, already labelled. */
+function formatItems() {
+  return ordered().map((it, i) => ({
+    key: it.key,
+    room: it.room,
+    ratio: it.ratio,
+    crop: it.crop,
+    label: photoLabel(it, i + 1),
+  }));
+}
+
+function formatSectionHtml() {
+  return imageFormatSectionHtml({
+    value: normalizeOutputRatio(S.outputRatio),
+    items: formatItems(),
+    open: !!S.formatOpen,
+  });
+}
+
+/** Re-render the Image Format section in place, never the whole page. */
+function renderFormatSection(el) {
+  const host_ = (el || host())?.querySelector("#rdsFormat");
+  if (!host_ || !host_.parentElement) return;
+  const box = document.createElement("div");
+  box.innerHTML = formatSectionHtml();
+  const next = box.firstElementChild;
+  if (!next) return;
+  host_.replaceWith(next);
+  bindFormatSection(el || host());
+  paint();
+}
+
+function bindFormatSection(el) {
+  if (!el) return;
+  bindImageFormat(el, {
+    onRatio: (r) => void setProjectRatio(r),
+    onMore: () => openProjectRatioMore(),
+    onPhotoRatio: (key, ratio) => {
+      const it = itemAt(key);
+      if (!it) return;
+      it.ratio = normalizeOverride(ratio);
+      S.formatOpen = true;
+      saveDraft();
+      applyRatiosLive();
+      renderFormatSection(el);
+    },
+    onCrop: (key) => openCropFor([itemAt(key)].filter(Boolean)),
+    onCropAll: () => openCropFor(ordered().filter((i) => i.selected)),
+  });
+}
+
+/** Open the reposition dialog for photos that render at a fixed ratio. */
+function openCropFor(items) {
+  const list = (items || [])
+    .map((it) => ({
+      key: it.key,
+      name: photoLabel(it),
+      url: it.resultUrl || it.signed || it.previewUrl || "",
+      ratio: tileRatio(it),
+      crop: normalizeCrop(it.crop),
+    }))
+    .filter((p) => p.url && p.ratio !== "original");
+  if (!list.length) {
+    cmToast("Choose a fixed image format first — Original never crops.");
+    return;
+  }
+  openCropDialog(list, (key, crop) => {
+    const it = itemAt(key);
+    if (!it) return;
+    it.crop = cropForDraft(crop);
+    saveDraft();
+    applyRatiosLive();
+    renderFormatSection(host());
+  });
+}
+
+
 function statusText() {
   const uploading = S.items.some((i) => i.status === "uploading");
   if (S.saveState === "saving" || uploading) return saveLabel("saving");
