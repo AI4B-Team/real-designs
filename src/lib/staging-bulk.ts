@@ -208,9 +208,15 @@ export async function runBulkDesign(items, direction, hooks = {}) {
         });
         stage("finalizing");
         let path = null;
-        try {
-          path = await uploadRenderDataUrl(r.image);
-        } catch (_) {}
+        /* One retry: a single flaky upload should not strand a design that
+           already cost a credit. */
+        for (let attempt = 0; attempt < 2 && !path; attempt++) {
+          try {
+            path = await uploadRenderDataUrl(r.image);
+          } catch (_) {
+            if (attempt === 0) await new Promise((res) => setTimeout(res, 600));
+          }
+        }
         it.resultPath = path;
         it.resultRatio = ratio;
         it.resultUrl = r.image;

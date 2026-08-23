@@ -2750,7 +2750,9 @@ registerCardMenu("photo", {
       return failedCardMenuGroups({ flow: "photo", key, hasMedia: stored });
 
     const hasOriginal = stored || !!it.previewUrl;
-    const hasDesign = !!it.resultPath;
+    /* A design that rendered but has not finished uploading is still a design
+       the user can download; the handler falls back to the in-memory image. */
+    const hasDesign = !!(it.resultPath || it.resultUrl);
     const dl = hasDesign
       ? {
           action: "download",
