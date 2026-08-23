@@ -40,11 +40,11 @@ export interface PresentationActivity {
 
 export type PresentationFilter = "all" | "due" | PresentationStatus;
 
-const PRES_STATUS_FALLBACK = { cls: "p-info", label: "Sent" } as const;
+const PRES_STATUS_FALLBACK = { cls: "p-gray", label: "Sent" } as const;
 
 export const PRES_STATUS_META: Record<string, { cls: string; label: string } | undefined> = {
-  sent: { cls: "p-info", label: "Sent" },
-  viewed: { cls: "p-amb", label: "Opened" },
+  sent: { cls: "p-gray", label: "Sent" },
+  viewed: { cls: "p-blue", label: "Opened" },
   approved: { cls: "p-ok", label: "Approved" },
   changes: { cls: "p-amb", label: "Changes Requested" },
 };
