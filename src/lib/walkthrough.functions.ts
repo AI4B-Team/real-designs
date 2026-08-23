@@ -102,7 +102,8 @@ export const pollWalkthrough = createServerFn({ method: "POST" })
     if (!res.ok) throw new Error(`Could not read the video job (${res.status}).`);
     const job = (await res.json()) as any;
 
-    if (job.status === "failed") {
+    // Refund the video credits at most once for this job, whatever the failure was.
+    const refundOnce = async (reason: string) => {
       const { refund, CREDIT_COSTS } = await import("@/lib/credits.server");
       const note = `Walkthrough video failed ${data.id}`;
       const { data: prior } = await supabaseAdmin
@@ -112,7 +113,11 @@ export const pollWalkthrough = createServerFn({ method: "POST" })
         .eq("note", note)
         .limit(1);
       if (!prior || prior.length === 0) await refund(context.userId, CREDIT_COSTS.video, note);
-      throw new Error(job?.error?.message || "The video could not be generated.");
+      return new Error(reason);
+    };
+
+    if (job.status === "failed") {
+      throw await refundOnce(job?.error?.message || "The video could not be generated.");
     }
 
     if (job.status !== "completed") {
@@ -124,20 +129,29 @@ export const pollWalkthrough = createServerFn({ method: "POST" })
       };
     }
 
-    const content = await fetch(
-      `https://ai.gateway.lovable.dev/v1/videos/${encodeURIComponent(data.id)}/content`,
-      { headers: { Authorization: `Bearer ${apiKey}` } },
-    );
-    if (!content.ok) throw new Error("The finished video could not be downloaded.");
-    const bytes = await content.arrayBuffer();
+    // The job finished but the file still has to be fetched and stored. If any of
+    // that fails the video is unrecoverable for this job id, so give the credits back.
+    try {
+      const content = await fetch(
+        `https://ai.gateway.lovable.dev/v1/videos/${encodeURIComponent(data.id)}/content`,
+        { headers: { Authorization: `Bearer ${apiKey}` } },
+      );
+      if (!content.ok) throw new Error("The finished video could not be downloaded.");
+      const bytes = await content.arrayBuffer();
 
-    const up = await supabaseAdmin.storage
-      .from(BUCKET)
-      .upload(path, bytes, { contentType: "video/mp4", upsert: true });
-    if (up.error) throw new Error(up.error.message);
+      const up = await supabaseAdmin.storage
+        .from(BUCKET)
+        .upload(path, bytes, { contentType: "video/mp4", upsert: true });
+      if (up.error) throw new Error(up.error.message);
 
-    const signed = await supabaseAdmin.storage.from(BUCKET).createSignedUrl(path, 3600);
-    if (!signed.data?.signedUrl) throw new Error("The video was saved but could not be opened.");
+      const signed = await supabaseAdmin.storage.from(BUCKET).createSignedUrl(path, 3600);
+      if (!signed.data?.signedUrl) throw new Error("The video was saved but could not be opened.");
 
-    return { status: "completed" as const, progress: 100, url: signed.data.signedUrl, path };
+      return { status: "completed" as const, progress: 100, url: signed.data.signedUrl, path };
+    } catch (err) {
+      throw await refundOnce(
+        err instanceof Error ? err.message : "The finished video could not be saved.",
+      );
+    }
   });
+
