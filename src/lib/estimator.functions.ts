@@ -123,6 +123,8 @@ export const buildScope = createServerFn({ method: "POST" })
     const { charge, chargeErrorMessage } = await import("@/lib/credits.server");
     const billing = await charge(context.userId, "scope", "priced scope");
     if (!billing.ok) throw new Error(chargeErrorMessage(billing));
+    try {
+
 
     const laborFactor = num(market.labor_factor) || 1;
     const materialFactor = num(market.material_factor) || 1;
