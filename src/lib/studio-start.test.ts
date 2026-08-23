@@ -187,7 +187,7 @@ describe("studio start source picker", () => {
     const auto = body.querySelector('[data-sp-mood="auto"]') as HTMLElement;
     expect(auto.getAttribute("aria-pressed")).toBe("true");
     (body.querySelector('[data-sp-mood="natural-daylight"]') as HTMLElement).click();
-    expect(host.textContent).toContain("Natural daylight");
+    expect(host.textContent).toContain("Natural Daylight");
   });
 
   it("marks the active tab with an accessible pressed state", () => {
