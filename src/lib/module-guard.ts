@@ -34,14 +34,39 @@ export function __resetModuleFailures() {
   failures.length = 0;
 }
 
+/**
+ * A request cancelled because the page is navigating away (or the caller
+ * aborted it) is not a module failure. Reporting it produces phantom
+ * "load failed" diagnostics every time the user clicks a link mid-fetch.
+ */
+export function isAbortLikeError(error: unknown): boolean {
+  const e = error as { name?: string; message?: string } | null | undefined;
+  if (!e) return false;
+  if (e.name === "AbortError" || e.name === "NavigationAborted") return true;
+  const m = String(e.message || "").toLowerCase();
+  return (
+    m.includes("failed to fetch") ||
+    m.includes("networkerror when attempting to fetch") ||
+    m.includes("load failed") ||
+    m.includes("the operation was aborted") ||
+    m.includes("aborted")
+  );
+}
+
 export function reportModuleFailure(module: string, error: unknown): ModuleFailure {
   const failure: ModuleFailure = { id: diagnosticId(), module, error, at: Date.now() };
+  if (isAbortLikeError(error)) {
+    // Transient: the fetch was cancelled, usually by navigation. Not a defect.
+    console.debug(`[REAL DESIGNS] ${module} cancelled`, error);
+    return failure;
+  }
   failures.push(failure);
   if (failures.length > 50) failures.shift();
   // Never an empty catch: the original error object is logged so the stack survives.
   console.error(`[REAL DESIGNS] ${module} failed (${failure.id})`, error);
   return failure;
 }
+
 
 /**
  * Run one module. Returns its value, or `undefined` when it threw — the caller

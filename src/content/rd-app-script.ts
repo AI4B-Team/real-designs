@@ -485,7 +485,7 @@ import {
 } from "@/content/rd-reveal";
 import { openPropertyUpload, mountUploadDock } from "@/content/rd-propmedia";
 import { mountSourcePicker } from "@/lib/source-picker";
-import { runModule, reportModuleFailure } from "@/lib/module-guard";
+import { runModule, reportModuleFailure, isAbortLikeError } from "@/lib/module-guard";
 import { mountMediaLibrary } from "@/content/rd-media-lib";
 import { mountCrm } from "@/content/rd-crm";
 import * as RDMediaLib from "@/lib/media-library";
@@ -2335,12 +2335,19 @@ export function initApp(): () => void {
         PROP_TREE = await getPropertyTree();
         WORKSPACE_LOADED = true;
       } catch (e) {
+        /* A cancelled request (navigation, aborted fetch) must not clear the
+           tree the user is already looking at. */
+        if (isAbortLikeError(e)) {
+          reportModuleFailure("Workspace load", e);
+          return;
+        }
         /* A failed read is not "this workspace is empty": keep navigation intact
            and report the failure instead of silently degrading the sidebar. */
         PROP_TREE = [];
         WORKSPACE_LOADED = false;
         reportModuleFailure("Workspace load", e);
       }
+
       if (SEL.p >= PROP_TREE.length) SEL = { p: 0, pr: 0 };
       const cp = document.getElementById("cntProps"),
         cd = document.getElementById("cntDesigns");
