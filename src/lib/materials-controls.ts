@@ -500,7 +500,7 @@ function paintManualSurfaces() {
         '" data-kind="' +
         k.id +
         '" title="' +
-        esc(k.blurb) +
+        Esc(k.blurb) +
         '">' +
         esc(k.label) +
         "</button>",
@@ -609,7 +609,7 @@ function paintMaterials() {
                     '" data-material="' +
                     m.id +
                     '" title="' +
-                    esc(m.blurb) +
+                    Esc(m.blurb) +
                     '"><span class="rd-mat-sw" style="background:' +
                     esc(m.swatch) +
                     '"></span><b>' +

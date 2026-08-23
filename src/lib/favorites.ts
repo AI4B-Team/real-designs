@@ -109,7 +109,7 @@ export function heartHtml(ref: FavoriteRef, extraClass = ""): string {
     '" aria-label="' +
     favoriteLabel(on) +
     '" title="' +
-    favoriteLabel(on) +
+    FavoriteLabel(on) +
     '"><i data-lucide="heart"></i></button>'
   );
 }

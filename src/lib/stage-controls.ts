@@ -125,7 +125,7 @@ function chipRow(name: string, items: Array<{ id: string; label: string; tip?: s
           '="' +
           esc(i.id) +
           '"' +
-          (i.tip ? ' title="' + esc(i.tip) + '"' : "") +
+          (i.tip ? ' title="' + Esc(i.tip) + '"' : "") +
           ">" +
           esc(i.label) +
           "</button>",
@@ -552,7 +552,7 @@ function paintDetection() {
             (state.rejectedFeatures.has(f) ? " off" : "") +
             '" data-feature="' +
             f +
-            '" title="Tap if this is wrong">' +
+            '" title="Tap If This Is Wrong">' +
             esc(FEATURE_LABEL[f]) +
             "</button>",
         )

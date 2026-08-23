@@ -294,7 +294,7 @@ export function mountFloorplanPanel(opts?: {
         '" data-furn="' +
         f.id +
         '" title="' +
-        esc(f.rule) +
+        Esc(f.rule) +
         '">' +
         esc(f.label) +
         "</button>",
@@ -309,7 +309,7 @@ export function mountFloorplanPanel(opts?: {
         '" data-finish="' +
         f.id +
         '" title="' +
-        esc(f.rule) +
+        Esc(f.rule) +
         '">' +
         esc(f.label) +
         "</button>",
@@ -654,7 +654,7 @@ function paintClassify() {
         '" data-src="' +
         s.id +
         '" title="' +
-        esc(s.blurb) +
+        Esc(s.blurb) +
         '">' +
         esc(s.label) +
         "</button>",
@@ -737,7 +737,7 @@ function paintGeometry() {
             (e.origin === "detected" && e.confidence < 0.55 ? " low" : "") +
             '"><button type="button" data-georen="' +
             esc(e.id) +
-            '" title="Rename or correct this element"><b>' +
+            '" title="Rename or Correct This Element"><b>' +
             esc(e.label) +
             "</b>" +
             (e.dimension ? '<em class="dim">' + esc(e.dimension) + "</em>" : "") +
@@ -948,7 +948,7 @@ function paintMap() {
         "%;--rd-cam-dir:" +
         Math.round(c.direction) +
         'deg" title="' +
-        esc(c.label) +
+        Esc(c.label) +
         '"><i></i></span>',
     )
     .join("");

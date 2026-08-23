@@ -288,7 +288,7 @@ export function mountSketchPanel(opts?: {
         '" data-matdir="' +
         m.id +
         '" title="' +
-        esc(m.rule) +
+        Esc(m.rule) +
         '">' +
         esc(m.label) +
         "</button>",
@@ -303,7 +303,7 @@ export function mountSketchPanel(opts?: {
         '" data-furn="' +
         f.id +
         '" title="' +
-        esc(f.rule) +
+        Esc(f.rule) +
         '">' +
         esc(f.label) +
         "</button>",
@@ -318,7 +318,7 @@ export function mountSketchPanel(opts?: {
         '" data-finish="' +
         f.id +
         '" title="' +
-        esc(f.rule) +
+        Esc(f.rule) +
         '">' +
         esc(f.label) +
         "</button>",
@@ -626,7 +626,7 @@ function paintClassify() {
         '" data-kind="' +
         k.id +
         '" title="' +
-        esc(k.blurb) +
+        Esc(k.blurb) +
         '">' +
         esc(k.label) +
         "</button>",
@@ -683,7 +683,7 @@ function paintGeometry() {
             (i.origin === "detected" && i.confidence < 0.55 ? " low" : "") +
             '" data-geodel="' +
             esc(i.id) +
-            '" title="Tap to remove or restore this element">' +
+            '" title="Tap to Remove or Restore This Element">' +
             "<b>" +
             esc(i.label) +
             "</b>" +
@@ -885,7 +885,7 @@ function paintPlan() {
         "%;--rd-cam-dir:" +
         Math.round(c.direction) +
         'deg" title="' +
-        esc(c.label) +
+        Esc(c.label) +
         '"><i></i></span>',
     )
     .join("");

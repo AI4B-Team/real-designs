@@ -555,7 +555,7 @@ export function createDescribeComposer(cfg: Cfg) {
     '" aria-pressed="' +
     on +
     '"' +
-    (title ? ' title="' + esc(title) + '"' : "") +
+    (title ? ' title="' + Esc(title) + '"' : "") +
     ">" +
     esc(label) +
     "</button>";

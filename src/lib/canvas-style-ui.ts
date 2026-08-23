@@ -114,7 +114,7 @@ export function sectionHeader(
     '<button type="button" class="fb-link cs-clear' +
     extra +
     '" title="' +
-    esc(CLEAR_A11Y) +
+    Esc(CLEAR_A11Y) +
     '" aria-label="' +
     esc(CLEAR_A11Y) +
     '">' +
@@ -214,7 +214,7 @@ function quickGrid(pool: StyleRecord[], selectedId: string | null): string {
           '" data-quick="' +
           esc(s.id) +
           '" title="' +
-          esc(s.displayName) +
+          Esc(s.displayName) +
           '">' +
           '<span class="cs-qth">' +
           (s.previewImage
@@ -360,7 +360,7 @@ function openBrowser(o: BrowseOpts) {
           '" data-style="' +
           esc(s.id) +
           '" title="' +
-          esc(s.displayName) +
+          Esc(s.displayName) +
           '">' +
           '<span class="cs-th">' +
           (s.previewImage

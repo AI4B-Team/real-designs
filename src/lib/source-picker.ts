@@ -588,7 +588,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
             '" aria-pressed="' +
             (on ? "true" : "false") +
             '" title="' +
-            esc(m.desc) +
+            Esc(m.desc) +
             '">' +
             '<i data-lucide="' + m.icon + '"></i>' +
             esc(m.tab) +
@@ -1052,7 +1052,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       '" aria-pressed="' +
       (state.mediaView === id ? "true" : "false") +
       '" title="' +
-      esc(label) +
+      Esc(label) +
       '" aria-label="' +
       esc(label) +
       '"><i data-lucide="' +
@@ -1241,7 +1241,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
             '<div class="spd-chip" role="listitem" draggable="true" data-sp-order="' +
             esc(d.id) +
             '" title="' +
-            esc("Drag to reorder " + (d.room || "Design")) +
+            Esc("Drag to reorder " + (d.room || "Design")) +
             '">' +
             '<span class="spd-chip-th" data-sp-thumb="' +
             esc(d.path) +
@@ -1361,7 +1361,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       thumbSpan(d, "spd-th") +
       '<button type="button" class="spd-eye" data-sp-preview="' +
       esc(d.id) +
-      '" title="View details" aria-label="' +
+      '" title="View Details" aria-label="' +
       esc("View details: " + mediaTitle(d)) +
       '"><i data-lucide="eye"></i></button>' +
       checkMark(on, i) +
@@ -1436,11 +1436,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       checkMark(on, i) +
       thumbSpan(d, "spd-rth") +
       '<span class="spd-rn"><b title="' +
-      esc(title) +
+      Esc(title) +
       '">' +
       esc(title) +
       '</b><span title="' +
-      esc(sub) +
+      Esc(sub) +
       '">' +
       esc(sub) +
       "</span>" +

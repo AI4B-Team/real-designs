@@ -196,7 +196,7 @@ export function openCatalogPicker(o: CatalogPickerOptions): CatalogPickerHandle 
       '" data-pick="' +
       esc(it.id) +
       '" title="' +
-      esc(it.label) +
+      Esc(it.label) +
       '">' +
       '<span class="cs-th">' +
       (it.image
