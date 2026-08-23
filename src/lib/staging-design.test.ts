@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   canEnterReview,
+  combineNotes,
   creditCost,
   designBlockers,
   designGroups,
