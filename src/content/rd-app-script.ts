@@ -3734,9 +3734,16 @@ export function initApp(): () => void {
     }
 
     function genPhase(stage, detail) {
-      if (SCAN) SCAN.setStage(stage, detail || "");
-      const st = document.getElementById("cStep");
-      if (st && SCAN) st.textContent = "";
+      /* Scan overlay flow: real stage names, no percentage. */
+      if (SCAN && typeof stage === "string") {
+        SCAN.setStage(stage, detail || "");
+        return;
+      }
+      /* Tools still on the legacy overlay keep their own progress bar. */
+      const bar = document.getElementById("cBar"),
+        st = document.getElementById("cStep");
+      if (bar && typeof stage === "number") bar.style.width = stage + "%";
+      if (st && detail) st.textContent = detail;
     }
 
     async function runGeneration(brief, VAR) {
