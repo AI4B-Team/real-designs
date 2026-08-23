@@ -15,7 +15,7 @@
 // @ts-nocheck
 import { renderDesign } from "@/lib/design-render.functions";
 import { newRequestId } from "@/lib/request-id";
-import { clampCrop, ratioValue } from "@/lib/photo-crop";
+import { cropPixels, normalizeCropModel, ratioAspect } from "@/lib/crop-model";
 import { effectiveRatio } from "@/lib/output-ratio";
 import { uploadRenderDataUrl, roomPhotoUrl } from "@/lib/room-photos";
 import { roomSpace } from "@/lib/staging-rooms";
@@ -122,7 +122,7 @@ async function toDataUrl(src, max = 1100) {
  * the generated design matches the framing previewed on the card exactly.
  */
 async function cropToRatio(dataUrl, ratio, crop) {
-  const frame = ratioValue(ratio);
+  const frame = ratioAspect(ratio);
   if (!frame) return dataUrl;
   const img = await new Promise((res, rej) => {
     const i = new Image();
@@ -132,18 +132,14 @@ async function cropToRatio(dataUrl, ratio, crop) {
   });
   const sw = img.naturalWidth || 1;
   const sh = img.naturalHeight || 1;
-  const c = clampCrop(crop, sw / sh, frame);
-  /* The visible slice of the source, at the requested zoom. */
-  const baseH = sw / sh > frame ? sh : sw / frame;
-  const baseW = baseH * frame;
-  const w = baseW / c.scale;
-  const h = baseH / c.scale;
-  const x = Math.max(0, Math.min(sw - w, c.x * sw - w / 2));
-  const y = Math.max(0, Math.min(sh - h, c.y * sh - h / 2));
+  /* One geometry: the same normalized model the card previewed decides the
+     pixels, so the generated design matches what the user framed. */
+  const model = normalizeCropModel({ ...(crop || {}), ratio, sourceW: sw, sourceH: sh });
+  const { sx, sy, sw: w, sh: h } = cropPixels(model, frame);
   const out = document.createElement("canvas");
-  out.width = Math.round(w);
-  out.height = Math.round(h);
-  out.getContext("2d").drawImage(img, x, y, w, h, 0, 0, out.width, out.height);
+  out.width = w;
+  out.height = h;
+  out.getContext("2d").drawImage(img, sx, sy, w, h, 0, 0, w, h);
   return out.toDataURL("image/jpeg", 0.92);
 }
 

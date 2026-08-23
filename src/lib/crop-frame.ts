@@ -11,6 +11,15 @@
  * centred in that viewport before offsets are applied.
  */
 
+import {
+  type CropModel,
+  MAX_CROP_ZOOM as MODEL_MAX_ZOOM,
+  clampCropModel,
+  fromFrameState,
+  normalizeCropModel,
+  wheelZoom,
+} from "./crop-model";
+
 export type CropRatioId = string;
 
 export type Frame = { x: number; y: number; width: number; height: number };
@@ -27,7 +36,8 @@ export type CropState = {
   focalY: number;
 };
 
-export const MAX_CROP_ZOOM = 4;
+export { MAX_CROP_ZOOM } from "./crop-model";
+const MAX_ZOOM = MODEL_MAX_ZOOM;
 const MIN_FRAME = 40;
 
 function fin(v: unknown, d = 0): number {
@@ -162,7 +172,7 @@ export function createCrop(
 /** Apply a new scale, keeping the frame centre anchored on the same pixels. */
 export function zoomTo(state: CropState, base: Box, view: Box, scale: number): CropState {
   const min = minCoverScale(state.frame, base);
-  const next = Math.min(MAX_CROP_ZOOM, Math.max(min, fin(scale, min)));
+  const next = Math.min(MAX_ZOOM, Math.max(min, fin(scale, min)));
   const focal = focalOf(state, base, view);
   const zoomed: CropState = { ...state, scale: next };
   const o = offsetForFocal(zoomed, base, view, focal.focalX, focal.focalY);
@@ -171,8 +181,45 @@ export function zoomTo(state: CropState, base: Box, view: Box, scale: number): C
 
 /** Wheel/pinch delta into a scale multiplier — magnitude aware, never per-tick. */
 export function wheelScale(state: CropState, deltaY: number, deltaMode = 0): number {
-  const dy = deltaY * (deltaMode === 1 ? 16 : deltaMode === 2 ? 100 : 1);
-  return state.scale * Math.exp(-dy * 0.0015);
+  /* One exponential curve for every surface: the canonical model owns it. */
+  const model = normalizeCropModel({ zoom: 1, sourceW: 1000, sourceH: 1000 });
+  const factor = wheelZoom(model, deltaY, deltaMode, 1).zoom;
+  return state.scale * factor;
+}
+
+/**
+ * The pixel-space editor state as the canonical normalized crop, so a crop
+ * made in the photo editor and one made in the Photos step are the same value.
+ */
+export function toCropModel(
+  state: CropState,
+  base: Box,
+  view: Box,
+  extra?: Partial<CropModel>,
+): CropModel {
+  return fromFrameState(
+    { ratio: state.ratio, frame: state.frame, offsetX: state.offsetX, offsetY: state.offsetY, scale: state.scale },
+    base,
+    view,
+    extra,
+  );
+}
+
+/** Restore a pixel-space state from a stored canonical crop. */
+export function fromCropModel(model: CropModel, aspect: number, base: Box, view: Box): CropState {
+  const m = clampCropModel(model, aspect);
+  const frame = fitFrame(view, base, aspect);
+  const cover = minCoverScale(frame, base);
+  const state: CropState = {
+    ratio: m.ratio,
+    frame,
+    offsetX: 0,
+    offsetY: 0,
+    scale: Math.min(MAX_ZOOM, Math.max(cover, cover * m.zoom)),
+    focalX: m.focalX,
+    focalY: m.focalY,
+  };
+  return { ...state, ...offsetForFocal(state, base, view, m.focalX, m.focalY) };
 }
 
 /** Resize the frame from a corner or edge handle, in Free mode. */
@@ -205,7 +252,7 @@ export function refit(state: CropState, aspect: number, base: Box, view: Box): C
     y: Math.min(Math.max(0, state.frame.y), Math.max(0, view.h - state.frame.height)),
   };
   const min = minCoverScale(frame, base);
-  const next: CropState = { ...state, frame, scale: Math.max(min, Math.min(MAX_CROP_ZOOM, state.scale)) };
+  const next: CropState = { ...state, frame, scale: Math.max(min, Math.min(MAX_ZOOM, state.scale)) };
   const o = offsetForFocal(next, base, view, state.focalX, state.focalY);
   return { ...next, ...o };
 }
