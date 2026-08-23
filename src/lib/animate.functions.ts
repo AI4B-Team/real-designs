@@ -47,6 +47,8 @@ const StartInput = z.object({
 });
 
 const BUCKET = "room-photos";
+/** A clip that has not finished in this long is never going to; release its credits. */
+const STALE_CLIP_MS = 45 * 60 * 1000;
 
 async function toDataUrl(path: string): Promise<string> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
