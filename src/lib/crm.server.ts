@@ -1,4 +1,3 @@
-import { checkUrl } from "@/lib/safe-fetch.server";
 /**
  * CRM provider adapters.
  *
@@ -6,6 +5,8 @@ import { checkUrl } from "@/lib/safe-fetch.server";
  * here reads the database — the calling server function owns persistence and
  * only ever hands over one connection's credential.
  */
+
+import { checkUrl } from "@/lib/safe-fetch.server";
 
 export type CrmProvider = "followupboss" | "hubspot" | "webhook";
 
