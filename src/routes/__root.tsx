@@ -25,7 +25,12 @@ export function NotFoundComponent() {
       className="flex min-h-screen items-center justify-center px-4"
       style={{ background: "#faf8f5", fontFamily: "'DM Sans', system-ui, sans-serif" }}
     >
+      {/* A missing route never reaches a leaf head(), so the document shipped with
+          no <title> and no robots directive. React hoists these into <head>. */}
+      <title>Page Not Found | REAL DESIGNS</title>
+      <meta name="robots" content="noindex, follow" />
       <div className="max-w-md text-center">
+
         <div
           style={{
             display: "inline-flex",
