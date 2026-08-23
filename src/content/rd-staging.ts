@@ -1064,7 +1064,7 @@ function designFeatures(it) {
     out.push({
       id: "ratio",
       icon: "crop",
-      label: "Photo Format",
+      label: "Image Format",
       value: ratioLabel(it.ratio),
       removable: false,
     });
@@ -1185,7 +1185,7 @@ function cardHtml(it, seq) {
       ${uploadChipHtml(it)}
       ${it.status === "failed" ? photoFailPanelHtml("upload") : ""}
       ${it.state === "generating" ? '<span class="rds-run"><i data-lucide="loader"></i>Generating</span>' : ""}
-      ${override ? `<span class="rv-tile-fmt" title="Custom format: ${esc(ratioLabel(override))}"><i data-lucide="crop"></i>${esc(ratioLabel(override))}</span>` : ""}
+      ${override ? `<span class="rv-tile-fmt" title="Image Format: ${esc(ratioLabel(override))}"><i data-lucide="crop"></i>${esc(ratioLabel(override))}</span>` : ""}
       ${imageToolbarHtml(
         failed
           ? []
@@ -1798,7 +1798,7 @@ async function setProjectRatio(next) {
   const overrides = overriddenItems();
   if (overrides.length) {
     const choice = await ratioChoiceDialog({
-      title: "Update Photo Format?",
+      title: "Update Image Format?",
       body: "Some photos use a custom output ratio.",
     });
     if (choice === "cancel") return;
@@ -1840,11 +1840,11 @@ function applyRatiosLive() {
     if (override && !badge && frame) {
       const b = document.createElement("span");
       b.className = "rv-tile-fmt";
-      b.title = "Custom format: " + ratioLabel(override);
+      b.title = "Image Format: " + ratioLabel(override);
       b.innerHTML = '<i data-lucide="crop"></i>' + esc(ratioLabel(override));
       frame.appendChild(b);
     } else if (override && badge) {
-      badge.title = "Custom format: " + ratioLabel(override);
+      badge.title = "Image Format: " + ratioLabel(override);
       badge.innerHTML = '<i data-lucide="crop"></i>' + esc(ratioLabel(override));
     } else if (!override && badge) {
       badge.remove();
@@ -1888,7 +1888,7 @@ function renderHeaderFormat(el, project) {
   if (!host_ || !host_.parentElement) return;
   const wrap = document.createElement("div");
   wrap.innerHTML = formatSelectorHtml({
-    label: "Photo Format",
+    label: "Image Format",
     options: PRIMARY_OUTPUT_RATIOS,
     value: project,
     attr: "ratio",
@@ -1959,7 +1959,7 @@ function openRatioOverride(it) {
   const opts = [
     {
       id: "",
-      label: "Use Project Format",
+      label: "Group Image Format",
       note: "Currently " + ratioLabel(project),
       ratio: project,
     },
@@ -2537,7 +2537,7 @@ registerCardMenu("photo", {
           {
             action: "ratio",
             label: normalizeOverride(it.ratio)
-              ? "Override Format · " + ratioLabel(it.ratio)
+              ? "Image Format · " + ratioLabel(it.ratio)
               : "Override Format",
             icon: "crop",
           },
