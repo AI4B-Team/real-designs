@@ -14,7 +14,9 @@
 // @ts-nocheck
 import { roomSpace } from "@/lib/staging-rooms";
 import { STYLES, styleById } from "@/lib/style-catalog";
-import { BULK_CREDIT_PER_PHOTO, styleFitsSpace } from "@/lib/staging-bulk";
+import { BULK_CREDIT_PER_PHOTO, combineNotes, styleFitsSpace } from "@/lib/staging-bulk";
+/* Re-exported so instruction merging has one home for callers of this module. */
+export { combineNotes };
 
 export const SPACE_LABEL = {
   interior: "Interior",
