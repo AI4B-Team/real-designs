@@ -1,0 +1,161 @@
+/* ===========================================================================
+   REAL DESIGNS — foundational token layer (Phase 2A)
+
+   One place where the product's colors, spacing, dimensions, type and effects
+   are named. Every value here is the value the product already ships: this
+   layer names existing decisions, it does not restyle anything.
+
+   Tokens live on :root so both application roots (`.rd-app`) and detached
+   roots (`.rd-modal`, mounted on document.body) inherit the same numbers.
+   Legacy short aliases (--ink, --line, --red, ...) remain and now point at
+   these tokens, so existing rules keep working unchanged.
+
+   NAMING: --rd-<group>-<name>.
+   Groups: color, space, size, font, text, weight, leading, radius, shadow,
+   focus, overlay, motion.
+   =========================================================================== */
+
+:root {
+  /* ---------------- color ---------------- */
+  --rd-color-brand: #cc0000;
+  --rd-color-brand-dark: #a30000;
+  --rd-color-brand-tint: #fdecec;
+
+  --rd-color-ink: #111113;
+  --rd-color-ink-2: #2a2a2e;
+  --rd-color-text-muted: #6b6b6b;
+  --rd-color-text-subtle: #8e8e8e;
+  --rd-color-text-disabled: #a8a8ad;
+
+  --rd-color-bg: #fafafa;
+  --rd-color-surface: #ffffff;
+  --rd-color-surface-2: #f5f5f5;
+  /* "Elevated" is the surface a floating layer sits on: panels, popovers,
+     modals. It is white plus a shadow, never a different hue. */
+  --rd-color-surface-elevated: #ffffff;
+  /* The dark Canvas chrome is product surface too, so it is named here rather
+     than repeated as a literal in the Canvas stylesheet. */
+  --rd-color-canvas-chrome: #1a1a1d;
+  --rd-color-canvas-stage: #141416;
+
+  --rd-color-border: #e5e5e5;
+  --rd-color-border-strong: #d6d6d6;
+
+  --rd-color-focus: #cc0000;
+
+  --rd-color-success: #0f7b4f;
+  --rd-color-success-tint: #e8f4ee;
+  --rd-color-warning: #9a5b00;
+  --rd-color-warning-tint: #fbf0e2;
+  --rd-color-error: #cc0000;
+  --rd-color-error-tint: #fdecec;
+  --rd-color-info: #1f5fa8;
+  --rd-color-info-tint: #e9f0f9;
+
+  /* ---------------- spacing ---------------- */
+  --rd-space-2: 2px;
+  --rd-space-4: 4px;
+  --rd-space-8: 8px;
+  --rd-space-12: 12px;
+  --rd-space-16: 16px;
+  --rd-space-20: 20px;
+  --rd-space-24: 24px;
+  --rd-space-32: 32px;
+  --rd-space-40: 40px;
+  --rd-space-48: 48px;
+  --rd-space-64: 64px;
+
+  /* ---------------- dimensions ---------------- */
+  --rd-size-sidebar: 236px;
+  --rd-size-sidebar-collapsed: 64px;
+  /* Icon glyph inside a collapsed rail button, and the button itself. The two
+     are separate on purpose: a 20px glyph inside a 44px target. */
+  --rd-size-nav-icon: 20px;
+  --rd-size-nav-target: 44px;
+
+  --rd-size-tool-rail: 112px;
+  --rd-size-inspector: 360px;
+  --rd-size-inspector-max: 470px;
+
+  --rd-size-header: 58px;
+  --rd-size-canvas-actionbar: 64px;
+  --rd-size-inspector-header: 48px;
+  --rd-size-inspector-footer-min: 56px;
+
+  --rd-size-modal-max: 720px;
+  --rd-size-modal-max-h: 88dvh;
+
+  --rd-size-card-radius: 12px;
+  --rd-size-control: 36px;
+  --rd-size-list-thumb-w: 56px;
+  --rd-size-list-thumb-h: 40px;
+
+  /* ---------------- typography ---------------- */
+  --rd-font-sans: "Inter", system-ui, sans-serif;
+  --rd-font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --rd-text-h1: 1.6rem;
+  --rd-text-h2: 1.24rem;
+  --rd-text-h3: 0.98rem;
+  --rd-text-body: 0.87rem;
+  --rd-text-body-sm: 0.8rem;
+  --rd-text-caption: 0.74rem;
+  --rd-text-micro: 0.66rem;
+
+  --rd-weight-regular: 400;
+  --rd-weight-medium: 500;
+  --rd-weight-semibold: 600;
+  --rd-weight-bold: 700;
+
+  --rd-leading-tight: 1.2;
+  --rd-leading-snug: 1.35;
+  --rd-leading-body: 1.5;
+
+  /* ---------------- effects ---------------- */
+  --rd-radius-xs: 4px;
+  --rd-radius-sm: 6px;
+  --rd-radius-md: 8px;
+  --rd-radius-lg: 10px;
+  --rd-radius-xl: 12px;
+  --rd-radius-pill: 999px;
+
+  --rd-shadow-1: 0 1px 2px rgba(17, 17, 19, 0.05);
+  --rd-shadow-2: 0 1px 2px rgba(17, 17, 19, 0.05), 0 8px 24px rgba(17, 17, 19, 0.06);
+  --rd-shadow-3: 0 8px 22px rgba(20, 18, 15, 0.14);
+  --rd-shadow-4: 0 24px 60px rgba(17, 17, 19, 0.18);
+
+  --rd-focus-width: 2px;
+  --rd-focus-offset: 2px;
+  --rd-focus-ring: var(--rd-focus-width) solid var(--rd-color-focus);
+
+  --rd-overlay-bg: rgba(17, 17, 19, 0.46);
+
+  --rd-motion-fast: 0.14s;
+  --rd-motion-base: 0.18s;
+  --rd-motion-slow: 0.32s;
+  --rd-motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Reduced motion is a token-level decision, so every surface honours it
+   without each stylesheet repeating a media query. Durations collapse to a
+   value CSS still treats as a transition (so transitionend handlers fire)
+   but a person does not perceive as movement. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --rd-motion-fast: 0.01ms;
+    --rd-motion-base: 0.01ms;
+    --rd-motion-slow: 0.01ms;
+  }
+
+  .rd-app *,
+  .rd-app *::before,
+  .rd-app *::after,
+  .rd-modal *,
+  .rd-modal *::before,
+  .rd-modal *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
+import "@/styles/rd-tokens.css";
 import "@/styles/rd-app.css";
+import "@/styles/rd-contracts.css";
 
 const title = "Welcome | REAL DESIGNS";
 const description = "Answer a few quick questions so REAL DESIGNS can set up your workspace.";

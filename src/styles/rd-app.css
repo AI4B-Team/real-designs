@@ -1,35 +1,36 @@
 @import "./rd-summary.css";
 
 .rd-app {
-  --ink: #111113;
-  --ink-2: #2a2a2e;
-  --paper: #fafafa;
-  --white: #fff;
-  --surface: #fff;
-  --surface-2: #f5f5f5;
-  --wash: #f5f5f5;
-  --line: #e5e5e5;
-  --line-2: #d6d6d6;
-  --red: #cc0000;
+  --ink: var(--rd-color-ink);
+  --ink-2: var(--rd-color-ink-2);
+  --paper: var(--rd-color-bg);
+  --white: var(--rd-color-surface);
+  --surface: var(--rd-color-surface);
+  --surface-2: var(--rd-color-surface-2);
+  --wash: var(--rd-color-surface-2);
+  --line: var(--rd-color-border);
+  --line-2: var(--rd-color-border-strong);
+  --red: var(--rd-color-brand);
   /* Aliases used across builder styles. Without these, `var(--brand)` is an
      invalid substitution and whole shorthands (borders, backgrounds) drop out. */
-  --brand: #cc0000;
-  --danger: #cc0000;
-  --card: #fff;
-  --soft: #f5f5f5;
-  --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --red-dk: #a30000;
-  --red-tint: #fdecec;
-  --mute: #6b6b6b;
-  --mute-2: #8e8e8e;
-  --muted: #6b6b6b;
-  --ok: #0f7b4f;
-  --ok-tint: #e8f4ee;
-  --amber: #9a5b00;
-  --amber-tint: #fbf0e2;
-  --blue: #1f5fa8;
-  --blue-tint: #e9f0f9;
-  --sh: 0 1px 2px rgba(17, 17, 19, 0.05), 0 8px 24px rgba(17, 17, 19, 0.06);
+  --brand: var(--rd-color-brand);
+  --danger: var(--rd-color-error);
+  --card: var(--rd-color-surface);
+  --soft: var(--rd-color-surface-2);
+  --font-mono: var(--rd-font-mono);
+  --red-dk: var(--rd-color-brand-dark);
+  --red-tint: var(--rd-color-brand-tint);
+  --mute: var(--rd-color-text-muted);
+  --mute-2: var(--rd-color-text-subtle);
+  --muted: var(--rd-color-text-muted);
+  --disabled: var(--rd-color-text-disabled);
+  --ok: var(--rd-color-success);
+  --ok-tint: var(--rd-color-success-tint);
+  --amber: var(--rd-color-warning);
+  --amber-tint: var(--rd-color-warning-tint);
+  --blue: var(--rd-color-info);
+  --blue-tint: var(--rd-color-info-tint);
+  --sh: var(--rd-shadow-2);
 }
 
 .rd-app,
@@ -68,8 +69,8 @@
 }
 
 .rd-app *:focus-visible {
-  outline: 2px solid var(--red);
-  outline-offset: 2px;
+  outline: var(--rd-focus-ring);
+  outline-offset: var(--rd-focus-offset);
   border-radius: 4px;
 }
 

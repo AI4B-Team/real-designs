@@ -772,7 +772,7 @@ export function openDeclutterBatch(opts: {
     '<div class="up-scrim" data-close></div><div class="up-card rd-brief-card rd-decl-batchcard" role="dialog" aria-modal="true" aria-label="Declutter All Photos">' +
     "<h3>Declutter All Photos In This Room</h3>" +
     '<p class="rd-brief-sub">Detection is free. Approve each photo you want cleaned — only approved photos are generated and charged.</p>' +
-    '<div class="rd-decl-batchlist" id="rdDeclBatchList"></div>' +
+    '<div class="rd-decl-batchlist rdw-scroll-own" id="rdDeclBatchList"></div>' +
     '<p class="rd-brief-note" id="rdDeclBatchCost"></p>' +
     '<div class="up-act"><button class="btn btn-primary" id="rdDeclBatchGo" type="button">Declutter Approved Photos</button>' +
     '<button class="btn btn-ghost" type="button" data-close>Close</button></div></div>';

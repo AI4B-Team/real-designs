@@ -4,6 +4,7 @@ import { absoluteUrl } from "@/lib/site";
 
 import { AppShell } from "@/features/app-shell/AppShell";
 import { LegacyOverlays, LegacyRuntime, LegacyViews } from "@/features/legacy/LegacyPrototypeView";
+import "@/styles/rd-tokens.css";
 import "@/styles/rd-app.css";
 import "@/styles/rd-canvas.css";
 import "@/styles/rd-explore.css";
@@ -18,6 +19,9 @@ import "@/styles/rd-present.css";
 import "@/styles/rd-scan.css";
 import "@/styles/rd-staging.css";
 import "@/styles/rd-photo-editor.css";
+// Layout contracts load last on purpose: they constrain the surfaces above by
+// source order, so no !important is needed.
+import "@/styles/rd-contracts.css";
 
 const title = "Back Office | REAL DESIGNS";
 const description =

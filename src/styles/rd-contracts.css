@@ -1,0 +1,283 @@
+/* ===========================================================================
+   REAL DESIGNS — layout contracts (Phase 2A)
+
+   Each block below states what owns size and what owns scrolling for one
+   high-risk surface. These are containment rules, not a redesign: colors,
+   spacing and typography stay exactly as the product ships them, expressed
+   through the tokens in rd-tokens.css.
+
+   This file is loaded after the surface stylesheets it constrains, so the
+   contracts win on source order and no `!important` is needed. The single
+   exception is documented inline.
+   =========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   1. APP SHELL
+   The shell owns three regions with explicit ownership: the sidebar column
+   (fixed width), the header (fixed height), and the content (all remaining
+   space, and the only region allowed to grow).
+   Expanded and collapsed differ in width only — never in which icons exist.
+   --------------------------------------------------------------------------- */
+.rd-app .app {
+  grid-template-columns: var(--rd-size-sidebar) minmax(0, 1fr);
+}
+.rd-app .app.sidemin {
+  grid-template-columns: var(--rd-size-sidebar-collapsed) minmax(0, 1fr);
+}
+@media (max-width: 900px) {
+  .rd-app .app,
+  .rd-app .app.sidemin {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The sidebar is a fixed-height column: header, one scrollable nav, footer. */
+.rd-app .side {
+  min-width: 0;
+  min-height: 0;
+}
+.rd-app .side-top,
+.rd-app .side-foot {
+  flex: none;
+}
+.rd-app .side-nav {
+  min-height: 0;
+}
+
+/* Collapsed rail: ~20px glyph centred inside a 44px click target. The icon
+   asset is the same element in both modes, so nothing is swapped or resized
+   per mode beyond this target. */
+.rd-app .app.sidemin .nav-i {
+  width: var(--rd-size-nav-target);
+  min-height: var(--rd-size-nav-target);
+  display: grid;
+  place-items: center;
+}
+.rd-app .app.sidemin .nav-i .nav-ico,
+.rd-app .app.sidemin .nav-i svg,
+.rd-app .app.sidemin .nav-i i[data-lucide] {
+  width: var(--rd-size-nav-icon);
+  height: var(--rd-size-nav-icon);
+  min-width: var(--rd-size-nav-icon);
+  min-height: var(--rd-size-nav-icon);
+  flex: 0 0 var(--rd-size-nav-icon);
+}
+/* Expanded rows keep a comfortable target too, without changing their padding
+   language. */
+.rd-app .nav-i {
+  min-height: var(--rd-space-32);
+}
+
+/* ---------------------------------------------------------------------------
+   2. PERSISTENT CANVAS
+   The Canvas card is two rows: a flexible viewport and a fixed action bar.
+   Neither row's size may depend on which tool is selected or on how much the
+   inspector is showing, so the Canvas never moves between tools.
+   --------------------------------------------------------------------------- */
+.rd-app .studio.rdw {
+  grid-template-columns:
+    var(--rd-size-tool-rail)
+    minmax(560px, 1fr)
+    minmax(var(--rd-size-inspector), 0.5fr);
+}
+.rd-app .studio.rdw #canvasCard > .card-b {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--rd-space-8);
+  min-height: 0;
+}
+.rd-app .studio.rdw .rdw-stage {
+  min-height: 0;
+  min-width: 0;
+}
+/* The version/action row under the stage is a fixed band. Its contents can
+   change per tool; its height cannot. */
+.rd-app .studio.rdw #canvasCard > .card-b > .rdw-vers {
+  min-height: var(--rd-size-canvas-actionbar);
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+.rd-app .rdw-main {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   3. INSPECTOR (right settings panel)
+   Fixed header, exactly one scrollable body, fixed footer. The body is the
+   only scroll owner, and the footer is in flow so it can never cover content.
+   --------------------------------------------------------------------------- */
+.rd-app .studio.rdw > .rdw-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
+  min-width: var(--rd-size-inspector);
+  max-width: var(--rd-size-inspector-max);
+  overflow: hidden;
+}
+.rd-app .rdw-panel-h {
+  min-height: var(--rd-size-inspector-header);
+  box-sizing: border-box;
+}
+.rd-app .rdw-panel-b {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* No nested vertical scrollbar inside the one scrolling body. Anything that
+   needs its own scroller (a long option list) must opt in explicitly with
+   .rdw-scroll-own. */
+.rd-app .rdw-panel-b > *:not(.rdw-scroll-own) {
+  overflow-y: visible;
+}
+.rd-app .rdw-foot {
+  min-height: var(--rd-size-inspector-footer-min);
+  box-sizing: border-box;
+  position: static;
+}
+
+/* ---------------------------------------------------------------------------
+   4. CARDS
+   Cards in one grid row are equal height: a fixed-aspect media region plus a
+   metadata block with reserved lines. An optional subtitle changes what a card
+   says, never how tall it is.
+   --------------------------------------------------------------------------- */
+.rd-app .ml-grid,
+.rd-app .rdw-cards {
+  align-items: stretch;
+}
+.rd-app .ml-card {
+  height: 100%;
+  min-width: 0;
+  border-radius: var(--rd-size-card-radius);
+}
+.rd-app .ml-card .ml-thumb {
+  flex: none;
+  aspect-ratio: 4 / 3;
+}
+.rd-app .ml-card .ml-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Reserved metadata: the body is a column whose title and subtitle lines each
+   occupy one line height whether or not the optional subtitle exists, so a
+   card's height never depends on how much text it happens to carry. */
+.rd-app .ml-card .ml-body {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.rd-app .ml-card .ml-t,
+.rd-app .ml-card .ml-sub {
+  min-width: 0;
+  min-height: var(--rd-space-16);
+}
+.rd-app .ml-card .ml-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rd-app .ml-card .ml-acts {
+  margin-top: auto;
+}
+
+/* ---------------------------------------------------------------------------
+   5. LIST VIEW
+   A row is a fixed-size thumbnail plus flexible text. Images are cropped to
+   the thumbnail box, never allowed to become a full-width strip, so row height
+   is stable no matter what a photo's aspect ratio is.
+   --------------------------------------------------------------------------- */
+.rd-app .rowi {
+  min-height: calc(var(--rd-size-list-thumb-h) + var(--rd-space-20));
+  min-width: 0;
+}
+.rd-app .rowi > .thumb {
+  flex: none;
+  width: var(--rd-size-list-thumb-w);
+  height: var(--rd-size-list-thumb-h);
+  overflow: hidden;
+}
+.rd-app .rowi > .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rd-app .rowt {
+  min-width: 0;
+}
+.rd-app .rowt b,
+.rd-app .rowt span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   6. MODALS
+   Bounded width and height, one scroll owner, action footer in flow. Per-modal
+   inline `max-width` still applies (it is more specific), so this only sets the
+   ceiling and the containment. Content cannot escape the dialog.
+   --------------------------------------------------------------------------- */
+.rd-app .rd-modal-card,
+.rd-modal .rd-modal-card {
+  width: min(100%, var(--rd-size-modal-max));
+  max-height: var(--rd-size-modal-max-h);
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--rd-color-surface-elevated);
+}
+/* The card is the scroll owner. Nothing inside it opens a second vertical
+   scrollbar unless it explicitly opts in with .rd-scroll-own. */
+.rd-app .rd-modal-card > *:not(.rd-scroll-own),
+.rd-modal .rd-modal-card > *:not(.rd-scroll-own) {
+  max-height: none;
+}
+.rd-app .rd-modal-card .rdm-foot,
+.rd-modal .rd-modal-card .rdm-foot {
+  flex: none;
+  position: static;
+}
+@media (max-width: 560px) {
+  .rd-app .rd-modal-card,
+  .rd-modal .rd-modal-card {
+    width: 100%;
+    max-height: 92dvh;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   7. ACCORDIONS / DISCLOSURES
+   Triggers are real 52px targets in normal flow; expanded content is a normal
+   block so nothing is clipped or overlapped. Native <summary> keeps its own
+   marker and layout — only the target size and flow are constrained here.
+   --------------------------------------------------------------------------- */
+.rd-app summary,
+.rd-modal summary {
+  min-height: 52px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.rd-app .acc-trigger,
+.rd-modal .acc-trigger {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: var(--rd-space-8);
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.rd-app details > *:not(summary),
+.rd-modal details > *:not(summary),
+.rd-app .acc-body,
+.rd-modal .acc-body {
+  position: static;
+  overflow: visible;
+  min-width: 0;
+}
+
+
