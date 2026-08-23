@@ -413,8 +413,8 @@ function SharedPackage() {
       <header className="sp-head">
         {branding.kind === "workspace" ? (
           <span className="sp-brand">
-            {branding.logo_url ? (
-              <img src={branding.logo_url} alt={branding.name} className="sp-brand-logo" />
+            {branding.logoUrl ? (
+              <img src={branding.logoUrl} alt={branding.name ?? "Brand"} className="sp-brand-logo" />
             ) : (
               <span className="sp-brand-name">{branding.name}</span>
             )}
