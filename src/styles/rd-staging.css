@@ -1348,6 +1348,9 @@
 .rd-app #v-staging .rv-addcard.rt-23 .rv-addcard-b {
   aspect-ratio: 3 / 4;
 }
+.rd-app #v-staging .rv-addcard.rt-54 .rv-addcard-b {
+  aspect-ratio: 5 / 4;
+}
 .rd-app #v-staging .rv-addcard.rt-11 .rv-addcard-b {
   aspect-ratio: 1 / 1;
 }
