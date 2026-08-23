@@ -72,6 +72,8 @@ import {
   toDirection,
   assertDesignState,
   directionFromPayload,
+  spaceOf,
+
 } from "@/lib/staging-design";
 import {
   bindDesignStep,
