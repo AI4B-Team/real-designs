@@ -683,7 +683,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       labels[0] + (labels.length > 1 ? " And " + (labels.length - 1) + " Other Issues" : "");
     return (
       '<div class="stw-qual" title="' +
-      Esc(labels.join(", ")) +
+      esc(labels.join(", ")) +
       '">' +
       '<i data-lucide="triangle-alert"></i>' +
       "<div><b>" +

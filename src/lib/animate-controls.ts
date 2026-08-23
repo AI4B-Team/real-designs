@@ -367,7 +367,7 @@ function paintKinds() {
       ' data-anim-kind="' +
       k.id +
       '" title="' +
-      Esc(blocked ? K.requires ||"Not available yet" : k.blurb) +
+      esc(blocked ? k.requires ||"Not available yet" : k.blurb) +
       '"><b>' +
       esc(k.label) +
       "</b><span>" +
@@ -387,7 +387,7 @@ function paintMotions() {
       '" data-anim-motion="' +
       m.id +
       '" title="' +
-      Esc(m.blurb) +
+      esc(m.blurb) +
       '"><i data-lucide="' +
       m.icon +
       '"></i><b>' +
@@ -428,7 +428,7 @@ function paintFormats() {
         ' data-anim-aspect="' +
         a.id +
         '" title="' +
-        Esc(a.reason || A.label) +
+        esc(a.reason || a.label) +
         '">' +
         esc(a.label) +
         "</button>",

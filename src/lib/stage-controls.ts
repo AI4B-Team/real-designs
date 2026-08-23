@@ -125,7 +125,7 @@ function chipRow(name: string, items: Array<{ id: string; label: string; tip?: s
           '="' +
           esc(i.id) +
           '"' +
-          (i.tip ? ' title="' + Esc(i.tip) + '"' : "") +
+          (i.tip ? ' title="' + esc(i.tip) + '"' : "") +
           ">" +
           esc(i.label) +
           "</button>",

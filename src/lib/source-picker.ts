@@ -588,7 +588,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
             '" aria-pressed="' +
             (on ? "true" : "false") +
             '" title="' +
-            Esc(m.desc) +
+            esc(m.desc) +
             '">' +
             '<i data-lucide="' + m.icon + '"></i>' +
             esc(m.tab) +
@@ -1052,7 +1052,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       '" aria-pressed="' +
       (state.mediaView === id ? "true" : "false") +
       '" title="' +
-      Esc(label) +
+      esc(label) +
       '" aria-label="' +
       esc(label) +
       '"><i data-lucide="' +
@@ -1241,7 +1241,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
             '<div class="spd-chip" role="listitem" draggable="true" data-sp-order="' +
             esc(d.id) +
             '" title="' +
-            Esc("Drag to reorder " + (d.room || "Design")) +
+            esc("Drag to reorder " + (d.room || "Design")) +
             '">' +
             '<span class="spd-chip-th" data-sp-thumb="' +
             esc(d.path) +
@@ -1436,11 +1436,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       checkMark(on, i) +
       thumbSpan(d, "spd-rth") +
       '<span class="spd-rn"><b title="' +
-      Esc(title) +
+      esc(title) +
       '">' +
       esc(title) +
       '</b><span title="' +
-      Esc(sub) +
+      esc(sub) +
       '">' +
       esc(sub) +
       "</span>" +

@@ -405,7 +405,7 @@ export function paintRoomCards() {
         '" data-room-id="' +
         esc(r.id) +
         '" title="' +
-        Esc(r.label) +
+        esc(r.label) +
         '"><span class="rdw-card-th">' +
         thumb +
         '<span class="rdw-card-check"><i data-lucide="check"></i></span></span><span class="rdw-card-n">' +
@@ -503,7 +503,7 @@ function paintCapabilities(tool: string) {
         '<button type="button" class="rdw-cap" data-cap="' +
         esc(c.id) +
         '" title="' +
-        Esc(c.blurb) +
+        esc(c.blurb) +
         '"><i data-lucide="' +
         esc(c.icon) +
         '"></i>' +

@@ -274,7 +274,7 @@ export function mountAnglesPanel(opts?: { onChange?: () => void; onRead?: () => 
         '" data-fov="' +
         f.fov +
         '" title="' +
-        Esc(f.blurb) +
+        esc(f.blurb) +
         '">' +
         esc(f.label) +
         "</button>",
@@ -419,7 +419,7 @@ function paintSource() {
         '" data-src="' +
         s.id +
         '" title="' +
-        Esc(s.blurb) +
+        esc(s.blurb) +
         '">' +
         esc(s.label) +
         "</button>",
@@ -476,7 +476,7 @@ function paintCameras() {
         '" data-cam="' +
         c.id +
         '" title="' +
-        Esc(c.blurb) +
+        esc(c.blurb) +
         '"><i data-lucide="' +
         c.icon +
         '"></i><b>' +
@@ -552,7 +552,7 @@ function paintSignals() {
       '<span class="rd-stage-chip' +
       (state.signals.includes(s.id) ? " on" : " is-off") +
       '" title="' +
-      Esc(s.blurb) +
+      esc(s.blurb) +
       '">' +
       esc(s.label) +
       "</span>",

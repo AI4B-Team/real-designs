@@ -122,7 +122,7 @@ export function resultBarHtml(ids: ResultAction[] = BAR.map((b) => b.id)) {
           '<button type="button" class="rda-b" data-rda="' +
           b.id +
           '" title="' +
-          Esc(spec(b.id).tooltip) +
+          esc(spec(b.id).tooltip) +
           '" aria-label="' +
           esc(b.label) +
           '"><i data-lucide="' +

@@ -288,7 +288,7 @@ export function mountSketchPanel(opts?: {
         '" data-matdir="' +
         m.id +
         '" title="' +
-        Esc(m.rule) +
+        esc(m.rule) +
         '">' +
         esc(m.label) +
         "</button>",
@@ -303,7 +303,7 @@ export function mountSketchPanel(opts?: {
         '" data-furn="' +
         f.id +
         '" title="' +
-        Esc(f.rule) +
+        esc(f.rule) +
         '">' +
         esc(f.label) +
         "</button>",
@@ -318,7 +318,7 @@ export function mountSketchPanel(opts?: {
         '" data-finish="' +
         f.id +
         '" title="' +
-        Esc(f.rule) +
+        esc(f.rule) +
         '">' +
         esc(f.label) +
         "</button>",
@@ -626,7 +626,7 @@ function paintClassify() {
         '" data-kind="' +
         k.id +
         '" title="' +
-        Esc(k.blurb) +
+        esc(k.blurb) +
         '">' +
         esc(k.label) +
         "</button>",
@@ -885,7 +885,7 @@ function paintPlan() {
         "%;--rd-cam-dir:" +
         Math.round(c.direction) +
         'deg" title="' +
-        Esc(c.label) +
+        esc(c.label) +
         '"><i></i></span>',
     )
     .join("");

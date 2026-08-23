@@ -294,7 +294,7 @@ export function mountFloorplanPanel(opts?: {
         '" data-furn="' +
         f.id +
         '" title="' +
-        Esc(f.rule) +
+        esc(f.rule) +
         '">' +
         esc(f.label) +
         "</button>",
@@ -309,7 +309,7 @@ export function mountFloorplanPanel(opts?: {
         '" data-finish="' +
         f.id +
         '" title="' +
-        Esc(f.rule) +
+        esc(f.rule) +
         '">' +
         esc(f.label) +
         "</button>",
@@ -654,7 +654,7 @@ function paintClassify() {
         '" data-src="' +
         s.id +
         '" title="' +
-        Esc(s.blurb) +
+        esc(s.blurb) +
         '">' +
         esc(s.label) +
         "</button>",
@@ -948,7 +948,7 @@ function paintMap() {
         "%;--rd-cam-dir:" +
         Math.round(c.direction) +
         'deg" title="' +
-        Esc(c.label) +
+        esc(c.label) +
         '"><i></i></span>',
     )
     .join("");
