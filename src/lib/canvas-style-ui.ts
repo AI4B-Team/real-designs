@@ -472,10 +472,8 @@ export function mountCanvasStyle(
     if (!sel) {
       el.innerHTML =
         '<div class="cs-sec cs-empty-state">' +
-        '<div class="cs-sec-h"><label>' +
-        esc(title) +
-        '</label><button type="button" class="fb-link cs-browse">View All</button></div>' +
-
+        sectionHeader(title, false, null, el.clientWidth) +
+        '<p class="cs-choose">' + esc(CHOOSE_STYLE_SUMMARY) + "</p>" +
         quickGrid(pool, null) +
         (propRec
           ? '<button class="btn btn-ghost btn-sm cs-useprop" type="button"><i data-lucide="dna"></i>Use Property Direction &middot; ' +
@@ -494,6 +492,7 @@ export function mountCanvasStyle(
          full grid only comes back when the user asks to change it. */
       el.innerHTML =
         '<div class="cs-sec cs-done">' +
+        sectionHeader(title, true, scopeLabel(sel.scope), el.clientWidth) +
         '<div class="rdw-sum"><span><b>' +
         esc(title) +
         "</b> &middot; " +
@@ -506,6 +505,7 @@ export function mountCanvasStyle(
       onChange?.(sel);
       return;
     }
+
     el.innerHTML =
       '<div class="cs-sec">' +
       sectionHeader(title, true, scopeLabel(sel.scope), el.clientWidth) +
