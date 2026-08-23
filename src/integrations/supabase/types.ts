@@ -3685,6 +3685,10 @@ export type Database = {
         }
         Returns: Json
       }
+      restore_free_design: {
+        Args: { _note?: string; _user_id: string }
+        Returns: Json
+      }
       set_subscription_cancel: { Args: { _cancel: boolean }; Returns: Json }
       spend_credits: {
         Args: {
