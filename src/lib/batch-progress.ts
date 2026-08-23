@@ -53,7 +53,7 @@ export function rowHtml(job: Job): string {
         ? `<button type="button" class="btn btn-ghost btn-xs" data-retry="${esc(job.id)}">Retry</button>`
         : `<span></span>`
     }
-  </span></div>`;
+  </div>`;
 }
 
 export function panelHtml(batch: Batch): string {
