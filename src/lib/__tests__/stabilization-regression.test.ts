@@ -819,7 +819,8 @@ describe("regression: duplicate entry protection", () => {
     const store = createOpenStore();
     const token = beginCanvasOpen(store, "photo-1");
     expect(canvasOpenIsCurrent(store, token, "photo-1")).toBe(true);
-    expect(isDuplicateOpen(store, "photo-1")).toBe(true);
+    expect(isDuplicateOpen(store, "photo-1", "loading")).toBe(true);
+    expect(isDuplicateOpen(store, "photo-1", "loaded")).toBe(false);
     beginCanvasOpen(store, "photo-2");
     expect(canvasOpenIsCurrent(store, token, "photo-1")).toBe(false);
   });
