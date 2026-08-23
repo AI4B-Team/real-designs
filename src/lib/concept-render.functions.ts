@@ -27,6 +27,8 @@ const Input = z.object({
   images: z.array(z.string().min(16).max(9_000_000)).max(3).nullable().optional(),
   /** Output framing for the concept. */
   aspect_ratio: z.string().max(8).nullable().optional(),
+  /* Stable identity of one user click; reused by retries of that click. */
+  request_id: z.string().max(80).nullable().optional(),
 });
 
 
@@ -67,11 +69,23 @@ export const renderConcept = createServerFn({ method: "POST" })
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("AI is not configured.");
 
-    const { charge, refund, chargeErrorMessage } = await import("@/lib/credits.server");
-    const charged = await charge(context.userId, "design", "Text concept");
-    if (!charged.ok) throw new Error(chargeErrorMessage(charged));
+    const { runGeneration } = await import("@/lib/generation-run.server");
+    const { imageIdentity } = await import("@/lib/generation-identity");
 
-    try {
+    return runGeneration(
+      {
+        userId: context.userId,
+        action: "design",
+        kind: "concept.render",
+        note: "Text concept",
+        requestId: data.request_id ?? null,
+        parts: [
+          buildPrompt(data),
+          imageIdentity(data.image),
+          (data.images || []).map(imageIdentity).join("|"),
+        ],
+      },
+      async (job) => {
       const content: any[] = [{ type: "text", text: buildPrompt(data) }];
       if (data.image) content.push({ type: "image_url", image_url: { url: data.image } });
       for (const ref of data.images || [])
@@ -101,12 +115,10 @@ export const renderConcept = createServerFn({ method: "POST" })
 
       return {
         image: url,
-        balance: charged.balance,
-        remainingToday: charged.remainingToday ?? null,
-        charged: charged.charged,
+        balance: job.balance,
+        remainingToday: job.remainingToday,
+        charged: job.charged,
       };
-    } catch (err) {
-      await refund(context.userId, charged.charged, "Text concept failed");
-      throw err;
-    }
+      },
+    );
   });

@@ -133,6 +133,8 @@ const RenderInput = z.object({
     )
     .min(1)
     .max(4),
+  /* Stable identity of one user click; reused by retries of that click. */
+  request_id: z.string().max(80).nullable().optional(),
 });
 
 /**
@@ -148,7 +150,8 @@ export const renderSketch = createServerFn({ method: "POST" })
     if (!apiKey) throw new Error("AI is not configured.");
 
     const { buildSketchPrompt, renderSketchView, IMAGE_MODEL } = await import("@/lib/sketch.server");
-    const { charge, refund, chargeErrorMessage } = await import("@/lib/credits.server");
+    const { runGenerationItem } = await import("@/lib/generation-run.server");
+    const { imageIdentity } = await import("@/lib/generation-identity");
     const { SKETCH_CLASSIFICATION, CONCEPT_DISCLAIMER } = await import("@/lib/sketch-brief");
 
     const results: Array<{ id: string; label: string; image: string | null; error: string | null }> = [];
@@ -160,38 +163,37 @@ export const renderSketch = createServerFn({ method: "POST" })
     let reference: string | null = data.reference;
 
     for (const run of data.runs) {
-      const charged = await charge(
-        context.userId,
-        "design",
-        `Sketch To Render, ${data.payload.mode} (${run.label})`,
-      );
-      if (!charged.ok) {
-        if (!results.length) throw new Error(chargeErrorMessage(charged));
-        results.push({ id: run.id, label: run.label, image: null, error: chargeErrorMessage(charged) });
-        break;
-      }
-      charges += charged.charged;
-      balance = charged.balance;
-      remainingToday = charged.remainingToday ?? null;
-      try {
-        const image = await renderSketchView(
+      const outcome = await runGenerationItem(
+        {
+          userId: context.userId,
+          action: "design",
+          kind: "sketch.render",
+          note: `Sketch To Render, ${data.payload.mode} (${run.label})`,
+          requestId: `${data.request_id ?? ""}:${run.id}`,
+          parts: [imageIdentity(data.image), run.id, run.label, run.directive, data.payload.mode],
+        },
+        async () => renderSketchView(
           buildSketchPrompt(data.payload as any, run.directive ? run : null),
           data.image,
           reference,
           apiKey,
-        );
-        if (!reference) reference = image;
-        results.push({ id: run.id, label: run.label, image, error: null });
-      } catch (err) {
-        await refund(context.userId, charged.charged, "Sketch To Render failed");
-        charges -= charged.charged;
-        results.push({
-          id: run.id,
-          label: run.label,
-          image: null,
-          error: (err as Error)?.message || "That render did not finish.",
-        });
+        ),
+      );
+
+      if (!outcome.ok) {
+        /* A refused charge stops the batch; a failed render fails only its own
+           item, and its credit was already refunded exactly once. */
+        if (outcome.blocked && !results.length) throw new Error(outcome.error);
+        results.push({ id: run.id, label: run.label, image: null, error: outcome.error });
+        if (outcome.blocked) break;
+        continue;
       }
+
+      charges += outcome.charged;
+      balance = outcome.balance;
+      remainingToday = outcome.remainingToday;
+      if (!reference) reference = outcome.value;
+      results.push({ id: run.id, label: run.label, image: outcome.value, error: null });
     }
 
     if (!results.some((r) => r.image))

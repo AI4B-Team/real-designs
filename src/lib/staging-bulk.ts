@@ -14,6 +14,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { renderDesign } from "@/lib/design-render.functions";
+import { newRequestId } from "@/lib/request-id";
 import { clampCrop, ratioValue } from "@/lib/photo-crop";
 import { effectiveRatio } from "@/lib/output-ratio";
 import { uploadRenderDataUrl, roomPhotoUrl } from "@/lib/room-photos";
@@ -163,6 +164,9 @@ async function sourceUrl(it) {
  */
 export async function runBulkDesign(items, direction, hooks = {}) {
   const queue = items.filter((i) => i.state !== "complete");
+  /* One id for this run; each photo keeps its own slot inside it, so a retried
+     run replays finished photos instead of paying for them twice. */
+  const runId = newRequestId("bulk-design");
   let done = 0;
   const total = queue.length;
   const worker = async () => {
@@ -195,6 +199,7 @@ export async function runBulkDesign(items, direction, hooks = {}) {
         const r = await renderDesign({
           data: {
             image,
+            request_id: `${runId}:${it.key}`,
             room_type: it.room || "living room",
             direction: (perPhoto && perPhoto.name) || (perSpace && perSpace.name) || direction.direction,
             style_id: (perPhoto && perPhoto.id) || (perSpace && perSpace.id) || direction.styleId || null,

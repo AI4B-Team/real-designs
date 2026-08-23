@@ -43,6 +43,8 @@ const Input = z.object({
   preserve_architecture: z.boolean().default(true),
   /* Photo Design output ratio. "original" keeps the source aspect ratio. */
   aspect_ratio: z.enum(["original", "1:1", "4:3", "3:2", "16:9", "5:4", "4:5", "2:3", "9:16"]).default("original"),
+  /* Stable identity of one user click; reused by retries of that same click. */
+  request_id: z.string().max(80).nullable().optional(),
 });
 
 const MODEL = "google/gemini-2.5-flash-image";
@@ -106,50 +108,71 @@ export const renderDesign = createServerFn({ method: "POST" })
     if (!apiKey) throw new Error("AI is not configured.");
 
     const unlocked = sanitizeUnlocked(data.unlocked);
-    const { charge, refund, chargeErrorMessage } = await import("@/lib/credits.server");
-    const charged = await charge(context.userId, "design", `Design render, ${data.direction}`);
-    if (!charged.ok) throw new Error(chargeErrorMessage(charged));
+    const { runGeneration } = await import("@/lib/generation-run.server");
+    const { imageIdentity } = await import("@/lib/generation-identity");
 
-    try {
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: MODEL,
-          modalities: ["image", "text"],
-          messages: [
-            {
-              role: "user",
-              content: [
-                { type: "text", text: buildPrompt(data) },
-                { type: "image_url", image_url: { url: data.image } },
-              ],
-            },
-          ],
-        }),
-      });
+    return runGeneration(
+      {
+        userId: context.userId,
+        action: "design",
+        kind: "design.render",
+        note: `Design render, ${data.direction}`,
+        requestId: data.request_id ?? null,
+        parts: [
+          imageIdentity(data.image),
+          data.room_type,
+          data.direction,
+          data.style_id,
+          data.intensity_id || data.intensity,
+          data.grade,
+          data.notes,
+          data.tool,
+          data.project_type,
+          data.aspect_ratio,
+          data.keep.join(","),
+          data.replace.join(","),
+          data.remove.join(","),
+          unlocked.join(","),
+        ],
+      },
+      async (job) => {
+        const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: MODEL,
+            modalities: ["image", "text"],
+            messages: [
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: buildPrompt(data) },
+                  { type: "image_url", image_url: { url: data.image } },
+                ],
+              },
+            ],
+          }),
+        });
 
-      if (res.status === 429) throw new Error("Rate limit reached, try again in a moment.");
-      if (res.status === 402) throw new Error("AI credits exhausted for this workspace.");
-      if (!res.ok) throw new Error(`Render failed (${res.status}).`);
+        if (res.status === 429) throw new Error("Rate limit reached, try again in a moment.");
+        if (res.status === 402) throw new Error("AI credits exhausted for this workspace.");
+        if (!res.ok) throw new Error(`Render failed (${res.status}).`);
 
-      const payload = (await res.json()) as any;
-      const msg = payload?.choices?.[0]?.message;
-      const url: string | undefined =
-        msg?.images?.[0]?.image_url?.url ?? msg?.images?.[0]?.url ?? undefined;
-      if (!url || !url.startsWith("data:image"))
-        throw new Error("The model did not return an image.");
+        const payload = (await res.json()) as any;
+        const msg = payload?.choices?.[0]?.message;
+        const url: string | undefined =
+          msg?.images?.[0]?.image_url?.url ?? msg?.images?.[0]?.url ?? undefined;
+        if (!url || !url.startsWith("data:image"))
+          throw new Error("The model did not return an image.");
 
-      return {
-        image: url,
-        intensity: intensityById(data.intensity_id || data.intensity).id,
-        unlocked,
-        balance: charged.balance,
-        remainingToday: charged.remainingToday ?? null,
-        charged: charged.charged,
-      };
-    } catch (err) {
-      await refund(context.userId, charged.charged, "Design render failed");
-      throw err;
-    }
+        return {
+          image: url,
+          intensity: intensityById(data.intensity_id || data.intensity).id,
+          unlocked,
+          balance: job.balance,
+          remainingToday: job.remainingToday,
+          charged: job.charged,
+        };
+      },
+    );
   });

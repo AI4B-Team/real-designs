@@ -71,6 +71,8 @@ const RenderInput = z.object({
     )
     .min(1)
     .max(4),
+  /* Stable identity of one user click; reused by retries of that click. */
+  request_id: z.string().max(80).nullable().optional(),
 });
 
 /**
@@ -91,7 +93,8 @@ export const renderDeclutter = createServerFn({ method: "POST" })
     const { EMPTY_ROOM_CONFIRM, classificationFor, disclosureFor } = await import(
       "@/lib/declutter-brief"
     );
-    const { charge, refund, chargeErrorMessage } = await import("@/lib/credits.server");
+    const { runGenerationItem } = await import("@/lib/generation-run.server");
+    const { imageIdentity } = await import("@/lib/generation-identity");
 
     /* The destructive mode is re-checked on the server: a client that skipped
        the confirmation dialog still cannot empty a room. */
@@ -114,39 +117,37 @@ export const renderDeclutter = createServerFn({ method: "POST" })
     let charges = 0;
 
     for (const run of data.runs) {
-      const charged = await charge(
-        context.userId,
-        "design",
-        `Declutter, ${data.payload.room_type || "room"} (${run.label})`,
-      );
-      if (!charged.ok) {
-        if (!results.length) throw new Error(chargeErrorMessage(charged));
-        results.push({ id: run.id, label: run.label, image: null, error: chargeErrorMessage(charged) });
-        break;
-      }
-      charges += charged.charged;
-      balance = charged.balance;
-      remainingToday = charged.remainingToday ?? null;
-      try {
-        const image = await renderDecluttered(
+      const outcome = await runGenerationItem(
+        {
+          userId: context.userId,
+          action: "design",
+          kind: "declutter.render",
+          note: `Declutter, ${data.payload.room_type || "room"} (${run.label})`,
+          requestId: `${data.request_id ?? ""}:${run.id}`,
+          parts: [imageIdentity(data.image), imageIdentity(data.mask), run.id, run.label, run.directive, data.payload.room_type, data.payload.remove.length, data.payload.keep.length, data.payload.strokes.length],
+        },
+        async () => renderDecluttered(
           buildDeclutterPrompt(data.payload as any, run.directive ? run : null),
           data.image,
           data.overlay,
           data.mask,
           apiKey,
-        );
-        results.push({ id: run.id, label: run.label, image, error: null });
-      } catch (err) {
-        /* Exactly one refund for exactly one failed charge. */
-        await refund(context.userId, charged.charged, "Declutter failed");
-        charges -= charged.charged;
-        results.push({
-          id: run.id,
-          label: run.label,
-          image: null,
-          error: (err as Error)?.message || "That cleanup did not finish.",
-        });
+        ),
+      );
+
+      if (!outcome.ok) {
+        /* A refused charge stops the batch; a failed render fails only its own
+           item, and its credit was already refunded exactly once. */
+        if (outcome.blocked && !results.length) throw new Error(outcome.error);
+        results.push({ id: run.id, label: run.label, image: null, error: outcome.error });
+        if (outcome.blocked) break;
+        continue;
       }
+
+      charges += outcome.charged;
+      balance = outcome.balance;
+      remainingToday = outcome.remainingToday;
+      results.push({ id: run.id, label: run.label, image: outcome.value, error: null });
     }
 
     if (!results.some((r) => r.image))

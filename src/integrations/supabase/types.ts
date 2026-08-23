@@ -846,31 +846,46 @@ export type Database = {
       }
       ops_idempotency: {
         Row: {
+          action: string | null
+          charged: number
           correlation_id: string
           created_at: string
+          credit_state: string
           expires_at: string
           job_id: string | null
           key: string
           note: string | null
+          result: Json | null
           state: string
+          user_id: string | null
         }
         Insert: {
+          action?: string | null
+          charged?: number
           correlation_id: string
           created_at?: string
+          credit_state?: string
           expires_at?: string
           job_id?: string | null
           key: string
           note?: string | null
+          result?: Json | null
           state?: string
+          user_id?: string | null
         }
         Update: {
+          action?: string | null
+          charged?: number
           correlation_id?: string
           created_at?: string
+          credit_state?: string
           expires_at?: string
           job_id?: string | null
           key?: string
           note?: string | null
+          result?: Json | null
           state?: string
+          user_id?: string | null
         }
         Relationships: []
       }

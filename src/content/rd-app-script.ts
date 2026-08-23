@@ -9,6 +9,7 @@ import { priceScopePreview } from "@/lib/estimator-preview.functions";
 import { detectChanges } from "@/lib/change-detect.functions";
 import { estimateDimensions } from "@/lib/dimensions.functions";
 import { renderDesign } from "@/lib/design-render.functions";
+import { clearRequestId, newRequestId, requestIdFor } from "@/lib/request-id";
 import { mountScanOverlay, clearScanOverlay } from "@/lib/scan-overlay";
 import {
   classifyFloorplan,
@@ -3829,6 +3830,9 @@ export function initApp(): () => void {
               unlocked: brief.payload.unlocked,
               aspect_ratio: brief.payload.aspect_ratio,
               variation_of: (VAR && VAR.parentPath) || null,
+              /* One id per committed click: a retry of this same click replays
+                 the first attempt instead of buying a second render. */
+              request_id: requestIdFor("studio-design:" + key),
             },
           });
           image = r.image;
@@ -3866,6 +3870,7 @@ export function initApp(): () => void {
           SCAN = null;
           done.complete();
         }
+        clearRequestId("studio-design:" + key);
         finish();
         cRng.value = 100;
         setC(100);
@@ -3879,6 +3884,8 @@ export function initApp(): () => void {
           }, 20);
         }, 600);
       } catch (e) {
+        /* The attempt is over either way: the next click is a new request. */
+        clearRequestId("studio-design:" + key);
         if (SCAN) SCAN.fail((e && e.message) || "This design did not render.");
         finish();
         setCanvasPhase("error");
@@ -8114,6 +8121,8 @@ ${picks
       let done = 0,
         failed = 0;
       const queue = BATCH_ROOMS.slice();
+      /* One id for this batch run; each photo keeps its own slot inside it. */
+      const batchRequestId = newRequestId("batch-stage");
       for (const room of queue) {
         if (st) {
           st.className = "pill p-amb";
@@ -8126,6 +8135,7 @@ ${picks
           const r = await renderDesign({
             data: {
               image,
+              request_id: `${batchRequestId}:${room.id}`,
               room_type:
                 room.room_type ||
                 (rdRoomSpace(room.room_type) === "interior" ? "living room" : "front exterior"),
