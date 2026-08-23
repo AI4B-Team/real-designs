@@ -2439,15 +2439,30 @@
   font-size: 12px;
   color: var(--muted);
 }
+.rdd-opt:hover {
+  border-color: var(--line-2, #d6d6d6);
+  background: var(--surface-2, #f5f5f5);
+}
 .rdd-opt.on {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 1px var(--brand);
+  border-color: var(--brand, #cc0000);
+  box-shadow: 0 0 0 1px var(--brand, #cc0000);
+  background: var(--card, #fff);
 }
 .rdd-chk {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 13px;
+  padding: 12px;
+  border: 1px solid var(--line, #e5e5e5);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.rdd-chk input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand, #cc0000);
+  flex: none;
 }
 .rdd-shared textarea {
   width: 100%;
