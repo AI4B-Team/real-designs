@@ -1989,10 +1989,10 @@ function openRatioOverride(it) {
   const wrap = document.createElement("div");
   wrap.className = "bx-cdlg";
   wrap.innerHTML = `<div class="bx-cdlg-in rdof-dlg" role="dialog" aria-modal="true" aria-labelledby="rdofTitle">
-    <h3 id="rdofTitle">Override Photo Format</h3>
+    <h3 id="rdofTitle">Image Format For This Photo</h3>
     <p>Use the project format or choose a different format for this photo.</p>
     <p class="rdof-meta">${esc(roomLabel(it) || "Photo")}${it.name ? " · " + esc(it.name) : ""}</p>
-    <div class="rdof-grid" role="radiogroup" aria-label="Photo Format">${opts.map(cardHtml).join("")}</div>
+    <div class="rdof-grid" role="radiogroup" aria-label="Image Format">${opts.map(cardHtml).join("")}</div>
     ${modalFooterHtml({
       extra: initial
         ? { label: "Reset To Project Format", value: "reset", variant: "ghost" }
@@ -2538,7 +2538,7 @@ registerCardMenu("photo", {
             action: "ratio",
             label: normalizeOverride(it.ratio)
               ? "Image Format · " + ratioLabel(it.ratio)
-              : "Override Format",
+              : "Image Format",
             icon: "crop",
           },
         ],
