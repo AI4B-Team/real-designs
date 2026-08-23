@@ -9,6 +9,7 @@ import { priceScopePreview } from "@/lib/estimator-preview.functions";
 import { detectChanges } from "@/lib/change-detect.functions";
 import { estimateDimensions } from "@/lib/dimensions.functions";
 import { renderDesign } from "@/lib/design-render.functions";
+import { mountScanOverlay, clearScanOverlay } from "@/lib/scan-overlay";
 import {
   classifyFloorplan,
   detectFloorplan,
@@ -3722,12 +3723,27 @@ export function initApp(): () => void {
     }
 
     /* Genuine job state: each phase is set when that phase actually starts.
-       Nothing ever reports completion before the request has returned. */
-    function genPhase(pct, label) {
+       Nothing ever reports completion before the request has returned, and no
+       percentage is shown because the render call returns no progress data. */
+    let SCAN = null;
+
+    function scanHost() {
+      /* The overlay sits over the existing image layer: the <img> itself is
+         never replaced, moved or resized while generation runs. */
+      return document.getElementById("cBefore");
+    }
+
+    function genPhase(stage, detail) {
+      /* Scan overlay flow: real stage names, no percentage. */
+      if (SCAN && typeof stage === "string") {
+        SCAN.setStage(stage, detail || "");
+        return;
+      }
+      /* Tools still on the legacy overlay keep their own progress bar. */
       const bar = document.getElementById("cBar"),
         st = document.getElementById("cStep");
-      if (bar) bar.style.width = pct + "%";
-      if (st) st.textContent = label;
+      if (bar && typeof stage === "number") bar.style.width = stage + "%";
+      if (st && detail) st.textContent = detail;
     }
 
     async function runGeneration(brief, VAR) {
@@ -3737,11 +3753,17 @@ export function initApp(): () => void {
       const btn = document.getElementById("genBtn");
       btn.disabled = true;
       const ov = document.getElementById("cGen");
-      ov.classList.add("on");
-      genPhase(8, "Preparing your photo");
+      /* The legacy bar overlay is gone: the source photo stays visible and the
+         scan overlay is a separate layer above it. */
+      if (ov) ov.classList.remove("on");
+      const host = scanHost();
+      if (host) SCAN = mountScanOverlay(host, { stage: "analyzing" });
       const finish = () => {
         setTimeout(() => {
-          ov.classList.remove("on");
+          if (SCAN) {
+            SCAN.destroy();
+            SCAN = null;
+          }
           busy = false;
           btn.disabled = false;
           GEN_GUARD.end();
@@ -3757,7 +3779,11 @@ export function initApp(): () => void {
         if (plan.action === "generate") {
           /* Keep as much of the source resolution as the provider accepts. */
           const source = await toDataUrl((VAR && VAR.src) || srcImg.src, 1600);
-          genPhase(35, "Generating the redesign");
+          genPhase(
+            "preparing",
+            `Applying ${brief.payload.direction || "your style"} with a ${brief.payload.intensity || "Makeover"} direction…`,
+          );
+          genPhase("generating");
           const r = await renderDesign({
             data: {
               image: source,
@@ -3782,11 +3808,11 @@ export function initApp(): () => void {
           image = r.image;
           track("design_rendered", { surface: "studio", room_type: brief.payload.room_type });
         } else {
-          genPhase(70, "Saving your version");
+          genPhase("finalizing");
         }
         lastRender = image;
         cAfter.innerHTML = photo(image, "Redesigned space, AI render");
-        genPhase(80, "Saving your version");
+        genPhase("finalizing");
         try {
           lastRenderPath = await persistRender(image, "Your Render");
           pendingPersist = null;
@@ -3808,7 +3834,12 @@ export function initApp(): () => void {
         });
         window.dispatchEvent(new Event("rd:credits-changed"));
         window.dispatchEvent(new Event("rd:photo"));
-        genPhase(100, "Done");
+        /* The asset is persisted by now, so the reveal runs exactly once. */
+        if (SCAN) {
+          const done = SCAN;
+          SCAN = null;
+          done.complete();
+        }
         finish();
         cRng.value = 100;
         setC(100);
@@ -3822,6 +3853,7 @@ export function initApp(): () => void {
           }, 20);
         }, 600);
       } catch (e) {
+        if (SCAN) SCAN.fail((e && e.message) || "This design did not render.");
         finish();
         setCanvasPhase("error");
         if (!creditGate(e))

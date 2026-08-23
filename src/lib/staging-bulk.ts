@@ -161,7 +161,13 @@ export async function runBulkDesign(items, direction, hooks = {}) {
       const it = queue.shift();
       it.state = "generating";
       it.err = "";
-      hooks.onUpdate && hooks.onUpdate(it);
+      /* Stages are reported as each phase really starts, never on a timer. */
+      const stage = (s) => {
+        it.stage = s;
+        hooks.onStage && hooks.onStage(it, s);
+        hooks.onUpdate && hooks.onUpdate(it);
+      };
+      stage("analyzing");
       try {
         /* Project default unless this photo carries its own override. */
         const ratio = effectiveRatio(direction.outputRatio, it.ratio);
@@ -174,6 +180,8 @@ export async function runBulkDesign(items, direction, hooks = {}) {
         const perPhoto = (direction.styleByPhoto || {})[it.key];
         const note =
           ((direction.notesByPhoto || {})[it.key] || "").trim() || direction.notes || null;
+        stage("preparing");
+        stage("generating");
         const r = await renderDesign({
           data: {
             image,
@@ -188,6 +196,7 @@ export async function runBulkDesign(items, direction, hooks = {}) {
             aspect_ratio: ratio,
           },
         });
+        stage("finalizing");
         let path = null;
         try {
           path = await uploadRenderDataUrl(r.image);
@@ -196,9 +205,11 @@ export async function runBulkDesign(items, direction, hooks = {}) {
         it.resultRatio = ratio;
         it.resultUrl = r.image;
         it.state = "complete";
+        it.stage = "complete";
         it.done = true;
       } catch (e) {
         it.state = "failed";
+        it.stage = "failed";
         it.err = (e && e.message) || "That design did not render.";
       }
       done++;
