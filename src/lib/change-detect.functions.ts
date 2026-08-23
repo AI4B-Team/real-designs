@@ -32,6 +32,8 @@ export const detectChanges = createServerFn({ method: "POST" })
     const { charge, chargeErrorMessage } = await import("@/lib/credits.server");
     const billing = await charge(context.userId, "design", "change detection");
     if (!billing.ok) throw new Error(chargeErrorMessage(billing));
+    try {
+
 
     // Cost mappings are internal pricing data: privileged read only.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -125,9 +127,7 @@ export const detectChanges = createServerFn({ method: "POST" })
     });
 
     if (!res.ok) {
-      // The model never ran usefully, so give the credit back.
-      const { refund } = await import("@/lib/credits.server");
-      await refund(context.userId, billing.charged, "change detection failed");
+      // The catch below refunds; just describe what went wrong.
       if (res.status === 429) throw new Error("Rate limit reached, try again shortly.");
       if (res.status === 402) throw new Error("AI credits exhausted for this workspace.");
       throw new Error(`Change detection failed (${res.status}).`);
@@ -194,4 +194,11 @@ export const detectChanges = createServerFn({ method: "POST" })
       })),
       dropped: (parsed.items ?? []).length - items.length,
     };
+    } catch (err) {
+      // Anything after the charge failing means no usable result: give the credit back.
+      const { refund } = await import("@/lib/credits.server");
+      await refund(context.userId, billing.charged, "change detection failed");
+      throw err;
+    }
+
   });
