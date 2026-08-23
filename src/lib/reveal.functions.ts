@@ -401,46 +401,62 @@ export const startRender = createServerFn({ method: "POST" })
       balance = extra.balance;
     }
 
-    await supabase.from("video_variants").delete().eq("video_project_id", data.id);
-    const rows = data.variants.map((v) => ({
-      aspect_ratio: v.aspect_ratio,
-      version_type: v.version_type,
-      brand_kit_id: v.brand_kit_id ?? null,
-      user_id: userId,
-      video_project_id: data.id,
-      render_status: "queued",
-      credit_cost: 0,
-    }));
-    const { data: out, error } = await supabase.from("video_variants").insert(rows).select("*");
-    if (error) throw new Error(error.message);
-    await supabase
-      .from("video_projects")
-      .update({ status: "processing", error_message: null, updated_at: new Date().toISOString() })
-      .eq("id", data.id);
-
-    const nowIso = new Date().toISOString();
-    const { data: job, error: jobErr } = await supabase
-      .from("video_render_jobs")
-      .insert({
+    try {
+      await supabase.from("video_variants").delete().eq("video_project_id", data.id);
+      const rows = data.variants.map((v) => ({
+        aspect_ratio: v.aspect_ratio,
+        version_type: v.version_type,
+        brand_kit_id: v.brand_kit_id ?? null,
         user_id: userId,
         video_project_id: data.id,
-        provider: DEFAULT_RENDER_PROVIDER,
-        status: "queued",
-        progress: 0,
-        stage: "Preparing scenes",
-        output_formats:
-          data.output_formats ?? Array.from(new Set(data.variants.map((v) => v.aspect_ratio))),
-        quality: data.quality ?? null,
-        scene_count: data.scene_count ?? 0,
-        credits_charged: spent,
-        heartbeat_at: nowIso,
-        started_at: nowIso,
-      })
-      .select("*")
-      .single();
-    if (jobErr) throw new Error(jobErr.message);
+        render_status: "queued",
+        credit_cost: 0,
+      }));
+      const { data: out, error } = await supabase.from("video_variants").insert(rows).select("*");
+      if (error) throw new Error(error.message);
+      await supabase
+        .from("video_projects")
+        .update({
+          status: "processing",
+          error_message: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", data.id);
 
-    return { variants: out ?? [], balance, job, reused: false };
+      const nowIso = new Date().toISOString();
+      const { data: job, error: jobErr } = await supabase
+        .from("video_render_jobs")
+        .insert({
+          user_id: userId,
+          video_project_id: data.id,
+          provider: DEFAULT_RENDER_PROVIDER,
+          status: "queued",
+          progress: 0,
+          stage: "Preparing scenes",
+          output_formats:
+            data.output_formats ?? Array.from(new Set(data.variants.map((v) => v.aspect_ratio))),
+          quality: data.quality ?? null,
+          scene_count: data.scene_count ?? 0,
+          credits_charged: spent,
+          heartbeat_at: nowIso,
+          started_at: nowIso,
+        })
+        .select("*")
+        .single();
+      if (jobErr) throw new Error(jobErr.message);
+
+      return { variants: out ?? [], balance, job, reused: false };
+    } catch (err) {
+      // The render was never queued, so nothing should stay charged for it.
+      const { refund } = await import("@/lib/credits.server");
+      await refund(userId, spent, "REAL REVEAL render could not be started");
+      await supabase
+        .from("video_projects")
+        .update({ status: "draft", updated_at: new Date().toISOString() })
+        .eq("id", data.id);
+      throw err;
+    }
+
   });
 
 /**
