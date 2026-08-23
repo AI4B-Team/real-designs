@@ -124,7 +124,7 @@ export const renderDeclutter = createServerFn({ method: "POST" })
           kind: "declutter.render",
           note: `Declutter, ${data.payload.room_type || "room"} (${run.label})`,
           requestId: `${data.request_id ?? ""}:${run.id}`,
-          parts: [imageIdentity(data.image), imageIdentity(data.mask), run.id, run.label, run.directive, data.payload.room_type, data.payload.targets.length, data.payload.strokes.length],
+          parts: [imageIdentity(data.image), imageIdentity(data.mask), run.id, run.label, run.directive, data.payload.room_type, data.payload.remove.length, data.payload.keep.length, data.payload.strokes.length],
         },
         async () => renderDecluttered(
           buildDeclutterPrompt(data.payload as any, run.directive ? run : null),
