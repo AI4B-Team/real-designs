@@ -1987,7 +1987,7 @@ export function initApp(): () => void {
           ) +
           '<div class="rowi"><button class="btn" id="dashRetry" type="button">Retry</button></div>';
         al.innerHTML = "";
-        bt.innerHTML = "";
+        if (bt) bt.innerHTML = "";
         const rb = document.getElementById("dashRetry");
         if (rb) rb.onclick = () => loadDashboard();
         return;
