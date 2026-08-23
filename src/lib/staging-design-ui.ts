@@ -213,8 +213,11 @@ export function designStepHtml(ctx) {
 
       <div class="rdd-block-s">
         <h3>Structure Protection</h3>
-        <label class="rdd-chk"><input type="checkbox" id="rddPreserve"${model.preserve !== false ? " checked" : ""}>
-          <span>Keep Walls, Windows, Doors and Layout Unchanged</span></label>
+        <label class="design-option-card design-toggle-card${model.preserve !== false ? " on" : ""}">
+          <input type="checkbox" id="rddPreserve"${model.preserve !== false ? " checked" : ""}>
+          <span class="doc-h"><b>Keep Walls, Windows, Doors and Layout Unchanged</b></span>
+          <span class="doc-n">Recommended for listing photos: the room stays the same space, only its design changes.</span>
+        </label>
       </div>
 
       <div class="rdd-block-s">
