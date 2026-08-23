@@ -1761,6 +1761,19 @@ function renderDesignFlow(el) {
           cmToast("Select At Least One Photo First.");
           return release();
         }
+        /* Generate always submits the reviewed revision. If the draft moved
+           on — another tab, a late upload — Review refreshes first. */
+        syncCanonicalDraft();
+        let snapRev = null;
+        try {
+          const snap = snapshotForGeneration(S.reviewedRev || null);
+          if (!snap.ok) {
+            cmToast("This Project Changed. Review Refreshed — Check It, Then Generate.");
+            render();
+            return;
+          }
+          snapRev = snap.snapshot.rev;
+        } catch (_) {}
         /* Review, the saved draft and the request must agree before spending. */
         assertDesignState("the Review summary", S.design, {
           direction: S.design.direction,
@@ -1768,6 +1781,7 @@ function renderDesignFlow(el) {
         });
         const payload = toDirection(S.design, items, normalizeOutputRatio(S.outputRatio));
         assertDesignState("the generation request", S.design, directionFromPayload(payload));
+        S.snapshotRev = snapRev;
         try {
           runBatch(items, payload);
         } catch (err) {
