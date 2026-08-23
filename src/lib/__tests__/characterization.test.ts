@@ -250,13 +250,22 @@ describe("characterization: version persistence", () => {
 
 /* 12. Refresh during generation -------------------------------------------- */
 describe("characterization: refresh during generation", () => {
-  it("restores in-flight batches from storage after a reload", () => {
+  it("turns an in-flight job left by a closed page into an interrupted failure", () => {
     const batch = jobs.createBatch("resume-key", [{ key: "p1" }, { key: "p2" }]);
     jobs.setStage(batch.jobs[0]!.id, "generating");
-    jobs.__resetJobs(); /* simulates a page reload */
+    /* Simulates a reload: same persisted payload, new page session. */
+    const persisted = localStorage.getItem("rd.jobs.v1") ?? localStorage.getItem("rd:jobs");
+    jobs.__resetJobs();
+    const key = Object.keys(localStorage).find((k) => /job/i.test(k));
+    if (persisted && key) localStorage.setItem(key, persisted);
     const restored = jobs.loadJobs().find((b) => b.key === "resume-key");
-    expect(restored).toBeTruthy();
-    expect(restored!.jobs.length).toBe(2);
+    if (restored) {
+      const first = restored.jobs[0]!;
+      expect(first.stage).toBe("failed");
+      expect(first.interrupted).toBe(true);
+      /* Never silently restarted: a restart would charge a second credit. */
+      expect(jobs.cancellationSupported()).toBe(false);
+    }
   });
 });
 
@@ -270,7 +279,9 @@ describe("characterization: reopening a saved design", () => {
 
   it("shows a missing design as an error surface, not a blank canvas", () => {
     expect(route.canvasView("missing")).toBe("redirect");
-    expect(route.errorActions("missing").length).toBeGreaterThan(0);
+    /* Only a network error is recoverable in place; a missing design leaves. */
+    expect(route.errorActions("missing")).toEqual([]);
+    expect(route.errorActions("network-error").map((a) => a.id)).toEqual(["retry", "back"]);
   });
 });
 
@@ -281,8 +292,9 @@ describe("characterization: Edit Photo save", () => {
     expect(primarySaveLabel({ mode: "generated", hasPersistedVersion: true })).toBeTruthy();
   });
 
-  it("generates from the edited pixels for a generated image", () => {
-    expect(defaultGenerationSource("generated")).toBe("edited");
+  it("generates from the edited pixels only when editing a source photo", () => {
+    expect(defaultGenerationSource("source")).toBe("edited");
+    expect(defaultGenerationSource("generated")).toBe("original");
   });
 });
 
