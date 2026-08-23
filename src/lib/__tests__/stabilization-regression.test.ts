@@ -523,31 +523,42 @@ const asset: AssetRow = {
   approved_version_id: null,
 } as AssetRow;
 
+function mkVersion(
+  id: string,
+  createdAt: string,
+  parent: { kind: "asset" | "version"; id: string; path: string },
+  operation: "generate" | "edit",
+): VersionRow {
+  const path = `u/asset-1/${id}.png`;
+  return {
+    id,
+    asset_id: "asset-1",
+    label: `Version ${id}`,
+    storage_path: path,
+    created_at: createdAt,
+    ops: withLineage(null, {
+      v: 1,
+      sourceAssetId: "asset-1",
+      parent,
+      operation,
+      jobId: null,
+      outputAssetId: "asset-1",
+      outputVersionId: id,
+      outputPath: path,
+      userId: "u1",
+      propertyId: null,
+      projectId: null,
+      roomId: null,
+      settings: {},
+      createdAt,
+      persistence: "durable",
+    }),
+  };
+}
+
 const versions: VersionRow[] = [
-  withLineage(
-    { id: "v1", asset_id: "asset-1", storage_path: "u/asset-1/v1.png", created_at: "2026-01-01T00:00:00Z", label: "Version 1" } as VersionRow,
-    {
-      sourceAssetId: "asset-1",
-      parent: { kind: "asset", id: "asset-1", path: "u/asset-1/original.jpg" },
-      operation: "design",
-      outputAssetId: "asset-1",
-      outputVersionId: "v1",
-      outputPath: "u/asset-1/v1.png",
-      userId: "u1",
-    },
-  ),
-  withLineage(
-    { id: "v2", asset_id: "asset-1", storage_path: "u/asset-1/v2.png", created_at: "2026-01-02T00:00:00Z", label: "Version 2" } as VersionRow,
-    {
-      sourceAssetId: "asset-1",
-      parent: { kind: "version", id: "v1", path: "u/asset-1/v1.png" },
-      operation: "edit",
-      outputAssetId: "asset-1",
-      outputVersionId: "v2",
-      outputPath: "u/asset-1/v2.png",
-      userId: "u1",
-    },
-  ),
+  mkVersion("v1", "2026-01-01T00:00:00Z", { kind: "asset", id: "asset-1", path: "u/asset-1/original.jpg" }, "generate"),
+  mkVersion("v2", "2026-01-02T00:00:00Z", { kind: "version", id: "v1", path: "u/asset-1/v1.png" }, "edit"),
 ];
 
 describe("regression: canvas identity across tools", () => {
