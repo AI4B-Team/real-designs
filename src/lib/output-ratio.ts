@@ -118,7 +118,9 @@ const RATIO_CLASS: Record<OutputRatio, string> = {
   "4:5": "rt-45",
   "3:2": "rt-32",
   "2:3": "rt-23",
+  "5:4": "rt-54",
   original: "rt-orig",
+
 };
 
 export const RATIO_CLASSES: string[] = Object.values(RATIO_CLASS);
