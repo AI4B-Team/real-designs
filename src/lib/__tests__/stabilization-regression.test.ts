@@ -681,22 +681,40 @@ describe("regression: media library", () => {
  * ================================================================== */
 
 describe("regression: presentations", () => {
-  const item = { id: "i1", versionId: "v2", path: "u/asset-1/v2.png" } as never;
+  const item = { id: "i1", version_id: "v2", url: "u/asset-1/v2.png", status: "ready" };
 
-  it("an empty presentation cannot be published", () => {
-    const r = presentationReadiness([], {} as never);
-    expect(r.ready).toBe(false);
-    expect(presentationReadiness([], {} as never).message || EMPTY_MESSAGE).toBeTruthy();
+  it("an empty presentation cannot be published, copied or sent", () => {
+    const r = presentationReadiness([]);
+    expect(r.canPublish).toBe(false);
+    expect(r.canCopyLink).toBe(false);
+    expect(r.canSend).toBe(false);
+    expect(r.message).toBe(EMPTY_MESSAGE);
+  });
+
+  it("one usable design is enough to publish, approve and export", () => {
+    const r = presentationReadiness([item]);
+    expect(r.canPublish).toBe(true);
+    expect(r.canApprove).toBe(true);
+    expect(r.canExportPdf).toBe(true);
+    expect(r.message).toBeNull();
   });
 
   it("a recipient opening an emptied link sees the unavailable notice, not a broken page", () => {
     const state = publicPresentationState([]);
+    expect(state.visible).toBe(false);
+    expect(state.showApproval).toBe(false);
     expect(state.message).toBe(RECIPIENT_UNAVAILABLE);
   });
 
-  it("items without a durable path are not published", () => {
-    expect(validItems([{ id: "x", path: "" } as never]).length).toBe(0);
+  it("failed or still-processing designs are never published", () => {
+    expect(validItems([{ id: "x", status: "failed" }]).length).toBe(0);
+    expect(validItems([{ id: "y", status: "processing" }]).length).toBe(0);
     expect(validItems([item]).length).toBe(1);
+  });
+
+  it("a published item stays pinned to the version it was published with", () => {
+    const published = validItems([item, { id: "i2", version_id: "v1", status: "ready" }]);
+    expect(published.map((p) => p.version_id)).toEqual(["v2", "v1"]);
   });
 
   it("a published item stays pinned to the version it was published with", () => {
