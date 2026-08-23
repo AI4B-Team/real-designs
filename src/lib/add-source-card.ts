@@ -1,110 +1,172 @@
 /**
  * The compact "Add More Photos" grid card.
  *
- * This card is NOT a general source browser. It adds new files only, from the
- * three places files actually come from: the computer, Google Drive and
- * Dropbox. Property and Media stay in the top-level Studio source picker.
+ * The card is intentionally simple: just a "+" icon and a label. It does NOT
+ * mirror the photo thumbnail's aspect ratio — that was the old design, and it
+ * caused source buttons to clip when the Image Format changed the preview
+ * shape. The card keeps a fixed, comfortable shape regardless of format.
  *
- * Everything happens inside the card itself — there is no floating popover and
- * no second modal shell here. The card keeps the photo cards' exact box, so
- * expanding it never resizes the tile, never reflows the grid and never lets a
- * label escape its own boundary.
+ * Clicking (or focusing, or hovering) opens a small anchored popover that lists
+ * every available source: Computer, Google Drive, Dropbox, Existing Property
+ * Photos, and Media. The host decides which sources are available and what each
+ * one does, so the same card serves both Photo Design (all five) and Video
+ * Builder (computer + cloud only).
  */
 
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
-import { providerAvailable } from "@/lib/provider-import";
 
-export type AddSourceId = "computer" | "drive" | "dropbox";
+export type AddSourceId = "computer" | "drive" | "dropbox" | "property" | "media";
+
+type SourceDef = {
+  id: AddSourceId;
+  label: string;
+  icon: string;
+  brandIcon?: string;
+};
+
+/** Canonical source list. Hosts filter by passing `sources` to mountAddSourceCard. */
+const ALL_SOURCES: SourceDef[] = [
+  { id: "computer", label: "Computer", icon: "monitor-up" },
+  { id: "drive", label: "Google Drive", icon: "", brandIcon: DRIVE_ICON },
+  { id: "dropbox", label: "Dropbox", icon: "", brandIcon: DROPBOX_ICON },
+  { id: "property", label: "Existing Property", icon: "home" },
+  { id: "media", label: "Media", icon: "images" },
+];
 
 export type AddSourceCardOptions = {
   /** Files chosen from the computer, or dropped on the card. */
   onComputer: () => void | Promise<void>;
   /** Cloud import for one provider. Omit to hide that button entirely. */
   onCloud?: (provider: "drive" | "dropbox") => void | Promise<void>;
+  /** Open the property photo browser. Omit to hide. */
+  onProperty?: () => void | Promise<void>;
+  /** Open the media browser. Omit to hide. */
+  onMedia?: () => void | Promise<void>;
   /** Raw files dropped on the card. Falls back to onComputer when absent. */
   onDrop?: (files: File[]) => void | Promise<void>;
   /** Repaint hook so host frameworks can refresh icons. */
   paint?: () => void;
+  /** Which sources to show, in order. Defaults to computer + cloud only. */
+  sources?: AddSourceId[];
 };
 
-/** Every mounted card, so only one can ever be expanded. */
-const MOUNTED = new Set<HTMLElement>();
-
-/** A provider button only really works when its authorization flow is configured. */
-export function cloudSourceEnabled(id: "drive" | "dropbox"): boolean {
-  return providerAvailable(id);
-}
-
+const escHtml = (s: string): string => {
+  let out = String(s == null ? "" : s);
+  out = out.split("&").join("\u0026amp;");
+  out = out.split("<").join("\u0026lt;");
+  out = out.split(">").join("\u0026gt;");
+  out = out.split('"').join("\u0026quot;");
+  return out;
+};
 
 /**
- * Card markup. `ratio` is the grid's aspect-ratio class so the action card is
- * exactly the same shape as the photo cards beside it.
+ * Card markup. No `ratio` — the card has its own fixed shape that never
+ * depends on the photo thumbnail's Image Format. No `pad` — the card is
+ * self-contained and doesn't need to align with a photo's footer row.
  */
-export function addSourceCardHtml(opts: {
-  id: string;
-  ratio?: string;
-  /** Reserves the photo cards' footer row so the frames stay aligned. */
-  pad?: boolean;
-}): string {
+export function addSourceCardHtml(opts: { id: string; ratio?: string; pad?: boolean }): string {
   const id = opts.id;
-  const panelId = id + "Sources";
-  /* Provider buttons are always real buttons and always clickable. When the
-     integration is not configured the click opens an honest explanation with a
-     "Choose From Computer" way out — never a dead, faded control. */
-  const cloud = (key: "drive" | "dropbox", label: string, icon: string) => {
-    /* The card is too small for badges: no "Coming Soon" chip, no truncated
-       provider name. An unconfigured provider still reads normally and its
-       click opens the honest explanation modal. */
-    return `<button type="button" class="rv-addsrc rv-addsrc-${key}" data-addsrc="${key}"${
-      cloudSourceEnabled(key) ? "" : ' data-unconfigured="1"'
-    }>
-        <span class="rv-addsrc-i">${icon}</span><span class="rv-addsrc-l">${label}</span>
-        <span class="rv-addsrc-sp" hidden aria-hidden="true"></span>
-      </button>`;
-  };
-  return `<div class="rv-addcard ${opts.ratio || ""}" data-addcard="${id}">
-    <div class="rv-addcard-b" id="${id}">
-      <button type="button" class="rv-addcard-face" data-addface
-        aria-label="Add More Photos" aria-expanded="false" aria-controls="${panelId}">
-        <i data-lucide="plus"></i>
-        <b>Add More Photos</b>
-      </button>
-      <div class="rv-addcard-src" id="${panelId}" role="group" aria-label="Add Photos From" hidden>
-        <button type="button" class="rv-addsrc rv-addsrc-computer" data-addsrc="computer">
-          <span class="rv-addsrc-i"><i data-lucide="monitor-up"></i></span><span class="rv-addsrc-l">Computer</span>
-          <span class="rv-addsrc-sp" hidden aria-hidden="true"></span>
-        </button>
-        ${cloud("drive", "Google Drive", DRIVE_ICON)}
-        ${cloud("dropbox", "Dropbox", DROPBOX_ICON)}
-        <p class="rv-addcard-note" data-addnote hidden></p>
-      </div>
-
-    </div>
-    ${opts.pad ? '<div class="rv-addcard-pad" aria-hidden="true"></div>' : ""}
+  /* ratio and pad are accepted for backward compatibility but ignored. */
+  void opts.ratio;
+  void opts.pad;
+  return `<div class="rv-addcard" data-addcard="${escHtml(id)}">
+    <button type="button" class="rv-addcard-face" data-addface
+      aria-label="Add More Photos" aria-haspopup="menu" aria-expanded="false">
+      <span class="rv-addcard-plus"><i data-lucide="plus"></i></span>
+      <b>Add More Photos</b>
+    </button>
     <p class="rv-addcard-live" role="status" aria-live="polite" hidden></p>
   </div>`;
 }
 
-function collapse(card: HTMLElement) {
-  card.classList.remove("open");
-  const face = card.querySelector<HTMLElement>("[data-addface]");
-  const panel = card.querySelector<HTMLElement>(".rv-addcard-src");
-  if (panel) panel.hidden = true;
-  face?.setAttribute("aria-expanded", "false");
+/* ---- popover ---- */
+
+let openPopover: HTMLElement | null = null;
+
+function closeAddSourcePopover() {
+  if (openPopover) {
+    const anchor = (openPopover as any).__anchor as HTMLElement | undefined;
+    anchor?.setAttribute("aria-expanded", "false");
+    openPopover.remove();
+    openPopover = null;
+  }
 }
 
-function expand(card: HTMLElement) {
-  MOUNTED.forEach((c) => {
-    if (c !== card) collapse(c);
+function openSourcePopover(
+  anchor: HTMLElement,
+  sources: SourceDef[],
+  onSelect: (id: AddSourceId) => void,
+  paint?: () => void,
+) {
+  closeAddSourcePopover();
+  const pop = document.createElement("div");
+  pop.className = "rds-addpop";
+  pop.setAttribute("role", "menu");
+  pop.setAttribute("aria-label", "Add Photos From");
+  pop.innerHTML = sources
+    .map(
+      (s, i) =>
+        `<button type="button" role="menuitem" class="rds-addpop-i" data-src="${escHtml(
+          s.id,
+        )}" tabindex="${i === 0 ? "0" : "-1"}">${
+          s.brandIcon
+            ? `<span class="rds-addpop-i-b">${s.brandIcon}</span>`
+            : `<span class="rds-addpop-i-l"><i data-lucide="${escHtml(s.icon)}"></i></span>`
+        }<span class="rds-addpop-l">${escHtml(s.label)}</span></button>`,
+    )
+    .join("");
+  document.body.appendChild(pop);
+  (pop as any).__anchor = anchor;
+  openPopover = pop;
+  anchor.setAttribute("aria-expanded", "true");
+
+  /* Position below the anchor, flip up if there's no room. */
+  const r = anchor.getBoundingClientRect();
+  const pw = pop.offsetWidth || 220;
+  const ph = pop.offsetHeight || 200;
+  const top =
+    r.bottom + 8 + ph > window.innerHeight
+      ? Math.max(12, r.top - ph - 8)
+      : r.bottom + 8;
+  pop.style.top = top + "px";
+  pop.style.left = Math.max(12, Math.min(r.left, window.innerWidth - pw - 12)) + "px";
+
+  paint?.();
+
+  const items = Array.from(pop.querySelectorAll<HTMLElement>("[data-src]"));
+  items.forEach((b, i) => {
+    b.addEventListener("click", () => {
+      const id = b.getAttribute("data-src") as AddSourceId;
+      closeAddSourcePopover();
+      onSelect(id);
+    });
+    b.addEventListener("keydown", (e: KeyboardEvent) => {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const n =
+          (i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+        items[n]?.focus();
+      }
+      if (e.key === "Escape") {
+        closeAddSourcePopover();
+        anchor?.focus();
+      }
+    });
   });
-  card.classList.add("open");
-  const panel = card.querySelector<HTMLElement>(".rv-addcard-src");
-  if (panel) panel.hidden = false;
-  card.querySelector<HTMLElement>("[data-addface]")?.setAttribute("aria-expanded", "true");
-}
+  items[0]?.focus();
 
-export function isAddSourceCardOpen(card: HTMLElement): boolean {
-  return card.classList.contains("open");
+  /* Click-away to close. Deferred so the opening click doesn't close it. */
+  setTimeout(() => {
+    const away = (e: MouseEvent) => {
+      if (openPopover && !openPopover.contains(e.target as Node) && !anchor.contains(e.target as Node)) {
+        closeAddSourcePopover();
+        document.removeEventListener("mousedown", away);
+      }
+    };
+    document.addEventListener("mousedown", away);
+  }, 0);
+
+  return pop;
 }
 
 /**
@@ -117,15 +179,19 @@ export function mountAddSourceCard(
 ): void {
   if (!card || (card as any).__rdAddCard) return;
   (card as any).__rdAddCard = true;
-  MOUNTED.forEach((c) => {
-    if (!c.isConnected) MOUNTED.delete(c);
-  });
-  MOUNTED.add(card);
 
   const face = card.querySelector<HTMLElement>("[data-addface]");
   const live = card.querySelector<HTMLElement>(".rv-addcard-live");
-  const buttons = () => Array.from(card.querySelectorAll<HTMLElement>("[data-addsrc]"));
-  let locked = false;
+
+  /* Resolve which sources to show based on which callbacks are present. */
+  const requested = opts.sources ?? ["computer", "drive", "dropbox"];
+  const sources = ALL_SOURCES.filter((s) => {
+    if (s.id === "computer") return true;
+    if (s.id === "drive" || s.id === "dropbox") return !!opts.onCloud && requested.includes(s.id);
+    if (s.id === "property") return !!opts.onProperty && requested.includes(s.id);
+    if (s.id === "media") return !!opts.onMedia && requested.includes(s.id);
+    return false;
+  });
 
   const say = (msg: string) => {
     if (!live) return;
@@ -133,110 +199,49 @@ export function mountAddSourceCard(
     live.textContent = msg;
   };
 
-  const open = (lock: boolean) => {
-    if (lock) locked = true;
-    expand(card);
-    opts.paint?.();
-  };
-  const note = card.querySelector<HTMLElement>("[data-addnote]");
-  const setNote = (msg: string) => {
-    if (!note) return;
-    note.hidden = !msg;
-    note.textContent = msg;
-  };
-  /* Set while we hand focus back to the face after an explicit close, so the
-     returning focus event cannot immediately re-expand the card. */
-  let refocusing = false;
-  const close = () => {
-    locked = false;
-    refocusing = true;
-    setNote("");
-    collapse(card);
-  };
-
-  face?.addEventListener("click", () => {
-    if (isAddSourceCardOpen(card) && locked) {
-      close();
-      return;
-    }
-    open(true);
-    buttons()[0]?.focus();
-  });
-
-  /* Instant hover: no timer, no hover intent, no deferred mount. The choices
-     are already in the DOM, so this is a single class toggle. */
-  const enter = () => {
-    if (!isAddSourceCardOpen(card)) open(false);
-  };
-  card.addEventListener("pointerenter", enter);
-  card.addEventListener("mouseenter", enter);
-  /* pointerleave fires only when the pointer leaves the whole card, so moving
-     from the face onto a source button can never collapse it. */
-  card.addEventListener("pointerleave", (e) => {
-    if (locked) return;
-    if (card.contains((e as PointerEvent).relatedTarget as Node)) return;
-    collapse(card);
-  });
-  /* Keyboard focus expands immediately too. */
-  card.addEventListener("focusin", () => {
-    if (refocusing) {
-      refocusing = false;
-      return;
-    }
-    open(false);
-  });
-  card.addEventListener("focusout", (e) => {
-    if (locked) return;
-    const next = (e as FocusEvent).relatedTarget as Node | null;
-    if (next && card.contains(next)) return;
-    collapse(card);
-  });
-
-  card.addEventListener("keydown", (e: KeyboardEvent) => {
-    if (e.key === "Escape" && isAddSourceCardOpen(card)) {
-      e.stopPropagation();
-      close();
-      face?.focus();
-      return;
-    }
-    const list = buttons();
-    const i = list.indexOf(document.activeElement as HTMLElement);
-    if ((e.key === "ArrowDown" || e.key === "ArrowUp") && i >= 0) {
-      e.preventDefault();
-      const n = (i + (e.key === "ArrowDown" ? 1 : -1) + list.length) % list.length;
-      list[n]?.focus();
-    }
-  });
-
-  /* Choosing a source: a spinner in that button, and no double launches. */
-  card.addEventListener("click", async (e) => {
-    const btn = (e.target as HTMLElement)?.closest?.("[data-addsrc]") as HTMLElement | null;
-    if (!btn || !card.contains(btn)) return;
-    e.preventDefault();
-    if (btn.hasAttribute("data-busy")) return;
-    e.stopPropagation();
-    const id = btn.getAttribute("data-addsrc") as AddSourceId;
-    setNote("");
-    /* The card stays open until the chosen flow has actually been launched. */
-    locked = true;
-    btn.setAttribute("data-busy", "1");
-    const sp = btn.querySelector<HTMLElement>(".rv-addsrc-sp");
-    if (sp) sp.hidden = false;
+  const handleSelect = async (id: AddSourceId) => {
     say(id === "computer" ? "Opening Your Files" : "Opening The Import Window");
     try {
       if (id === "computer") await opts.onComputer();
-      else await opts.onCloud?.(id);
+      else if (id === "drive") await opts.onCloud?.("drive");
+      else if (id === "dropbox") await opts.onCloud?.("dropbox");
+      else if (id === "property") await opts.onProperty?.();
+      else if (id === "media") await opts.onMedia?.();
     } finally {
-      btn.removeAttribute("data-busy");
-      if (sp) sp.hidden = true;
       say("");
-      /* Focus returns to the card once a source workflow hands back. */
-      close();
-      face?.focus();
+    }
+  };
+
+  face?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (openPopover && (openPopover as any).__anchor === face) {
+      closeAddSourcePopover();
+      return;
+    }
+    if (sources.length === 1) {
+      /* Only one source: skip the menu and go straight to it. */
+      void handleSelect(sources[0]!.id);
+      return;
+    }
+    openSourcePopover(
+      face!,
+      sources,
+      (id) => void handleSelect(id),
+      opts.paint,
+    );
+  });
+
+  /* Keyboard: Enter/Space already handled by the button, but also support
+     opening with arrow-down to match native menu semantics. */
+  face?.addEventListener("keydown", (e: KeyboardEvent) => {
+    if (e.key === "ArrowDown" && !openPopover) {
+      e.preventDefault();
+      (e.currentTarget as HTMLElement).click();
     }
   });
 
-  /* Dropping on the collapsed or the expanded card is the same intake. */
+  /* Dropping on the card is the same intake as choosing Computer. */
   const stop = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -254,14 +259,9 @@ export function mountAddSourceCard(
     if (opts.onDrop) await opts.onDrop(files);
     else await opts.onComputer();
   });
+}
 
-  const away = (e: Event) => {
-    if (!card.isConnected) {
-      document.removeEventListener("mousedown", away);
-      MOUNTED.delete(card);
-      return;
-    }
-    if (!card.contains(e.target as Node)) close();
-  };
-  document.addEventListener("mousedown", away);
+/** Legacy export — no-ops the old expand/collapse checks. */
+export function isAddSourceCardOpen(_card: HTMLElement): boolean {
+  return false;
 }

@@ -1312,16 +1312,15 @@
   outline-offset: 2px;
 }
 
-/* The image frame previews the real output shape. The grid still owns the
-   card width: only the frame's height changes, so no ratio can widen a card,
-   clip the first or last one, or introduce horizontal scrolling. */
+/* The add card has its own fixed shape (defined in rd-reveal.css) that never
+   depends on the photo thumbnail's Image Format. No rt-* aspect-ratio rules
+   are applied here — the card stays the same size regardless of format. */
 .rd-app #v-staging .rv-tile,
 .rd-app #v-staging .rv-addcard {
   min-width: 0;
   max-width: 100%;
 }
-.rd-app #v-staging .rv-tile-th,
-.rd-app #v-staging .rv-addcard-b {
+.rd-app #v-staging .rv-tile-th {
   width: 100%;
   max-width: 100%;
   transition:
@@ -1334,40 +1333,9 @@
   object-fit: cover;
 }
 
-/* The frame aspects themselves live in rd-reveal.css (canonical builder
-   media-card frame, mirrored by src/lib/builder-card-frame.ts). Photo Design
-   only mirrors them onto its action card so it lines up with the photos. */
-.rd-app #v-staging .rv-addcard.rt-169 .rv-addcard-b,
-.rd-app #v-staging .rv-addcard.rt-43 .rv-addcard-b,
-.rd-app #v-staging .rv-addcard.rt-32 .rv-addcard-b,
-.rd-app #v-staging .rv-addcard.rt-orig .rv-addcard-b {
-  aspect-ratio: 4 / 3;
-}
-.rd-app #v-staging .rv-addcard.rt-916 .rv-addcard-b,
-.rd-app #v-staging .rv-addcard.rt-45 .rv-addcard-b,
-.rd-app #v-staging .rv-addcard.rt-23 .rv-addcard-b {
-  aspect-ratio: 3 / 4;
-}
-.rd-app #v-staging .rv-addcard.rt-54 .rv-addcard-b {
-  aspect-ratio: 5 / 4;
-}
-.rd-app #v-staging .rv-addcard.rt-11 .rv-addcard-b {
-  aspect-ratio: 1 / 1;
-}
 /* Original keeps the photo whole inside the canonical landscape frame. */
 .rd-app .rv-tile.rt-orig .rv-tile-th img {
   object-fit: contain;
-}
-
-/* The action card has no room selector, so a neutral spacer keeps its frame
-   aligned with the photo frames beside it. */
-.rd-app #v-staging .rv-addcard {
-  display: flex;
-  flex-direction: column;
-}
-.rd-app #v-staging .rv-addcard-pad {
-  height: 38px;
-  margin-top: 8px;
 }
 
 /* A photo that overrides the project format says so, on the frame. */
@@ -1396,8 +1364,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rd-app #v-staging .rv-tile-th,
-  .rd-app #v-staging .rv-addcard-b {
+  .rd-app #v-staging .rv-tile-th {
     transition: none;
   }
 }
@@ -2036,10 +2003,6 @@
   padding: 16px 18px 20px;
 }
 
-.rd-app #v-staging .rv-addcard.drop .rv-addcard-b {
-  border-color: var(--red, #c00);
-  background: #fff5f5;
-}
 .rds-floatadd {
   position: sticky;
   bottom: 18px;

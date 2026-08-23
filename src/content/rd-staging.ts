@@ -19,6 +19,7 @@
 import { createIcons, icons } from "lucide";
 import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
 import { addSourceCardHtml, mountAddSourceCard } from "@/lib/add-source-card";
+import { openSourceModal } from "@/lib/add-source-popover";
 import {
   normalizeRotation,
   nextRotation,
@@ -1245,10 +1246,11 @@ function cardHtml(it, seq) {
 }
 
 /* A permanent action card closes the grid. It is not a room: no number, no
-   selector, no menu, no credits — it only opens the existing Add Photos
-   picker, and it always stays the final grid item. */
+   selector, no menu, no credits — it only opens the Add Photos popover, and it
+   always stays the final grid item. The card has its own fixed shape that
+   never depends on the photo thumbnail's Image Format. */
 function addCardHtml() {
-  return addSourceCardHtml({ id: "rdsAddCard", ratio: ratioClass(S && S.outputRatio), pad: true });
+  return addSourceCardHtml({ id: "rdsAddCard" });
 }
 
 function gridHtml() {
@@ -1930,11 +1932,9 @@ function applyRatiosLive() {
     }
   });
 
-  const add = el.querySelector(".rv-addcard");
-  if (add) {
-    const want = ratioClass(project);
-    RATIO_CLASSES.forEach((c) => add.classList.toggle(c, c === want));
-  }
+  /* The Add More Photos card has its own fixed shape — it no longer mirrors
+     the photo thumbnail's Image Format, so there is nothing to sync here. */
+
 
   /* Header: the selected button can never disagree with the card shapes. */
   el.querySelectorAll("[data-ratio]").forEach((b) => {
@@ -2228,8 +2228,29 @@ function bindReview(el) {
   pickFiles = () => file && file.click();
   mountAddSourceCard(el.querySelector(".rv-addcard"), {
     paint,
+    sources: ["computer", "drive", "dropbox", "property", "media"],
     onComputer: () => pickFiles(),
     onCloud: (provider) => openCloudImport(provider),
+    onProperty: () =>
+      openSourceModal({
+        title: "Add From Property",
+        paint,
+        picker: {
+          ...pickerCommon(),
+          initialTab: "property",
+          onPick: async (picked) => addFiles(picked.map((p) => p.file)),
+        },
+      }),
+    onMedia: () =>
+      openSourceModal({
+        title: "Add From Media",
+        paint,
+        picker: {
+          ...pickerCommon(),
+          initialTab: "media",
+          onPick: async (picked) => addFiles(picked.map((p) => p.file)),
+        },
+      }),
     onDrop: async (raw) => {
       const ok = await validateFiles(raw);
       if (ok.length) addFiles(ok);
