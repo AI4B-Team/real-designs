@@ -1628,6 +1628,8 @@ function renderDesignFlow(el) {
         ratioLabel: reviewFormatLabel(),
         cropCount: items.filter((it) => tileRatio(it) !== "original").length,
         balance: typeof S.creditBalance === "number" ? S.creditBalance : null,
+        plan: S.creditPlan || null,
+        remainingToday: typeof S.creditRemaining === "number" ? S.creditRemaining : null,
         photoLabel,
         photoFormat: (it) => ratioLabel(tileRatio(it)),
         photoCustomCrop: (it) => isCustomCrop(it.crop) && tileRatio(it) !== "original",
@@ -1635,8 +1637,11 @@ function renderDesignFlow(el) {
           items,
           model,
           balance: typeof S.creditBalance === "number" ? S.creditBalance : null,
+          plan: S.creditPlan || null,
+          remainingToday: typeof S.creditRemaining === "number" ? S.creditRemaining : null,
           uploading: S.items.some((i) => i.status === "uploading"),
         }),
+
       })
     : designStepHtml({ items, model });
 
@@ -1738,8 +1743,12 @@ async function loadCreditBalance() {
   try {
     const c = await getMyCredits();
     const next = c && typeof c.balance === "number" ? c.balance : null;
-    if (S && next !== S.creditBalance) {
+    const plan = (c && c.plan) || null;
+    const left = c && typeof c.remainingToday === "number" ? c.remainingToday : null;
+    if (S && (next !== S.creditBalance || plan !== S.creditPlan || left !== S.creditRemaining)) {
       S.creditBalance = next;
+      S.creditPlan = plan;
+      S.creditRemaining = left;
       if (S.step === "final") render();
     }
   } catch (_) {
@@ -1747,6 +1756,7 @@ async function loadCreditBalance() {
     if (S) S.creditLoading = false;
   }
 }
+
 
 /* Every rail step is a real destination: nothing in the rail is decorative. */
 function bindRail(el) {
@@ -3821,11 +3831,16 @@ function markCurrentDone() {
   } catch (_) {}
 }
 
-/* Keep the strip honest when the canvas produces a result. */
+/* Keep the strip honest when the canvas produces a result, and re-read the
+   balance so the Review summary never shows a stale allowance. */
 try {
   window.addEventListener("rd:credits-changed", () => {
     markCurrentDone();
     drawStrip();
+    try {
+      if (S) loadCreditBalance();
+    } catch (_) {}
+
   });
 } catch (_) {}
 
