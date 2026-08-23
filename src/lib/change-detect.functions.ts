@@ -194,4 +194,11 @@ export const detectChanges = createServerFn({ method: "POST" })
       })),
       dropped: (parsed.items ?? []).length - items.length,
     };
+    } catch (err) {
+      // Anything after the charge failing means no usable result: give the credit back.
+      const { refund } = await import("@/lib/credits.server");
+      await refund(context.userId, billing.charged, "change detection failed");
+      throw err;
+    }
+
   });
