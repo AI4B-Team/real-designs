@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import React, { useEffect, useState } from "react";
 
+import { RealDesignsLogoResponsive } from "@/components/brand/RealDesignsLogo";
+import { resolveShareBranding } from "@/lib/share-branding";
 import { getSharedPresentation, respondToPresentation } from "@/lib/presentations.functions";
 import "@/styles/rd-site.css";
 
