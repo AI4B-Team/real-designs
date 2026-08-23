@@ -799,7 +799,7 @@ describe("regression: security boundaries", () => {
   it("upload validation rejects content that is not the image it claims to be", () => {
     const html = new TextEncoder().encode("<html><script>alert(1)</script></html>");
     expect(detectFileKind(html)).not.toBe("jpeg");
-    const verdict = validateUploadBytes(html, { bucket: "room-photos", declaredType: "image/jpeg" } as never);
+    const verdict = validateUploadBytes("room-photos", html, "image/jpeg");
     expect(verdict.ok).toBe(false);
   });
 
