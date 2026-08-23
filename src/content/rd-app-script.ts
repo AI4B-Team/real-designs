@@ -1997,9 +1997,9 @@ export function initApp(): () => void {
       /* The Budget KPI is stripped at render time while budgets are hidden, so
          positional indexes shift. Slot 2 is Budget and slot 3 is Awaiting
          Approval regardless of whether the Budget card exists. */
-      const hasBudgetKpi = !!document.getElementById("kpiBudget");
+      const hasBudgetKpi = [...kpis].some((k) => k.id === "kpiBudget");
       const setKpi = (i, val, note) => {
-        const k = kpis[!hasBudgetKpi && i === 3 ? 2 : i];
+        const k = kpis[!hasBudgetKpi && i === 3 ? kpis.length - 1 : i];
         if (!k) return;
         const b = k.querySelector("b");
         if (b) b.textContent = val;
