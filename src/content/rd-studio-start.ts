@@ -23,6 +23,7 @@ import {
 } from "@/lib/source-detect.functions";
 import {
   getStudioStyle,
+  setStudioStyle,
   clearStudioStyle,
   applyStudioStyleToControls,
   type StudioStyleChoice,
