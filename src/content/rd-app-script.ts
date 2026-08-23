@@ -1994,8 +1994,12 @@ export function initApp(): () => void {
       }
 
       const kpis = document.querySelectorAll("#v-dash .grid.g4 .kpi");
+      /* The Budget KPI is stripped at render time while budgets are hidden, so
+         positional indexes shift. Slot 2 is Budget and slot 3 is Awaiting
+         Approval regardless of whether the Budget card exists. */
+      const hasBudgetKpi = !!document.getElementById("kpiBudget");
       const setKpi = (i, val, note) => {
-        const k = kpis[i];
+        const k = kpis[!hasBudgetKpi && i === 3 ? 2 : i];
         if (!k) return;
         const b = k.querySelector("b");
         if (b) b.textContent = val;
