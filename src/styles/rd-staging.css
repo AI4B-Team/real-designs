@@ -2167,7 +2167,8 @@
   height: 14px;
 }
 
-/* Design page: fixed header, one scroll region, permanently visible footer. */
+/* Design page: sticky workflow header, one content region, always-visible
+   footer that reserves its own space instead of covering the last section. */
 .rdd-design {
   display: flex;
   flex-direction: column;
@@ -2178,15 +2179,18 @@
   display: flex;
   flex-direction: column;
   gap: 22px;
-  padding-bottom: 18px;
+  /* Reserve the footer band so the last section is never covered. */
+  padding-bottom: 84px;
 }
 .rdd-foot {
   position: sticky;
   bottom: 0;
   z-index: 5;
+  margin-top: 0;
   background: var(--surface, #fff);
-  border-top: 1px solid var(--line);
-  padding-top: 12px;
+  border-top: 1px solid var(--line, #e5e5e5);
+  padding: 12px 2px;
+  box-shadow: 0 -8px 20px rgba(17, 17, 19, 0.06);
 }
 .rdd-status {
   display: flex;
