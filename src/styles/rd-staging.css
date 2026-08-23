@@ -1779,8 +1779,11 @@
 
 /* ---- "More Ratios" modal — proper header / scrollable body / footer ----
    The grid reuses the rdof-card components so the nine ratio options sit in a
-   responsive 3-column grid that never overflows the modal boundary. */
-.rdmr-dlg {
+   responsive 3-column grid that never overflows the modal boundary.
+   Use .bx-cdlg-in.rdmr-dlg for specificity so the base .bx-cdlg-in width and
+   padding (which lack box-sizing:border-box) are overridden. */
+.bx-cdlg-in.rdmr-dlg {
+  box-sizing: border-box;
   width: min(560px, calc(100vw - 32px));
   max-width: 560px;
   display: flex;
@@ -1817,6 +1820,8 @@
   height: 30px;
   flex: none;
   border-radius: 999px;
+  border: none;
+  background: none;
   color: #4b5563;
   cursor: pointer;
 }
@@ -1849,7 +1854,9 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
-.rdmr-dlg .rdm-foot {
+.bx-cdlg-in.rdmr-dlg .rdm-foot {
+  display: flex;
+  justify-content: flex-end;
   padding: 0 22px 20px;
   margin-top: 0;
   flex-shrink: 0;
