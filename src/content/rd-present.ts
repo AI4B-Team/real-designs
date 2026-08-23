@@ -753,6 +753,89 @@ async function exportPdf(id) {
   }, 700);
 }
 
+
+/** Send To Client: a finished, accurate draft the sender delivers themselves. */
+async function sendPresentation(id) {
+  const row = S.rows.find((x) => x.id === id);
+  if (!row) return;
+  const ready = presentationReadiness(
+    Array.from({ length: row.asset_count || 0 }, (_, i) => ({ id: "i" + i })),
+  );
+  if (!ready.canSend) return toast("Add at least one design before sharing.");
+  let link = activeLink(row);
+  if (!link) {
+    try {
+      link = await createPackageLink({ data: { package_id: id } });
+      await refresh();
+    } catch (err) {
+      return toast(err?.message || "Could not create that link.");
+    }
+  }
+  const mail = buildApprovalEmail({
+    target: {
+      design_id: row.id,
+      version_id: row.id,
+      asset_ref: row.id,
+      room_name: "Design",
+      address: row.property_label || null,
+      status: "saved",
+    },
+    token: link.token,
+    origin: location.origin,
+    recipient_name: row.client_name || null,
+  });
+  const url = shareUrl(link.token);
+  const body = mail.body.replace(mail.url, url);
+  window.location.href =
+    "mailto:" +
+    encodeURIComponent(row.client_email || "") +
+    "?subject=" +
+    encodeURIComponent(row.title || mail.subject) +
+    "&body=" +
+    encodeURIComponent(body);
+  toast("Email App Opened. Delivery occurs through your email app and cannot be confirmed by REAL DESIGNS.");
+}
+
+async function duplicatePresentation(id) {
+  try {
+    const p = await getPackage({ data: { id } });
+    await savePackage({
+      data: {
+        title: (p.package.title || "Presentation") + " Copy",
+        property_id: p.package.property_id,
+        property_label: p.package.property_label,
+        client_name: p.package.client_name,
+        client_email: p.package.client_email,
+        intro: p.package.intro,
+        logo_url: p.package.logo_url,
+        accent: p.package.accent || "#CC0000",
+        settings: p.package.settings || {},
+        sections: (p.sections || []).map((s, i) => ({
+          section_key: s.section_key,
+          title: s.title,
+          hidden: !!s.hidden,
+          sort_order: i,
+        })),
+        assets: (p.assets || []).map((a, i) => ({
+          section_key: a.section_key,
+          kind: a.kind,
+          title: a.title,
+          caption: a.caption,
+          url: a.url,
+          compare_url: a.compare_url,
+          source_id: a.source_id,
+          meta: a.meta || {},
+          sort_order: i,
+        })),
+      },
+    });
+    await refresh();
+    toast("Presentation Duplicated.");
+  } catch (err) {
+    toast(err?.message || "Could not duplicate that presentation.");
+  }
+}
+
 /* ======================= MOUNT ======================= */
 
 let wired = false;
