@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import React, { useEffect, useState } from "react";
 
+import { RealDesignsLogoResponsive } from "@/components/brand/RealDesignsLogo";
+import { resolveShareBranding } from "@/lib/share-branding";
 import { getSharedPresentation, respondToPresentation } from "@/lib/presentations.functions";
 import "@/styles/rd-site.css";
 
@@ -51,7 +53,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="pp-wrap">
       <div className="pp-card pp-empty">
-        <span className="pp-brand">REAL DESIGNS</span>
+        <RealDesignsLogoResponsive />
         {children}
       </div>
     </main>
@@ -124,6 +126,13 @@ function SharedPresentation() {
     ? (deck.brand_accent as string)
     : "#CC0000";
   const brandName = (deck.brand_name || "").trim();
+  // A workspace name only appears when it was captured from a verified brand
+  // kit at creation time; otherwise the canonical REAL DESIGNS mark is shown.
+  const branding = resolveShareBranding({
+    name: brandName || null,
+    verified: !!brandName,
+    accent,
+  });
 
   async function downloadCopy() {
     setPdfBusy(true);
@@ -197,12 +206,14 @@ function SharedPresentation() {
     <main className="pp-wrap" style={{ "--pp-accent": accent } as Record<string, string>}>
       <header className="pp-head">
         <span className="pp-brand">
-          {brandName || (
+          {branding.kind === "workspace" ? (
             <>
-              REAL <b>DESIGNS</b>
+              <span className="pp-brand-name">{branding.name}</span>
+              <span className="pp-via">Shared Through REAL DESIGNS</span>
             </>
+          ) : (
+            <RealDesignsLogoResponsive />
           )}
-          {brandName ? <span className="pp-via">via Real Designs</span> : null}
         </span>
         <span className="pp-head-right">
           <span className="pp-kicker">Prepared For {deck.client_name || "You"}</span>

@@ -9,6 +9,9 @@ import { getPropertyTree, listSavedEstimates } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
 import { listVideos } from "@/lib/reveal.functions";
 import { budgetsLive, budgetAvailability } from "@/lib/budget-coming-soon";
+import { presentationReadiness } from "@/lib/presentation-publish";
+import { buildApprovalEmail } from "@/lib/approval-link";
+import { productionSafeOrigin } from "@/lib/approval-link";
 import {
   listPackages,
   getPackage,
@@ -94,7 +97,7 @@ function ago(iso) {
 }
 
 function shareUrl(token) {
-  return location.origin + "/pkg/" + token;
+  return productionSafeOrigin(location.origin) + "/pkg/" + token;
 }
 
 function activeLink(row) {
@@ -115,34 +118,52 @@ function libraryHtml() {
   }
   return S.rows
     .map((r) => {
-      const [cls, lab] = STATUS[r.status] || STATUS.draft;
+      const ready = presentationReadiness(
+        Array.from({ length: r.asset_count || 0 }, (_, i) => ({ id: "i" + i })),
+      );
+      const [cls, lab] = ready.isDraft ? ["p-gray", "Draft"] : STATUS[r.status] || STATUS.draft;
       const link = activeLink(r);
-      const ctx = [r.property_label, r.client_name ? "For " + r.client_name : null]
+      const ctx = [
+        r.property_label,
+        r.client_name ? "For " + r.client_name : "No recipient",
+      ]
         .filter(Boolean)
         .map(esc)
         .join(" · ");
+      const dis = (ok) => (ok ? "" : " disabled aria-disabled=\"true\"");
       return `<div class="pk-row" data-id="${r.id}">
         <div class="pk-row-t">
           <b>${esc(r.title)}</b>
-          <span>${ctx ? ctx + " · " : ""}${r.asset_count} Item${r.asset_count === 1 ? "" : "s"} · ${r.view_count || 0} View${
-            (r.view_count || 0) === 1 ? "" : "s"
+          <span>${ctx ? ctx + " · " : ""}${r.asset_count} Item${r.asset_count === 1 ? "" : "s"} · ${
+            ready.isDraft ? "Not Shared" : (r.view_count || 0) + " View" + ((r.view_count || 0) === 1 ? "" : "s")
           } · ${esc(r.last_activity || "Created")} ${ago(r.last_activity_at || r.created_at)}</span>
+          ${ready.isDraft ? `<span class="pk-note">${esc(ready.message)}</span>` : ""}
         </div>
         <span class="pill ${cls}">${lab}</span>
         <div class="pk-row-a">
-          <button class="btn btn-ghost btn-xs" data-pk="open" title="Open Presentation"><i data-lucide="eye"></i>Open</button>
-          <button class="btn btn-ghost btn-xs" data-pk="edit" title="Edit Presentation"><i data-lucide="pencil"></i>Edit</button>
-          <button class="btn btn-ghost btn-xs" data-pk="${link ? "copy" : "link"}" title="${link ? "Copy Client Link" : "Create Client Link"}"><i data-lucide="${
+          <button class="btn btn-ghost btn-xs" data-pk="open" title="Open Presentation" aria-label="Open Presentation"><i data-lucide="eye"></i>Open</button>
+          <button class="btn btn-ghost btn-xs" data-pk="send" title="Send To Client" aria-label="Send To Client"${dis(ready.canSend)}><i data-lucide="send"></i>Send</button>
+          <button class="btn btn-ghost btn-xs" data-pk="${link ? "copy" : "link"}" title="${link ? "Copy Client Link" : "Create Client Link"}" aria-label="${link ? "Copy Client Link" : "Create Client Link"}"${dis(ready.canCopyLink)}><i data-lucide="${
             link ? "copy" : "link"
           }"></i>${link ? "Copy Link" : "Client Link"}</button>
-          <button class="btn btn-ghost btn-xs" data-pk="pdf" title="Export PDF"><i data-lucide="file-text"></i>PDF</button>
-          <button class="btn btn-ghost btn-xs" data-pk="del" title="Delete Presentation"><i data-lucide="trash-2"></i>Delete</button>
+          <div class="pk-more">
+            <button class="icon-btn xs" data-pk="more" title="More Actions" aria-label="More Actions" aria-haspopup="menu"><i data-lucide="more-horizontal"></i></button>
+            <div class="pk-menu" role="menu" hidden>
+              <button role="menuitem" data-pk="open"><i data-lucide="activity"></i>View Activity</button>
+              <button role="menuitem" data-pk="pdf"${dis(ready.canExportPdf)}><i data-lucide="file-text"></i>Download PDF</button>
+              <button role="menuitem" data-pk="edit"><i data-lucide="pencil"></i>Edit Details</button>
+              <button role="menuitem" data-pk="dup"><i data-lucide="copy-plus"></i>Duplicate</button>
+              <button role="menuitem" data-pk="revokerow"${dis(!!link)}><i data-lucide="ban"></i>Revoke</button>
+              <button role="menuitem" data-pk="del"><i data-lucide="trash-2"></i>Delete</button>
+            </div>
+          </div>
         </div>
 
       </div>`;
     })
     .join("");
 }
+
 
 async function refresh() {
   const el = document.getElementById("pkList");
@@ -732,6 +753,89 @@ async function exportPdf(id) {
   }, 700);
 }
 
+
+/** Send To Client: a finished, accurate draft the sender delivers themselves. */
+async function sendPresentation(id) {
+  const row = S.rows.find((x) => x.id === id);
+  if (!row) return;
+  const ready = presentationReadiness(
+    Array.from({ length: row.asset_count || 0 }, (_, i) => ({ id: "i" + i })),
+  );
+  if (!ready.canSend) return toast("Add at least one design before sharing.");
+  let link = activeLink(row);
+  if (!link) {
+    try {
+      link = await createPackageLink({ data: { package_id: id } });
+      await refresh();
+    } catch (err) {
+      return toast(err?.message || "Could not create that link.");
+    }
+  }
+  const mail = buildApprovalEmail({
+    target: {
+      design_id: row.id,
+      version_id: row.id,
+      asset_ref: row.id,
+      room_name: "Design",
+      address: row.property_label || null,
+      status: "saved",
+    },
+    token: link.token,
+    origin: location.origin,
+    recipient_name: row.client_name || null,
+  });
+  const url = shareUrl(link.token);
+  const body = mail.body.replace(mail.url, url);
+  window.location.href =
+    "mailto:" +
+    encodeURIComponent(row.client_email || "") +
+    "?subject=" +
+    encodeURIComponent(row.title || mail.subject) +
+    "&body=" +
+    encodeURIComponent(body);
+  toast("Email App Opened. Delivery occurs through your email app and cannot be confirmed by REAL DESIGNS.");
+}
+
+async function duplicatePresentation(id) {
+  try {
+    const p = await getPackage({ data: { id } });
+    await savePackage({
+      data: {
+        title: (p.package.title || "Presentation") + " Copy",
+        property_id: p.package.property_id,
+        property_label: p.package.property_label,
+        client_name: p.package.client_name,
+        client_email: p.package.client_email,
+        intro: p.package.intro,
+        logo_url: p.package.logo_url,
+        accent: p.package.accent || "#CC0000",
+        settings: p.package.settings || {},
+        sections: (p.sections || []).map((s, i) => ({
+          section_key: s.section_key,
+          title: s.title,
+          hidden: !!s.hidden,
+          sort_order: i,
+        })),
+        assets: (p.assets || []).map((a, i) => ({
+          section_key: a.section_key,
+          kind: a.kind,
+          title: a.title,
+          caption: a.caption,
+          url: a.url,
+          compare_url: a.compare_url,
+          source_id: a.source_id,
+          meta: a.meta || {},
+          sort_order: i,
+        })),
+      },
+    });
+    await refresh();
+    toast("Presentation Duplicated.");
+  } catch (err) {
+    toast(err?.message || "Could not duplicate that presentation.");
+  }
+}
+
 /* ======================= MOUNT ======================= */
 
 let wired = false;
@@ -835,6 +939,15 @@ async function onClick(e) {
     return renderBuilder();
   }
 
+  if (a === "more") {
+    const menu = t.parentNode.querySelector(".pk-menu");
+    document.querySelectorAll(".pk-menu").forEach((m) => {
+      if (m !== menu) m.hidden = true;
+    });
+    if (menu) menu.hidden = !menu.hidden;
+    return;
+  }
+  if (t.disabled || t.getAttribute("aria-disabled") === "true") return;
   if (a === "new") return openBuilder(null);
   if (a === "close") {
     S.draft = null;
@@ -876,7 +989,27 @@ async function onClick(e) {
   if (a === "save") return saveDraft();
   if (a === "open" && id) return openDetail(id);
   if (a === "edit" && id) return openBuilder(id);
-  if (a === "pdf" && id) return exportPdf(id);
+  if (a === "pdf" && id) {
+    const row = S.rows.find((x) => x.id === id);
+    if (row && !presentationReadiness(Array.from({ length: row.asset_count || 0 }, (_, i) => ({ id: "i" + i }))).canExportPdf)
+      return toast("Add at least one design before exporting a PDF.");
+    return exportPdf(id);
+  }
+  if (a === "send" && id) return sendPresentation(id);
+  if (a === "dup" && id) return duplicatePresentation(id);
+  if (a === "revokerow" && id) {
+    const row = S.rows.find((x) => x.id === id);
+    const lk = row && activeLink(row);
+    if (!lk) return toast("There is no active link to revoke.");
+    try {
+      await revokePackageLink({ data: { id: lk.id } });
+      toast("Link Revoked.");
+      await refresh();
+    } catch (err) {
+      toast(err?.message || "Could not revoke that link.");
+    }
+    return;
+  }
   if (a === "copytok") {
     try {
       await navigator.clipboard.writeText(shareUrl(t.getAttribute("data-tok")));

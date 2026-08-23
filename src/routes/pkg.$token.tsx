@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { RealDesignsLogoResponsive, REAL_DESIGNS_HOME } from "@/components/brand/RealDesignsLogo";
+import { resolveShareBranding } from "@/lib/share-branding";
 import {
   approvalScopeMessage,
   buildItems,
@@ -370,6 +371,15 @@ function SharedPackage() {
   const accent = /^#[0-9a-f]{6}$/i.test(pk.accent || "") ? pk.accent : "#CC0000";
   const title = presentationTitle(pk.title);
   const prepared = preparedByLine(pk.settings);
+  // Workspace branding only replaces the REAL DESIGNS mark when the brand kit
+  // was verified; otherwise the canonical mark stays.
+  const settings = (pk.settings ?? {}) as Record<string, unknown>;
+  const branding = resolveShareBranding({
+    name: typeof settings["brand_name"] === "string" ? (settings["brand_name"] as string) : null,
+    logo_url: pk.logo_url ?? null,
+    verified: settings["brand_verified"] === true,
+    accent,
+  });
   const version = presentationVersion(items);
   const shown = perms.mode === "slideshow" ? items.slice(cursor, cursor + 1) : items;
 
@@ -401,7 +411,18 @@ function SharedPackage() {
   return (
     <main className="sp-wrap" style={{ "--sp-accent": accent } as Record<string, string>}>
       <header className="sp-head">
-        <RealDesignsLogoResponsive href={REAL_DESIGNS_HOME} />
+        {branding.kind === "workspace" ? (
+          <span className="sp-brand">
+            {branding.logoUrl ? (
+              <img src={branding.logoUrl} alt={branding.name ?? "Brand"} className="sp-brand-logo" />
+            ) : (
+              <span className="sp-brand-name">{branding.name}</span>
+            )}
+            <span className="sp-via">Shared Through REAL DESIGNS</span>
+          </span>
+        ) : (
+          <RealDesignsLogoResponsive href={REAL_DESIGNS_HOME} />
+        )}
         <span className="sp-kicker">{recipientLine(pk.client_name)}</span>
       </header>
 

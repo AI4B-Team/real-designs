@@ -14,23 +14,35 @@ export const listShareableVersions = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("versions")
       .select(
-        `id, version_no, created_at,
-         rooms!inner ( name, projects!inner ( name, properties!inner ( address ) ) )`,
+        `id, version_no, created_at, style, status, after_path, before_path, room_id,
+         rooms!inner ( name, projects!inner ( name, properties!inner ( id, address ) ) )`,
       )
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) throw new Error(error.message);
-    return (data ?? []).map((v: any) => {
-      const room = v.rooms?.name ?? "Room";
-      const address = v.rooms?.projects?.properties?.address ?? "Property";
-      return {
-        id: v.id as string,
-        room: room as string,
-        address: String(address).split(",")[0],
-        label: `${String(address).split(",")[0]} · ${room} · V${v.version_no ?? 1}`,
-      };
-    });
+    // Only persisted designs may be shared: no processing jobs, no failures.
+    return (data ?? [])
+      .filter((v: any) => !!v.after_path && !["processing", "failed"].includes(v.status))
+      .map((v: any) => {
+        const room = v.rooms?.name ?? "Room";
+        const address = String(v.rooms?.projects?.properties?.address ?? "Property").split(",")[0];
+        return {
+          id: v.id as string,
+          design_id: v.room_id as string,
+          version_no: (v.version_no ?? 1) as number,
+          room: room as string,
+          address,
+          property_id: v.rooms?.projects?.properties?.id ?? null,
+          style: v.style ?? null,
+          status: v.status ?? "saved",
+          created_at: v.created_at as string,
+          after_path: v.after_path as string,
+          before_path: v.before_path as string,
+          label: `${address} · ${room} · V${v.version_no ?? 1}`,
+        };
+      });
   });
+
 
 /** Owner: every share link created from their own saved versions, newest first. */
 
