@@ -1595,18 +1595,44 @@ function renderDesignFlow(el) {
         S.focusFormat = true;
         goStep("review");
       },
+      /* Generate is its own action. It never reuses an Edit navigation path:
+         it validates, creates the batch and starts the work on this page. */
       onGenerate: () => {
+        const btn = el.querySelector("#rddGenerate");
+        const release = () => {
+          if (btn) btn.disabled = false;
+        };
+        if (S.busy) return release();
         persistDesign();
+        /* Only a real, named missing Design requirement sends the user back. */
+        if (!canEnterReview(S.items, designModel())) {
+          cmToast("Choose a design style for every space first.");
+          goStep("design");
+          return;
+        }
+        if (S.items.some((i) => i.status === "uploading")) {
+          cmToast("Still Saving Your Photos. Try Again In A Moment.");
+          return release();
+        }
+        if (!items.length) {
+          cmToast("Select At Least One Photo First.");
+          return release();
+        }
         /* Review, the saved draft and the request must agree before spending. */
         assertDesignState("the Review summary", S.design, {
           direction: S.design.direction,
           grade: S.design.grade,
         });
-        goStep("review");
         const payload = toDirection(S.design, items, normalizeOutputRatio(S.outputRatio));
         assertDesignState("the generation request", S.design, directionFromPayload(payload));
-        runBatch(items, payload);
+        try {
+          runBatch(items, payload);
+        } catch (err) {
+          release();
+          cmToast((err && err.message) || "Generation could not start.");
+        }
       },
+
     });
     return;
   }
