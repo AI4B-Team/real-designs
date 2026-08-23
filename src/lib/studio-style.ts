@@ -54,6 +54,17 @@ export function setStudioStyle(id?: string | null): StudioStyleChoice | null {
   const rec = styleById(id);
   if (!rec) return null;
   const choice = build(rec);
+  /* Re-selecting the style already stored is a no-op. Listeners re-read the
+     choice when they hear the event, and some of them write it back, so
+     announcing an unchanged selection would loop forever. */
+  let same = false;
+  try {
+    const prev = JSON.parse(localStorage.getItem(KEY) || "null");
+    same = !!prev && prev.styleId === choice.styleId;
+  } catch (_) {
+    same = false;
+  }
+  if (same) return choice;
   try {
     localStorage.setItem(KEY, JSON.stringify(choice));
   } catch (_) {
@@ -64,6 +75,7 @@ export function setStudioStyle(id?: string | null): StudioStyleChoice | null {
   } catch (_) {}
   return choice;
 }
+
 
 /** Reads the stored choice, re-validated against the current catalog. */
 export function getStudioStyle(): StudioStyleChoice | null {
