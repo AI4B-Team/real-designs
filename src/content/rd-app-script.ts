@@ -8121,6 +8121,8 @@ ${picks
       let done = 0,
         failed = 0;
       const queue = BATCH_ROOMS.slice();
+      /* One id for this batch run; each photo keeps its own slot inside it. */
+      const batchRequestId = newRequestId("batch-stage");
       for (const room of queue) {
         if (st) {
           st.className = "pill p-amb";
