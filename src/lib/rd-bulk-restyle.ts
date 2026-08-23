@@ -11,6 +11,7 @@
 import { createIcons, icons } from "lucide";
 import { resolvePhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
 import { renderDesign } from "@/lib/design-render.functions";
+import { newRequestId } from "@/lib/request-id";
 import { addMediaVersion } from "@/lib/property-media.functions";
 import { STYLES, STYLE_CATEGORIES, styleById } from "@/lib/style-catalog";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
@@ -215,6 +216,7 @@ export function openBulkRestyle(input: BulkRestyleInput) {
         const r = await renderDesign({
           data: {
             image,
+            request_id: `${runId}:${it.assetId}`,
             room_type: known || (space === "interior" ? "living room" : "front exterior"),
             direction: style.displayName,
             style_id: style.id,

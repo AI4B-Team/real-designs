@@ -14,6 +14,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { renderDesign } from "@/lib/design-render.functions";
+import { newRequestId } from "@/lib/request-id";
 import { clampCrop, ratioValue } from "@/lib/photo-crop";
 import { effectiveRatio } from "@/lib/output-ratio";
 import { uploadRenderDataUrl, roomPhotoUrl } from "@/lib/room-photos";
@@ -195,6 +196,7 @@ export async function runBulkDesign(items, direction, hooks = {}) {
         const r = await renderDesign({
           data: {
             image,
+            request_id: `${runId}:${it.key}`,
             room_type: it.room || "living room",
             direction: (perPhoto && perPhoto.name) || (perSpace && perSpace.name) || direction.direction,
             style_id: (perPhoto && perPhoto.id) || (perSpace && perSpace.id) || direction.styleId || null,
