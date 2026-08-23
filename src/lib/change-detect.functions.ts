@@ -127,9 +127,7 @@ export const detectChanges = createServerFn({ method: "POST" })
     });
 
     if (!res.ok) {
-      // The model never ran usefully, so give the credit back.
-      const { refund } = await import("@/lib/credits.server");
-      await refund(context.userId, billing.charged, "change detection failed");
+      // The catch below refunds; just describe what went wrong.
       if (res.status === 429) throw new Error("Rate limit reached, try again shortly.");
       if (res.status === 402) throw new Error("AI credits exhausted for this workspace.");
       throw new Error(`Change detection failed (${res.status}).`);
