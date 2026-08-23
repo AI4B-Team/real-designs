@@ -14,6 +14,14 @@ import { renderDesign } from "@/lib/design-render.functions";
 import { addMediaVersion } from "@/lib/property-media.functions";
 import { STYLES, STYLE_CATEGORIES, styleById } from "@/lib/style-catalog";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
+import { roomSpace } from "@/lib/staging-rooms";
+import { styleFitsSpace } from "@/lib/staging-bulk";
+
+const PROJECT_TYPE: Record<string, string> = {
+  interior: "interior",
+  exterior: "exterior",
+  landscape: "garden",
+};
 
 const esc = (s: any) =>
   String(s ?? "").replace(
