@@ -1985,46 +1985,73 @@ function renderHeaderFormat(el, project) {
  * The ratios that stay out of the header: Original and the classic print
  * shapes. Chosen here, the header shows a compact "Custom:" chip instead of a
  * fourth button.
+ *
+ * The modal uses a proper fixed-header / scrollable-body / fixed-footer
+ * structure with a responsive card grid (reusing the rdof-card components),
+ * so the nine ratio options never overflow the modal boundary.
  */
 function openProjectRatioMore() {
   if (typeof document === "undefined") return;
   const cur = normalizeOutputRatio(S.outputRatio);
+  const ratios = MORE_OUTPUT_RATIOS.concat(PRIMARY_OUTPUT_RATIOS);
+  const shape = (id) => {
+    const a = ratioAspect(id);
+    return `<span class="rdof-shape" aria-hidden="true"><span style="aspect-ratio:${a || "4 / 3"}"></span></span>`;
+  };
+  const cardHtml = (o) => {
+    const on = cur === o.id;
+    return `<button type="button" role="radio" aria-checked="${on ? "true" : "false"}" tabindex="${
+      on ? "0" : "-1"
+    }" class="rdof-card${on ? " on" : ""}" data-rdsmoreratio="${esc(o.id)}">
+      ${shape(o.id)}
+      <span class="rdof-name">${esc(o.label)}</span>
+      <span class="rdof-note">${esc(o.note || "Intrinsic")}</span>
+      <i class="rdof-tick" data-lucide="check"></i>
+    </button>`;
+  };
   const wrap = document.createElement("div");
   wrap.className = "bx-cdlg";
-  wrap.innerHTML = `<div class="bx-cdlg-in" role="dialog" aria-modal="true" aria-label="More Ratios">
-    <h3>More Ratios</h3>
-    <p>These apply to every photo that has no override of its own.</p>
-    <div class="rv-seg wrap" style="margin:10px 0 4px">${MORE_OUTPUT_RATIOS.concat(
-      PRIMARY_OUTPUT_RATIOS,
-    )
-      .map(
-        (o) =>
-          `<button type="button" class="${cur === o.id ? "on" : ""}" data-rdsmoreratio="${o.id}">${esc(
-            o.note ? o.label + " " + o.note : o.label,
-          )}</button>`,
-      )
-      .join("")}</div>
+  wrap.innerHTML = `<div class="bx-cdlg-in rdmr-dlg" role="dialog" aria-modal="true" aria-labelledby="rdmrTitle">
+    <header class="rdmr-head">
+      <div class="rdmr-head-txt">
+        <h3 id="rdmrTitle">More Ratios</h3>
+        <p>These apply to every photo that has no override of its own.</p>
+      </div>
+      <button type="button" class="rdmr-x" data-rdsmoreclose aria-label="Close"><i data-lucide="x"></i></button>
+    </header>
+    <div class="rdmr-body">
+      <div class="rdmr-grid" role="radiogroup" aria-label="Image Format">${ratios
+        .map(cardHtml)
+        .join("")}</div>
+    </div>
     ${modalFooterHtml({ primary: { label: "Done", value: "done" } })}
   </div>`;
   document.body.appendChild(wrap);
   paint();
-  const close = () => wrap.remove();
+  const close = () => {
+    applyRatiosLive();
+    wrap.remove();
+  };
   wrap.addEventListener("click", (e) => {
     const b = e.target.closest("[data-rdsmoreratio]");
     if (b) {
-      close();
       void setProjectRatio(b.getAttribute("data-rdsmoreratio"));
+      // Update selected state in place without closing — user can pick, then Done.
+      wrap.querySelectorAll("[data-rdsmoreratio]").forEach((el) => {
+        const on = el === b;
+        el.classList.toggle("on", on);
+        el.setAttribute("aria-checked", on ? "true" : "false");
+        el.setAttribute("tabindex", on ? "0" : "-1");
+      });
       return;
     }
-    if (e.target.closest("[data-mfa]") || e.target === wrap) {
+    if (e.target.closest("[data-rdsmoreclose]") || e.target.closest("[data-mfa]") || e.target === wrap) {
       close();
-      applyRatiosLive();
     }
   });
   wrap.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       close();
-      applyRatiosLive();
     }
   });
 }
