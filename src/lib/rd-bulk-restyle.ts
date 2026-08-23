@@ -199,6 +199,8 @@ export function openBulkRestyle(input: BulkRestyleInput) {
     bar.hidden = false;
     let done = 0;
     let failed = 0;
+    /* One id for this restyle run; each photo keeps its own slot inside it. */
+    const runId = newRequestId("bulk-restyle");
     for (let i = 0; i < items.length; i++) {
       const it = items[i];
       stat.textContent = `Redesigning Photo ${i + 1} Of ${items.length} In ${style.displayName}`;

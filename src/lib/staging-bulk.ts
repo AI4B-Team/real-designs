@@ -164,6 +164,9 @@ async function sourceUrl(it) {
  */
 export async function runBulkDesign(items, direction, hooks = {}) {
   const queue = items.filter((i) => i.state !== "complete");
+  /* One id for this run; each photo keeps its own slot inside it, so a retried
+     run replays finished photos instead of paying for them twice. */
+  const runId = newRequestId("bulk-design");
   let done = 0;
   const total = queue.length;
   const worker = async () => {
