@@ -3381,6 +3381,14 @@ function setFilmstripOpen(open) {
 function drawStrip() {
 
   if (!strip || !S) return;
+  /* Keep the filmstrip parented to the image viewport as a floating overlay,
+     even when the stage mounts after the strip was first created. */
+  const stageHost = document.getElementById("rdwStage");
+  if (stageHost && strip.parentElement !== stageHost) {
+    strip.classList.add("rds-film-float");
+    stageHost.appendChild(strip);
+  }
+
   const list = designSet();
   const i = list.findIndex((x) => x.key === S.current);
   const cur = i >= 0 ? list[i] : null;
