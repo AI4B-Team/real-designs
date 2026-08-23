@@ -739,15 +739,19 @@ describe("regression: feature suppression", () => {
     }
   });
 
-  it("a direct route to a suppressed feature redirects with no partial UI", () => {
-    const verdict = resolveDirectRoute("budget", ready);
-    expect(verdict.action === "redirect" || verdict.action === "unavailable").toBe(true);
-    if (verdict.action === "redirect") expect(verdict.to).toBeTruthy();
+  it("a direct route to the suppressed Budget view redirects with no partial UI", () => {
+    const verdict = resolveDirectRoute("scope", ready);
+    expect(verdict.feature).toBe("budget");
+    expect(verdict.action).toBe("redirect");
+    expect(verdict.to).toBe("dash");
   });
 
   it("markup for suppressed features is stripped before it reaches the DOM", () => {
-    const html = gateFeatureMarkup(`<div id="v-budget">secret</div><div id="v-dash">ok</div>`);
-    expect(html).not.toContain("v-budget");
+    const html = gateFeatureMarkup(
+      `<div id="v-scope"><span id="kpiBudget">secret</span></div><div id="v-dash">ok</div>`,
+    );
+    expect(html).not.toContain("v-scope");
+    expect(html).not.toContain("kpiBudget");
     expect(html).toContain("v-dash");
   });
 
