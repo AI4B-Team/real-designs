@@ -115,6 +115,23 @@ describe("photo format reshapes the review grid", () => {
     expect(stagingHost().textContent).toContain("Prepare Your Photos");
   });
 
+  it("keeps style selection in the Design step only", async () => {
+    await openReviewWith(["a.jpg", "b.jpg"]);
+    expect(stagingHost().textContent).not.toContain("Set Design Style ·");
+    expect(stagingHost().querySelector("#rdsBulk")).toBeNull();
+    expect(stagingHost().querySelector("#rdsGo")?.textContent).toContain("Next: Design Style");
+  });
+
+  it("marks the select-all box indeterminate on a partial selection", async () => {
+    await openReviewWith(["a.jpg", "b.jpg"]);
+    const box = stagingHost().querySelector("#rdsSelAll") as HTMLInputElement;
+    expect(box.checked).toBe(true);
+    (stagingHost().querySelector("[data-sel]") as HTMLElement).click();
+    await settle(10);
+    expect(box.indeterminate).toBe(true);
+    expect(stagingHost().querySelector("#rdsFootCount")?.textContent).toBe("1 photo selected");
+  });
+
   it("shows the Add More Photos card without a room selector", async () => {
     await openReviewWith(["a.jpg"]);
     const add = stagingHost().querySelector(".rv-addcard") as HTMLElement;
