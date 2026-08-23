@@ -383,12 +383,15 @@ function reviewGroupHtml(ctx, model, group) {
         const label = (ctx.photoLabel && ctx.photoLabel(it, n)) || `${it.room || "Photo"} · Photo ${n}`;
         const fmt = (ctx.photoFormat && ctx.photoFormat(it)) || "";
         const custom = ctx.photoCustomCrop && ctx.photoCustomCrop(it);
+        const note = photoNote(model, it);
         return `<div class="rdd-rrow">
           <span class="rdd-rn">${n}</span>
           <span class="rdd-photo-th"><img src="${esc(it.signed || it.previewUrl || "")}" alt="${esc(label)}" loading="lazy"></span>
           <span class="rdd-photo-m"><b>${esc(label)}</b>
-            <em>${esc(styleName(id) || "No style")}${own ? " · Own Style" : ""}${fmt ? " · " + esc(fmt) : ""}${custom ? " · Custom Position" : ""}</em></span>
+            <em>${esc(styleName(id) || "No style")}${own ? " · Own Style" : ""}${fmt ? " · " + esc(fmt) : ""}${custom ? " · Custom Position" : ""}</em>
+            ${note ? `<em class="rdd-rnote"><b>Photo Instructions</b> ${esc(note)}</em>` : ""}</span>
         </div>`;
+
       })
       .join("")}</div>
   </section>`;
