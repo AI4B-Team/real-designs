@@ -168,18 +168,23 @@ function overridesHtml(model, cats) {
     cat.items.forEach((it) => {
       const own = hasOverride(model, it);
       const id = effectiveStyleId(model, it);
+      const note = photoNote(model, it);
       const state = own
         ? `Custom Style: ${styleName(id) || "Not chosen"}`
         : id
           ? `Uses ${cat.label} Style: ${styleName(id)}`
           : `No ${cat.label} style chosen yet`;
-      rows.push(`<div class="rdd-photo${own ? " own" : ""}">
+      rows.push(`<div class="rdd-photo${own || note ? " own" : ""}">
         <span class="rdd-photo-th"><img src="${esc(it.signed || it.previewUrl || "")}" alt="${esc(it.room || "Photo")}" loading="lazy"></span>
         <span class="rdd-photo-m"><b>${esc(it.room || "Room Type Needed")}</b><em>${esc(state)}</em></span>
         <span class="rdd-photo-a">
           <button type="button" class="fb-link" data-photostyle="${esc(it.key)}">Customize</button>
           ${own ? `<button type="button" class="fb-link" data-photoreset="${esc(it.key)}">Use Group Style</button>` : ""}
         </span>
+        <label class="rdd-photo-note">
+          <span>Instructions For This Photo</span>
+          <textarea rows="2" data-photonote="${esc(it.key)}" placeholder="Example: Leave the fireplace exactly as it is.">${esc(note)}</textarea>
+        </label>
       </div>`);
     });
   });
@@ -189,6 +194,7 @@ function overridesHtml(model, cats) {
     <div class="rdd-photos">${rows.join("")}</div>
   </details>`;
 }
+
 
 /** The full Design page body. */
 export function designStepHtml(ctx) {
