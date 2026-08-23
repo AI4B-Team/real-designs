@@ -3020,9 +3020,8 @@
 }
 .rdc-in .rdc-frame {
   position: relative;
-  height: 46vh;
-  width: auto;
-  max-width: 100%;
+  width: 100%;
+  max-width: calc(46vh * var(--rdc-ar, 1.3333));
   overflow: hidden;
   border-radius: 10px;
   background: #101014;

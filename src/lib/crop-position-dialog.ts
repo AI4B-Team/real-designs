@@ -75,6 +75,7 @@ export function openCropDialog(photos, onSave) {
   function show() {
     const p = list[i];
     frame.style.aspectRatio = String(p.ratio).replace(":", " / ");
+    frame.style.setProperty("--rdc-ar", String(ratioValue(p.ratio) || 1));
     img.src = p.url;
     img.alt = p.name || "Photo";
     sub.textContent = `${p.name || "Photo"} · ${ratioLabel(p.ratio)}`;
