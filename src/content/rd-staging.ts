@@ -1554,6 +1554,12 @@ function designHeadHtml(title, sub) {
     </div>`;
 }
 
+/** Review restates the exact stored format — it never substitutes a default. */
+function reviewFormatLabel() {
+  const r = normalizeOutputRatio(S.outputRatio);
+  return r === "original" ? "Original · Keep Source Proportions" : ratioLabel(r).replace(" ", " · ");
+}
+
 function renderDesignFlow(el) {
   const items = designSelection();
   /* A room-type change can invalidate a style. Only the impossible choice is
@@ -1567,7 +1573,8 @@ function renderDesignFlow(el) {
         items,
         model,
         address: S.address || "",
-        ratioLabel: ratioLabel(S.outputRatio),
+        ratioLabel: reviewFormatLabel(),
+        cropCount: items.filter((it) => tileRatio(it) !== "original").length,
         balance: typeof S.creditBalance === "number" ? S.creditBalance : null,
         photoLabel,
         photoFormat: (it) => ratioLabel(tileRatio(it)),
