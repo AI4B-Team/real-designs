@@ -1,43 +1,294 @@
-/* REAL DESIGNS — client-facing shared presentation package. */
+/* REAL DESIGNS — public presentation link. Design imagery leads; the form follows. */
 
 .sp-wrap {
   --sp-accent: #cc0000;
-  max-width: 940px;
+  max-width: 1040px;
   margin: 0 auto;
-  padding: 26px 18px 80px;
+  padding: 22px 18px 80px;
   font-family: "DM Sans", system-ui, sans-serif;
   color: #111;
+  background: #fff;
 }
 .sp-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 18px;
-}
-.sp-brand {
-  font-size: 0.96rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-.sp-brand b {
-  color: var(--sp-accent);
-}
-.sp-logo {
-  max-height: 38px;
-  width: auto;
+  margin-bottom: 22px;
 }
 .sp-kicker {
-  font-size: 0.76rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
   color: #767676;
+}
+
+.sp-hero {
+  padding: 6px 0 20px;
+  border-bottom: 1px solid #ececec;
+  margin-bottom: 22px;
+}
+.sp-title {
+  font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+.sp-h1 {
+  font-size: 1.35rem;
+  margin: 0 0 6px;
+}
+.sp-sub {
+  color: #6b6b6b;
+  font-size: 0.95rem;
+  margin: 0;
+}
+.sp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  color: #767676;
+}
+.sp-intro {
+  margin: 14px 0 0;
+  font-size: 0.98rem;
+  line-height: 1.65;
+  max-width: 72ch;
+}
+
+/* Navigation */
+.sp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 18px;
+}
+.sp-navbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.sp-count {
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-size: 0.8rem;
+  color: #767676;
+}
+.sp-film {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.sp-thumb {
+  flex: none;
+  width: 92px;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  background: #fafafa;
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+}
+.sp-thumb img,
+.sp-thumb span {
+  display: block;
+  width: 100%;
+  height: 58px;
+  object-fit: cover;
+  background: #f0f0f0;
+}
+.sp-thumb em {
+  display: block;
+  font-style: normal;
+  font-size: 0.68rem;
+  color: #6b6b6b;
+  padding: 4px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sp-thumb.on {
+  border-color: var(--sp-accent);
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.12);
+}
+
+/* Presentation item */
+.sp-item {
+  border: 1px solid #ececec;
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 20px;
+  background: #fff;
+}
+.sp-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.sp-room {
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sp-accent);
+}
+.sp-item-title {
+  font-size: 1.15rem;
+  margin: 4px 0 0;
+}
+.sp-item-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 0.78rem;
+  color: #767676;
+}
+.sp-ver {
+  border: 1px solid #ececec;
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.sp-stagewrap {
+  display: grid;
+  gap: 10px;
+}
+.sp-modes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sp-chip {
+  border: 1px solid #e2e2e2;
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.sp-chip.on {
+  border-color: var(--sp-accent);
+  color: var(--sp-accent);
+}
+.sp-stage {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f6f6f6;
+  border: 1px solid #ececec;
+}
+.sp-stage img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.sp-stage-empty {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  padding: 40px 16px;
+  color: #6b6b6b;
+  font-size: 0.9rem;
+}
+.sp-side {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.sp-side figure {
+  margin: 0;
+}
+.sp-side img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  border: 1px solid #ececec;
+}
+.sp-side figcaption {
+  font-size: 0.76rem;
+  color: #767676;
+  margin-top: 5px;
+}
+.sp-slider .sp-slider-top {
+  position: absolute;
+  inset: 0 auto 0 0;
+  overflow: hidden;
+}
+.sp-slider .sp-slider-top img {
+  height: 100%;
+  width: auto;
+  max-width: none;
+}
+.sp-slider input[type="range"] {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 10px;
+  width: calc(100% - 16px);
+}
+
+.sp-item-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.sp-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 0.86rem;
+  color: #555;
+}
+.sp-facts b {
+  color: #111;
+  margin-right: 4px;
+}
+
+.sp-comments {
+  margin-top: 14px;
+  border-top: 1px solid #f2f2f2;
+  padding-top: 12px;
+}
+.sp-clist {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.sp-clist li {
+  background: #fafafa;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+}
+.sp-clist b {
+  margin-right: 8px;
+}
+.sp-clist span {
+  color: #8a8a8a;
+  font-size: 0.76rem;
+}
+.sp-clist p {
+  margin: 4px 0 0;
 }
 
 .sp-card {
   background: #fff;
   border: 1px solid #ececec;
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 20px;
   margin-bottom: 16px;
 }
@@ -47,70 +298,23 @@
   gap: 12px;
   justify-items: center;
 }
-.sp-title {
-  font-size: 1.7rem;
-  margin: 0 0 4px;
-}
-.sp-sub {
-  color: #6b6b6b;
-  font-size: 0.9rem;
-  margin: 0;
-}
-.sp-intro {
-  margin: 12px 0 0;
-  font-size: 0.96rem;
-  line-height: 1.6;
-}
 .sp-h2 {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.1em;
   color: var(--sp-accent);
-  margin: 0 0 12px;
+  margin: 16px 0 10px;
 }
-
-.sp-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 14px;
-}
-.sp-fig {
-  margin: 0;
-}
-.sp-fig img,
-.sp-fig video {
-  width: 100%;
-  border-radius: 10px;
-  border: 1px solid #ececec;
+.sp-label {
   display: block;
+  font-size: 0.84rem;
+  color: #555;
+  margin-bottom: 6px;
 }
-.sp-ba {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-.sp-fig figcaption {
-  font-size: 0.8rem;
-  color: #6b6b6b;
-  margin-top: 6px;
-}
-
-.sp-lines {
-  display: grid;
-}
-.sp-line {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 9px 0;
-  border-bottom: 1px solid #f1f1f1;
-  font-size: 0.9rem;
-}
-
 .sp-in {
   width: 100%;
   border: 1px solid #dcdcdc;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 10px 12px;
   font: inherit;
   font-size: 0.92rem;
@@ -118,22 +322,32 @@
   color: #111;
   margin-bottom: 10px;
 }
+.sp-in:focus {
+  outline: none;
+  border-color: var(--sp-accent);
+  box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.12);
+}
 .sp-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
 .sp-btn {
-  border: 1px solid #d8d8d8;
+  border: 1px solid #cfcfcf;
   background: #fff;
   border-radius: 999px;
-  padding: 10px 20px;
+  padding: 11px 22px;
   font: inherit;
   font-size: 0.9rem;
+  color: #111;
   cursor: pointer;
 }
+.sp-btn-sm {
+  padding: 7px 16px;
+  font-size: 0.82rem;
+}
 .sp-btn[disabled] {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: default;
 }
 .sp-btn-primary {
@@ -141,20 +355,41 @@
   border-color: var(--sp-accent);
   color: #fff;
 }
-.sp-ok {
-  font-size: 0.92rem;
-  color: #14804a;
-  margin: 0 0 10px;
+.sp-confirm p {
+  margin: 0 0 12px;
+  font-size: 0.98rem;
+}
+.sp-done p {
+  color: #444;
+  margin: 0 0 14px;
+}
+.sp-err {
+  color: var(--sp-accent);
+  font-size: 0.86rem;
+  margin: 10px 0 0;
 }
 .sp-foot {
   text-align: center;
   font-size: 0.78rem;
   color: #8a8a8a;
-  padding: 18px 0;
+  padding: 22px 0 0;
 }
 
 @media (max-width: 640px) {
-  .sp-ba {
+  .sp-wrap {
+    padding: 16px 12px 60px;
+  }
+  .sp-side {
     grid-template-columns: 1fr;
+  }
+  .sp-item {
+    padding: 12px;
+    border-radius: 12px;
+  }
+  .sp-actions .sp-btn {
+    width: 100%;
+  }
+  .sp-item-head {
+    flex-direction: column;
   }
 }
