@@ -382,6 +382,11 @@ export function commitDraft(
     return { ok: false, conflict: true, draft: cur };
   }
   const merged = normalize({ ...cur, ...patch, id: cur.id, rev: cur.rev }) as StudioDraft;
+  /* An identical write is not a change: rerenders must not burn revisions or
+     make a freshly loaded Review look stale. */
+  const same =
+    JSON.stringify({ ...merged, updatedAt: "" }) === JSON.stringify({ ...cur, updatedAt: "" });
+  if (same) return { ok: true, draft: cur };
   return { ok: true, draft: persist(merged) };
 }
 
