@@ -3831,11 +3831,16 @@ function markCurrentDone() {
   } catch (_) {}
 }
 
-/* Keep the strip honest when the canvas produces a result. */
+/* Keep the strip honest when the canvas produces a result, and re-read the
+   balance so the Review summary never shows a stale allowance. */
 try {
   window.addEventListener("rd:credits-changed", () => {
     markCurrentDone();
     drawStrip();
+    try {
+      if (S) loadCreditBalance();
+    } catch (_) {}
+
   });
 } catch (_) {}
 
