@@ -9766,6 +9766,71 @@ ${picks
       });
     }
 
+    /* ---------- quick approval link creation ----------
+   Three honest states: nothing, creating, created. No URL is rendered until
+   the server confirms creation, and the selected design is shown so the
+   sender can visually verify exactly which version gets locked in. */
+    let PL_STATE = { phase: "idle", url: null };
+    let PL_VERSIONS = [];
+
+    function plSelected() {
+      const sel = document.getElementById("plVer");
+      const id = sel ? sel.value : "";
+      return PL_VERSIONS.find((v) => v.id === id) || null;
+    }
+
+    async function renderPlPreview() {
+      const box = document.getElementById("plPrev");
+      if (!box) return;
+      const v = plSelected();
+      if (!v) {
+        box.innerHTML =
+          '<span class="pl-prev-empty">Select a saved design to see what will be shared.</span>';
+        return;
+      }
+      const when = v.created_at
+        ? new Date(v.created_at).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+        : "";
+      box.innerHTML =
+        '<div class="pl-prev-th"><img alt="' +
+        esc(v.room || "Design") +
+        '" id="plPrevImg"></div>' +
+        '<div class="pl-prev-m"><b>' +
+        esc(v.address || "Property") +
+        "</b><span>" +
+        esc(v.room || "Room") +
+        (v.style ? " &middot; " + esc(v.style) : "") +
+        "</span><span>Version " +
+        esc(String(v.version_no || 1)) +
+        (when ? " &middot; " + esc(when) : "") +
+        '</span><span class="pill p-ok">Saved</span></div>';
+      try {
+        const url = await resolvePhotoUrl(v.after_path);
+        const img = document.getElementById("plPrevImg");
+        if (img && url) img.src = url;
+      } catch (_) {}
+    }
+
+    function renderPlState() {
+      const go = document.getElementById("plGo");
+      const out = document.getElementById("plOut");
+      const url = document.getElementById("plUrl");
+      const done = document.getElementById("plDone");
+      if (!go || !out) return;
+      const created = PL_STATE.phase === "created";
+      go.textContent =
+        PL_STATE.phase === "creating" ? "Creating Link\u2026" : "Create Approval Link";
+      go.disabled = PL_STATE.phase === "creating" || created || !plSelected();
+      go.hidden = created;
+      out.style.display = created ? "block" : "none";
+      if (created && url) url.value = PL_STATE.url;
+      if (done) done.hidden = !created;
+    }
+
     function presModal() {
       let m = document.getElementById("presModal");
       if (!m) {
@@ -9774,74 +9839,128 @@ ${picks
         m.className = "up-modal";
         m.innerHTML =
           '<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">' +
-          "<h3>New Client Approval Link</h3>" +
-          "<p>Pick a saved design. The client opens a branded page with the before and after and the scope, then approves or asks for changes. No login needed.</p>" +
+          "<h3>New Quick Approval Link</h3>" +
+          "<p>Share one saved design for focused feedback and approval. The link is locked to the exact version you pick, so the record cannot change underneath your client.</p>" +
           '<div class="field"><label>Design</label><select id="plVer"></select></div>' +
-          '<div class="field"><label>Title</label><input id="plTitle" type="text" placeholder="Living Room Refresh"></div>' +
-          '<div class="field"><label>Client Name</label><input id="plName" type="text" placeholder="Keisha C."></div>' +
+          '<div class="pl-prev" id="plPrev"></div>' +
+          '<div class="field"><label>Title</label><input id="plTitle" type="text" placeholder="Kitchen Design Review"></div>' +
+          '<div class="field"><label>Client Name (Optional)</label><input id="plName" type="text" placeholder="Keisha C."></div>' +
           '<div class="field"><label>Client Email (Optional)</label><input id="plMail" type="email" placeholder="client@email.com"></div>' +
+          '<p class="pl-brand" id="plBrand"></p>' +
           '<div id="plErr" style="display:none;font-size:.78rem;color:var(--red);margin-bottom:8px"></div>' +
-          '<div id="plOut" style="display:none;margin-bottom:10px"><div class="rowi"><div class="rowt"><b>Link Ready</b><span id="plUrl" style="word-break:break-all"></span></div></div></div>' +
-          '<button class="btn btn-primary btn-block" id="plGo"><i data-lucide="link"></i>Create Link</button>' +
+          '<div id="plOut" style="display:none;margin-bottom:10px"><div class="pl-out"><b>Approval Link Created</b>' +
+          '<input id="plUrl" readonly aria-label="Approval link">' +
+          '<div class="pl-out-a"><button class="btn btn-dark btn-xs" id="plCopy"><i data-lucide="copy"></i>Copy Link</button>' +
+          '<button class="btn btn-ghost btn-xs" id="plOpen"><i data-lucide="external-link"></i>Preview</button>' +
+          '<button class="btn btn-ghost btn-xs" id="plSend"><i data-lucide="send"></i>Send To Client</button>' +
+          '<button class="btn btn-ghost btn-xs" id="plRevoke"><i data-lucide="ban"></i>Revoke Link</button></div></div></div>' +
+          '<button class="btn btn-primary btn-block" id="plGo">Create Approval Link</button>' +
+          '<button class="btn btn-primary btn-block" id="plDone" hidden data-close>Done</button>' +
           '<button class="btn btn-ghost btn-block" style="margin-top:8px" data-close>Close</button></div>';
         (document.querySelector(".rd-app") || document.body).appendChild(m);
         m.addEventListener("click", (e) => {
           if (e.target.hasAttribute && e.target.hasAttribute("data-close"))
             m.classList.remove("on");
         });
+        m.addEventListener("change", (e) => {
+          if (e.target && e.target.id === "plVer") {
+            renderPlPreview();
+            renderPlState();
+          }
+        });
         m.querySelector("#plGo").addEventListener("click", async () => {
-          const err = m.querySelector("#plErr"),
-            out = m.querySelector("#plOut"),
-            go = m.querySelector("#plGo");
-          const version_id = m.querySelector("#plVer").value;
+          const err = m.querySelector("#plErr");
+          const v = plSelected();
+          if (PL_STATE.phase === "creating" || PL_STATE.phase === "created") return;
           const title = (m.querySelector("#plTitle").value || "").trim();
-          if (!version_id) {
+          if (!v) {
             err.style.display = "block";
             err.textContent = "Save a room in Studio first, then come back.";
             return;
           }
           if (!title) {
             err.style.display = "block";
-            err.textContent = "Give the package a title your client will recognise.";
+            err.textContent = "Give the approval link a title your client will recognise.";
             return;
           }
+          const existing = (PRES_ROWS || []).find(
+            (r) => r.version_id === v.id && r.status !== "revoked",
+          );
+          if (existing && !window.confirm(EXISTING_LINK_MESSAGE + "\n\nCreate a new link anyway?"))
+            return;
           err.style.display = "none";
-          go.disabled = true;
+          PL_STATE = { phase: "creating", url: null };
+          renderPlState();
           try {
             const bk = (PREFS && PREFS.brand) || {};
-            const accent = /^#[0-9a-f]{6}$/i.test(bk.color || "") ? bk.color : undefined;
+            const brand = resolveShareBranding({
+              name: bk.company,
+              logo_url: bk.logo,
+              verified: bk.verified === true,
+              accent: bk.color,
+            });
             const res = await createPresentation({
               data: {
-                version_id,
+                version_id: v.id,
                 title,
                 client_name: (m.querySelector("#plName").value || "").trim() || undefined,
                 client_email: (m.querySelector("#plMail").value || "").trim() || undefined,
-                brand_name: (bk.company || "").trim() || undefined,
-                brand_accent: accent,
+                brand_name: brand.kind === "workspace" ? brand.name : undefined,
+                brand_accent: brand.accent,
               },
             });
-            const url = presLink(res.token);
-            out.style.display = "block";
-            m.querySelector("#plUrl").textContent = url;
-            try {
-              await navigator.clipboard.writeText(url);
-            } catch (_) {}
+            PL_STATE = { phase: "created", url: presLink(res.token), token: res.token };
+            renderPlState();
             paintPresentations();
           } catch (e) {
+            PL_STATE = { phase: "idle", url: null };
+            renderPlState();
             err.style.display = "block";
             err.textContent =
               (e && e.message) || "We could not create that link. Check the details and try again.";
           }
-          go.disabled = false;
+        });
+        m.querySelector("#plCopy").addEventListener("click", async () => {
+          if (!PL_STATE.url) return;
+          try {
+            await navigator.clipboard.writeText(PL_STATE.url);
+            toast("Approval Link Copied.");
+          } catch (_) {}
+        });
+        m.querySelector("#plOpen").addEventListener("click", () => {
+          if (PL_STATE.url) window.open(PL_STATE.url, "_blank", "noopener");
+        });
+        m.querySelector("#plSend").addEventListener("click", () => {
+          const r = (PRES_ROWS || []).find((x) => x.token === PL_STATE.token);
+          if (r) presSendModal(r, false);
+        });
+        m.querySelector("#plRevoke").addEventListener("click", async () => {
+          const r = (PRES_ROWS || []).find((x) => x.token === PL_STATE.token);
+          if (!r) return;
+          try {
+            await deletePresentation({ data: { id: r.id } });
+            toast("Link Revoked.");
+            PL_STATE = { phase: "idle", url: null };
+            renderPlState();
+            paintPresentations();
+          } catch (_) {}
         });
       }
       const sel = m.querySelector("#plVer");
       const plGo = m.querySelector("#plGo");
+      PL_STATE = { phase: "idle", url: null };
       m.querySelector("#plErr").style.display = "none";
-      m.querySelector("#plOut").style.display = "none";
       m.classList.add("on");
       sel.innerHTML = '<option value="">Loading Your Saved Designs</option>';
-      plGo.disabled = true;
+      const bk0 = (PREFS && PREFS.brand) || {};
+      const bp = m.querySelector("#plBrand");
+      if (bp)
+        bp.textContent = brandingPreviewLine({
+          name: bk0.company,
+          verified: bk0.verified === true,
+        });
+      renderPlState();
+      renderPlPreview();
       lucide.createIcons();
       (async () => {
         let versions = [];
@@ -9850,24 +9969,13 @@ ${picks
         } catch (_) {
           versions = [];
         }
-        if (!versions.length) {
-          /* fall back to whatever the loaded tree knows about */
-          PROP_TREE.forEach((p) =>
-            p.projects.forEach((pr) =>
-              pr.rooms.forEach((r) => {
-                if (r.version_id)
-                  versions.push({ id: r.version_id, label: p.address + " \u00b7 " + r.name });
-              }),
-            ),
-          );
-        }
+        PL_VERSIONS = versions;
         if (!versions.length) {
           sel.innerHTML = '<option value="">No Saved Designs Yet</option>';
           const err = m.querySelector("#plErr");
           err.style.display = "block";
           err.textContent =
             "Save a design in Studio first. Approval links are built from a saved before and after.";
-          plGo.disabled = true;
           let jump = m.querySelector("#plStudio");
           if (!jump) {
             jump = document.createElement("button");
@@ -9882,17 +9990,19 @@ ${picks
           }
           jump.hidden = false;
           plGo.hidden = true;
+          renderPlPreview();
           return;
         }
         const jump = m.querySelector("#plStudio");
         if (jump) jump.hidden = true;
         plGo.hidden = false;
-        plGo.disabled = false;
         sel.innerHTML = versions
           .map((v) => `<option value="${v.id}">${esc(v.label)}</option>`)
           .join("");
         const t = m.querySelector("#plTitle");
-        if (t && !t.value) t.value = (versions[0].room ? versions[0].room : "Design") + " Approval";
+        if (t && !t.value) t.value = (versions[0].room ? versions[0].room : "Design") + " Design Review";
+        renderPlPreview();
+        renderPlState();
       })();
     }
 
