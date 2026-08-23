@@ -13267,7 +13267,21 @@ ${picks
         paintBilling(c);
         loadCreditHistory();
       } catch (e) {
-        /* signed out or not provisioned yet */
+        /* Signed out, offline or not provisioned yet. The meter must never sit
+           on its "Loading Plan" placeholder forever, so it falls back to a
+           plain, honest state with a retry instead. */
+        const title = box && box.querySelector(".lab span");
+        if (title) title.textContent = "Credits";
+        if (lab.textContent === "\u2014" || !lab.textContent) lab.textContent = "\u2014";
+        if (bar) bar.style.width = "0%";
+        if (foot)
+          foot.innerHTML = '<span>Not Available Right Now</span><b class="cred-retry" role="button" tabindex="0">Retry</b>';
+        if (box && !box.dataset.retryWired) {
+          box.dataset.retryWired = "1";
+          box.addEventListener("click", (ev) => {
+            if (ev.target.classList && ev.target.classList.contains("cred-retry")) refreshCredits();
+          });
+        }
       }
     }
     refreshCredits();

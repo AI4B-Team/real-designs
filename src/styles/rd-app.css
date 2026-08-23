@@ -3115,11 +3115,13 @@
 .up-costs div:last-child {
   border-bottom: 0;
 }
-.cred-up {
+.cred-up,
+.cred-retry {
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
 
 /* ---------- saved projects: photo upload + property thumbnails ---------- */
 .rd-app .save-form {

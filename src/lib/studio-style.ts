@@ -50,20 +50,40 @@ function build(rec: StyleRecord): StudioStyleChoice {
 }
 
 /** Validates the id against the catalog and persists it. Returns null when unknown. */
+let announcing = false;
 export function setStudioStyle(id?: string | null): StudioStyleChoice | null {
   const rec = styleById(id);
   if (!rec) return null;
   const choice = build(rec);
+  /* Re-selecting the style already stored is a no-op. Listeners re-read the
+     choice when they hear the event, and some of them write it back, so
+     announcing an unchanged selection would loop forever. */
+  let same = false;
+  try {
+    const prev = JSON.parse(localStorage.getItem(KEY) || "null");
+    same = !!prev && prev.styleId === choice.styleId;
+  } catch (_) {
+    same = false;
+  }
+  if (same) return choice;
   try {
     localStorage.setItem(KEY, JSON.stringify(choice));
   } catch (_) {
     /* storage may be blocked */
   }
+  /* Listeners re-read (and sometimes re-write) the choice, so the
+     announcement is never allowed to re-enter itself. */
+  if (announcing) return choice;
+  announcing = true;
   try {
     window.dispatchEvent(new CustomEvent("rd:style-selected", { detail: choice }));
-  } catch (_) {}
+  } catch (_) {
+  } finally {
+    announcing = false;
+  }
   return choice;
 }
+
 
 /** Reads the stored choice, re-validated against the current catalog. */
 export function getStudioStyle(): StudioStyleChoice | null {
