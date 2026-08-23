@@ -77,6 +77,33 @@ describe("multi-photo design model", () => {
     expect(short.join(" ")).toContain("2 more credits");
   });
 
+  it("measures the free plan against the daily allowance, not the balance", () => {
+    const model = newDesignModel() as any;
+    model.styleBySpace.interior = interiorStyle.id;
+    model.styleBySpace.exterior = exteriorStyle.id;
+    // Zero credit balance is normal on the free plan and must not block.
+    expect(
+      reviewBlockers({ items: photos, model, balance: 0, plan: "free", remainingToday: 5 }),
+    ).toEqual([]);
+    const partial = reviewBlockers({
+      items: photos,
+      model,
+      balance: 0,
+      plan: "free",
+      remainingToday: 2,
+    });
+    expect(partial.join(" ")).toContain("Only 2 free designs left today");
+    const none = reviewBlockers({
+      items: photos,
+      model,
+      balance: 0,
+      plan: "free",
+      remainingToday: 0,
+    });
+    expect(none.join(" ")).toContain("used all 5 free designs");
+  });
+
+
   it("sends every chosen style to the render payload", () => {
     const model = normalizeDesignModel({
       styleBySpace: { interior: interiorStyle.id, exterior: exteriorStyle.id },
