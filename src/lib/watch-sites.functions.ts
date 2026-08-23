@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { checkUrl, safeFetch } from "@/lib/safe-fetch.server";
 
 /**
  * Site Watch — listing site monitoring, gated on a written ownership
@@ -65,12 +66,13 @@ function isPortal(host: string) {
 /** Politely ask the target whether we may read it. Absent robots means yes. */
 async function robotsAllows(origin: string) {
   try {
-    const res = await fetch(origin + "/robots.txt", {
-      headers: { "user-agent": USER_AGENT, accept: "text/plain" },
-      signal: AbortSignal.timeout(8000),
-    });
+    const res = await safeFetch(
+      origin + "/robots.txt",
+      { maxBytes: 512 * 1024, timeoutMs: 8000 },
+      { headers: { "user-agent": USER_AGENT, accept: "text/plain" } },
+    );
     if (!res.ok) return true;
-    const txt = (await res.text()).slice(0, 20000);
+    const txt = new TextDecoder().decode(res.bytes).slice(0, 20000);
     let applies = false;
     let allowed = true;
     for (const line of txt.split(/\r?\n/)) {
@@ -100,6 +102,10 @@ export const checkWatchSite = createServerFn({ method: "POST" })
         reason: "That Does Not Look Like A Web Address. Try Something Like https://your-site.com.",
       };
     }
+    const policy = checkUrl(parsed.url, { allowHttp: false });
+    if (!policy.ok) {
+      return { ok: false, reason: policy.message };
+    }
     if (isPortal(parsed.host)) {
       return {
         ok: false,
@@ -109,11 +115,13 @@ export const checkWatchSite = createServerFn({ method: "POST" })
     const robots = await robotsAllows(parsed.origin);
     let reachable = true;
     try {
-      const res = await fetch(parsed.url, {
-        headers: { "user-agent": USER_AGENT },
-        signal: AbortSignal.timeout(8000),
-      });
-      reachable = res.status < 500;
+      const res = await safeFetch(
+        parsed.url,
+        { maxBytes: 2 * 1024 * 1024, timeoutMs: 8000 },
+        { headers: { "user-agent": USER_AGENT } },
+      );
+      // A 4xx is still "reachable"; only transport failure or 5xx is not.
+      reachable = res.ok || (res.code === "http_error" && (res.status ?? 500) < 500);
     } catch (_) {
       reachable = false;
     }

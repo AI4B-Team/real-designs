@@ -9,6 +9,7 @@
 
 import { safeFetch } from "@/lib/safe-fetch.server";
 import { validateUploadBytes } from "@/lib/upload-guard";
+import { sanitizeFileName } from "@/lib/storage-paths";
 
 const MAX_BYTES = 15 * 1024 * 1024;
 
@@ -129,7 +130,9 @@ export async function fetchCloudFile(link: CloudLink) {
       : type.includes("heic") || type.includes("heif")
         ? "heic"
         : "jpg";
-  let name = (nm ? decodeURIComponent(nm) : link.name).replace(/[\\/]/g, "-").slice(0, 120);
+  // The provider controls this filename; it is never allowed to act as path
+  // structure, and it is only ever a display hint — the stored key is a UUID.
+  let name = sanitizeFileName(nm ? decodeURIComponent(nm) : link.name) || link.name;
   if (!/\.[a-z0-9]{3,4}$/i.test(name)) name = `${name}.${ext}`;
 
   let bin = "";
