@@ -98,11 +98,19 @@ type Record_ = {
   charged: number | null;
 };
 
+export type RecordPatch = {
+  state?: string;
+  job_id?: string;
+  result?: unknown;
+  credit_state?: string;
+  charged?: number;
+};
+
 export interface RunDeps {
   claim: typeof claim;
   release: typeof release;
   readRecord(key: string): Promise<Record_ | null>;
-  saveRecord(key: string, patch: Partial<Omit<Record_, "key">>): Promise<void>;
+  saveRecord(key: string, patch: RecordPatch): Promise<void>;
   startJob(input: {
     workspaceId: string;
     kind: string;
@@ -156,7 +164,10 @@ async function defaultDeps(): Promise<RunDeps> {
       return (data as unknown as Record_ | null) ?? null;
     },
     async saveRecord(key, patch) {
-      await supabaseAdmin.from("ops_idempotency").update(patch).eq("key", key);
+      await supabaseAdmin
+        .from("ops_idempotency")
+        .update(patch as never)
+        .eq("key", key);
     },
     startJob: (input) =>
       startJob({
