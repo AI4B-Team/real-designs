@@ -207,20 +207,22 @@ export function designStepHtml(ctx) {
       <h3>Shared Instructions <em class="rdd-optional">Optional</em></h3>
       <textarea id="rddNotes" rows="3" placeholder="Example: Warm oak floors, neutral colors, matte black fixtures.">${esc(model.notes || "")}</textarea>
     </section>
+    </div>
 
-    <div class="rv-gridfoot">
+    <div class="rv-gridfoot rdd-foot">
       <div class="rv-count">${
-        blockers.length
-          ? `<span class="rdd-block"><i data-lucide="alert-circle"></i>${esc(blockers[0])}</span>`
+        summary
+          ? `<span class="rdd-block"><i data-lucide="alert-circle"></i>${esc(summary)}</span>`
           : `<span>${items.length} photo${items.length === 1 ? "" : "s"} · ${creditCost(items)} credit${creditCost(items) === 1 ? "" : "s"} at Review</span>`
       }</div>
       <div class="rv-gridfoot-a">
         <button class="btn btn-ghost" id="rddBack">Back</button>
-        <button class="btn btn-primary" id="rddNext"${blockers.length ? ' disabled aria-disabled="true"' : ""}>Next: Review</button>
+        <button class="btn btn-primary" id="rddNext"${blocked ? ' disabled aria-disabled="true"' : ""}>Next: Review</button>
       </div>
     </div>
   </div>`;
 }
+
 
 /** Wire the Design page. `ctx.onChange` re-renders through the caller. */
 export function bindDesignStep(root, ctx) {
