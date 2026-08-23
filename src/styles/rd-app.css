@@ -8195,10 +8195,82 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-height: 40px;
+  flex-wrap: nowrap;
 }
 .cs-sec-h label {
   margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+/* Clear · View All · scope — one row, never wrapping, never overlapping. */
+.cs-sec-a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+.cs-sec-h .cs-clear {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 2px;
+  background: none;
+  border: 0;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.cs-sec-h .cs-clear:hover {
+  color: var(--ink, #111);
+}
+.cs-ovf {
+  position: relative;
+  display: inline-flex;
+}
+.cs-ovf-b {
+  min-height: 40px;
+  min-width: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: var(--muted);
+}
+.cs-ovf-m {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 40;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 4px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.14);
+  display: flex;
+  flex-direction: column;
+}
+.cs-ovf-m .cs-clear {
+  min-height: 40px;
+  padding: 0 12px;
+  text-decoration: none;
+  justify-content: flex-start;
+}
+.cs-choose {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
 .cs-req {
   font-size: 0.68rem;
   font-weight: 700;

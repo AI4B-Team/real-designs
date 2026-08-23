@@ -34,6 +34,18 @@ import {
   type ResolvedDirection,
   type StyleNeed,
 } from "@/lib/canvas-style";
+import {
+  applyClear,
+  clearPlan,
+  undoClear,
+  styleHeaderActions,
+  CHOOSE_STYLE_SUMMARY,
+  CLEAR_A11Y,
+  CLEAR_LABEL,
+  type HeaderAction,
+  type StyleUndo,
+} from "@/lib/style-clear";
+
 
 export type CanvasStyleContext = {
   tool: string;
@@ -55,7 +67,12 @@ export type CanvasStyleApi = {
   /** Null when the active tool needs no style. */
   need: () => StyleNeed | null;
   open: () => void;
+  /** Clears the style at its own scope; false when nothing was cleared. */
+  clear: () => boolean;
+  /** Restores the last cleared style at the scope it was cleared from. */
+  undo: () => boolean;
 };
+
 
 const esc = (s: unknown): string =>
   String(s == null ? "" : s).replace(
@@ -78,8 +95,59 @@ function icons(root?: Element | null) {
 }
 
 /* ------------------------------------------------------------------ */
+/* section header                                                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * DESIGN STYLE on the left; Clear, View All and the scope chip on the right.
+ * Clear only exists while a style is selected and drops into the overflow
+ * menu on a narrow inspector rather than being clipped.
+ */
+export function sectionHeader(
+  title: string,
+  selected: boolean,
+  scopeText?: string | null,
+  width?: number | null,
+): string {
+  const layout = styleHeaderActions({ selected, scopeLabel: scopeText ?? null, width: width ?? 0 });
+  const clearBtn = (extra: string) =>
+    '<button type="button" class="fb-link cs-clear' +
+    extra +
+    '" title="' +
+    esc(CLEAR_A11Y) +
+    '" aria-label="' +
+    esc(CLEAR_A11Y) +
+    '">' +
+    esc(CLEAR_LABEL) +
+    "</button>";
+  const inline = layout.inline
+    .map((a: HeaderAction) => {
+      if (a.id === "clear") return clearBtn("");
+      if (a.id === "browse")
+        return '<button type="button" class="fb-link cs-browse">' + esc(a.label) + "</button>";
+      return '<span class="cs-scope">' + esc(a.label) + "</span>";
+    })
+    .join("");
+  const overflow = layout.overflow.length
+    ? '<span class="cs-ovf"><button type="button" class="cs-ovf-b" aria-haspopup="menu" aria-expanded="false" aria-label="More Design Style Actions"><i data-lucide="more-horizontal"></i></button>' +
+      '<span class="cs-ovf-m" role="menu" hidden>' +
+      layout.overflow.map(() => clearBtn(" cs-ovf-i")).join("") +
+      "</span></span>"
+    : "";
+  return (
+    '<div class="cs-sec-h"><label>' +
+    esc(title) +
+    '</label><span class="cs-sec-a">' +
+    inline +
+    overflow +
+    "</span></div>"
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* quick picks                                                         */
 /* ------------------------------------------------------------------ */
+
 
 /** Popular styles offered inline in the Setup panel, in priority order. */
 export const QUICK_STYLE_IDS = [
@@ -472,10 +540,8 @@ export function mountCanvasStyle(
     if (!sel) {
       el.innerHTML =
         '<div class="cs-sec cs-empty-state">' +
-        '<div class="cs-sec-h"><label>' +
-        esc(title) +
-        '</label><button type="button" class="fb-link cs-browse">View All</button></div>' +
-
+        sectionHeader(title, false, null, el.clientWidth) +
+        '<p class="cs-choose">' + esc(CHOOSE_STYLE_SUMMARY) + "</p>" +
         quickGrid(pool, null) +
         (propRec
           ? '<button class="btn btn-ghost btn-sm cs-useprop" type="button"><i data-lucide="dna"></i>Use Property Direction &middot; ' +
@@ -494,6 +560,7 @@ export function mountCanvasStyle(
          full grid only comes back when the user asks to change it. */
       el.innerHTML =
         '<div class="cs-sec cs-done">' +
+        sectionHeader(title, true, scopeLabel(sel.scope), el.clientWidth) +
         '<div class="rdw-sum"><span><b>' +
         esc(title) +
         "</b> &middot; " +
@@ -506,13 +573,10 @@ export function mountCanvasStyle(
       onChange?.(sel);
       return;
     }
+
     el.innerHTML =
       '<div class="cs-sec">' +
-      '<div class="cs-sec-h"><label>' +
-      esc(title) +
-      '</label><button type="button" class="fb-link cs-browse">View All</button><span class="cs-scope">' +
-      esc(scopeLabel(sel.scope)) +
-      "</span></div>" +
+      sectionHeader(title, true, scopeLabel(sel.scope), el.clientWidth) +
       '<div class="cs-picked">' +
       '<span class="cs-picked-th">' +
       (s.previewImage
@@ -526,15 +590,13 @@ export function mountCanvasStyle(
       "</em></span>" +
       "</div>" +
       quickGrid(pool, s.id) +
-      '<div class="cs-picked-act">' +
-      '<button class="fb-link cs-clear" type="button">Clear</button>' +
-      "</div>" +
       (sel.scope !== "photo" && c.photoKey
         ? '<p class="cs-inherit">Inherited from ' +
           esc(scopeLabel(sel.scope)) +
           ". Choosing a different style here only changes this photo.</p>"
         : "") +
       "</div>";
+
 
     icons(el);
     onChange?.(sel);
@@ -570,6 +632,50 @@ export function mountCanvasStyle(
     openBrowser({ need, ctx: c, currentId: selection()?.styleId || "", onPick: pick });
   }
 
+  /* Undo history for Clear: the previous style and the exact scope it lived
+     at, so Undo restores it where it was and nowhere else. */
+  const undoStack: StyleUndo[] = [];
+
+  function clearStyle(): boolean {
+    const need = needNow();
+    const sel = selection();
+    if (!need || !sel) return false;
+    const c = getContext();
+    const others = Math.max(0, (c.photoKeys || []).filter((k) => k && k !== c.photoKey).length);
+    const plan = clearPlan(sel, { otherPhotoCount: others });
+    if (!plan) return false;
+    /* A project or property style is shared: never take it away from other
+       photos silently. */
+    if (plan.needsConfirm && typeof window !== "undefined" && typeof window.confirm === "function") {
+      if (!window.confirm(plan.confirmMessage)) return false;
+    }
+    const res = applyClear(store, sel, ctxFor(need, c));
+    store = res.store;
+    undoStack.push(res.undo);
+    saveDirections(store);
+    expanded = true;
+    paint();
+    try {
+      window.dispatchEvent(
+        new CustomEvent("rd:canvas-style", { detail: { need, styleId: "", cleared: plan.scope } }),
+      );
+    } catch (_) {
+      /* event is advisory */
+    }
+    return true;
+  }
+
+  function undoLast(): boolean {
+    const last = undoStack.pop();
+    if (!last) return false;
+    store = undoClear(store, last);
+    saveDirections(store);
+    expanded = true;
+    paint();
+    return true;
+  }
+
+
   document.addEventListener("click", (e: any) => {
     const el = host();
     if (!el || el.hidden) return;
@@ -599,19 +705,29 @@ export function mountCanvasStyle(
       if (need) pick(propertyDirection(store, ctxFor(need, getContext())), false);
       return;
     }
+    if (t.closest(".cs-ovf-b")) {
+      e.preventDefault();
+      const btn = t.closest(".cs-ovf-b") as HTMLElement;
+      const menu = btn.parentElement?.querySelector(".cs-ovf-m") as HTMLElement | null;
+      if (menu) {
+        const open = menu.hidden;
+        menu.hidden = !open;
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+      return;
+    }
     if (t.closest(".cs-clear")) {
       e.preventDefault();
-      const need = needNow();
-      if (!need) return;
-      const dctx = ctxFor(need, getContext());
-      store = clearDirection(store, "photo", dctx);
-      store = clearDirection(store, "project", dctx);
-      saveDirections(store);
-      expanded = true;
-      paint();
+      clearStyle();
+      return;
+    }
+    if (t.closest(".cs-undo")) {
+      e.preventDefault();
+      undoLast();
     }
   });
 
   paint();
-  return { refresh: paint, selection, need: needNow, open };
+  return { refresh: paint, selection, need: needNow, open, clear: clearStyle, undo: undoLast };
 }
+
