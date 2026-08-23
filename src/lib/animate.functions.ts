@@ -186,32 +186,42 @@ export const pollMotionClip = createServerFn({ method: "POST" })
     const { readProviderJob, downloadProviderVideo } = await import("@/lib/animate.server");
     const { refund } = await import("@/lib/credits.server");
 
-    let job: { status: string; progress: number; error: string | null };
-    try {
-      job = await readProviderJob(String(row.provider_job_id));
-    } catch (_) {
-      // A transient read failure is not a failed render — keep waiting.
-      return { job: shape(row) };
-    }
-
-    if (job.status === "failed") {
+    /** End a clip that produced no video and give its credits back exactly once. */
+    const failClip = async (message: string) => {
       if (!row.refunded && row.charged) {
         await refund(userId, Number(row.credits || 0), `Motion clip ${row.id} failed`);
       }
       const { data: failed } = await supabase
         .from("motion_clip_jobs")
-        .update({
-          status: "failed",
-          refunded: true,
-          error: job.error || "The clip could not be generated.",
-        })
+        .update({ status: "failed", refunded: true, error: message })
         .eq("id", row.id)
         .select("*")
         .single();
       return { job: shape(failed || row) };
+    };
+
+    let job: { status: string; progress: number; error: string | null };
+    try {
+      job = await readProviderJob(String(row.provider_job_id));
+    } catch (_) {
+      // A transient read failure is not a failed render — keep waiting, unless
+      // the job is so old that no video is coming; then release the credits.
+      const ageMs = Date.now() - new Date(String(row.created_at)).getTime();
+      if (ageMs > STALE_CLIP_MS) {
+        return await failClip("The clip stopped responding before it finished.");
+      }
+      return { job: shape(row) };
+    }
+
+    if (job.status === "failed") {
+      return await failClip(job.error || "The clip could not be generated.");
     }
 
     if (job.status !== "completed") {
+      const ageMs = Date.now() - new Date(String(row.created_at)).getTime();
+      if (ageMs > STALE_CLIP_MS) {
+        return await failClip("The clip took too long and was stopped.");
+      }
       if (job.progress !== Number(row.progress || 0) || row.status !== "in_progress") {
         await supabase
           .from("motion_clip_jobs")
@@ -223,11 +233,19 @@ export const pollMotionClip = createServerFn({ method: "POST" })
 
     // Completed — store the MP4 durably before the gateway copy expires.
     const path = `${userId}/motion/${row.id}.mp4`;
-    const bytes = await downloadProviderVideo(String(row.provider_job_id));
-    const up = await supabaseAdmin.storage
-      .from(BUCKET)
-      .upload(path, bytes, { contentType: "video/mp4", upsert: true });
-    if (up.error) throw new Error(up.error.message);
+    try {
+      const bytes = await downloadProviderVideo(String(row.provider_job_id));
+      const up = await supabaseAdmin.storage
+        .from(BUCKET)
+        .upload(path, bytes, { contentType: "video/mp4", upsert: true });
+      if (up.error) throw new Error(up.error.message);
+    } catch (err) {
+      // The provider copy expires, so a failed save means the clip is gone:
+      // do not leave the user charged and waiting forever.
+      const why = err instanceof Error ? err.message : "The clip could not be saved.";
+      return await failClip(why);
+    }
+
 
     // Make the clip appear in Media as a generated video.
     let videoProjectId: string | null = row.video_project_id ?? null;
