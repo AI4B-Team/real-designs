@@ -69,7 +69,7 @@ export function startOverModalHtml(ids: {
 /* Browser Back steps through the builder rather than dumping the project.
    The builder pushes one history entry per step; Back inside those entries
    moves a step back, and Back from the first step asks before leaving. */
-const H: any = { key: null, step: null, handlers: null };
+const H: any = { key: null, step: null, handlers: null, len: 0 };
 
 export function trackBuilderStep(
   key: string,
@@ -86,6 +86,7 @@ export function trackBuilderStep(
     const state = { rdb: key, rdbStep: step };
     if (first) history.replaceState({ ...(history.state || {}), ...state }, "");
     else history.pushState(state, "");
+    H.len = history.length;
   } catch (_) {}
 }
 
@@ -94,6 +95,7 @@ export function endBuilderHistory(key: string) {
     H.key = null;
     H.step = null;
     H.handlers = null;
+    H.len = 0;
   }
 }
 
@@ -104,11 +106,25 @@ if (typeof window !== "undefined" && !(window as any).__rdBuilderHistory) {
     const st = e.state && e.state.rdb === H.key ? e.state : null;
     if (st) {
       H.step = st.rdbStep;
+      H.len = typeof history !== "undefined" ? history.length : H.len;
       try {
         H.handlers.onStep && H.handlers.onStep(st.rdbStep);
       } catch (_) {}
       return;
     }
+    /* Browsers also fire popstate for a forward same-document hash navigation
+       (`location.hash = "#v-explore"`), which is the shell routing somewhere
+       else — not the user pressing Back. A forward navigation adds a history
+       entry, so only a stack that did not grow can be a real Back. */
+    try {
+      if (typeof history !== "undefined" && history.length > H.len) {
+        H.key = null;
+        H.step = null;
+        H.handlers = null;
+        H.len = 0;
+        return;
+      }
+    } catch (_) {}
     /* Back out of the builder's own entries: confirm instead of discarding,
        and put the user back where they were. */
     try {
@@ -117,3 +133,4 @@ if (typeof window !== "undefined" && !(window as any).__rdBuilderHistory) {
     } catch (_) {}
   });
 }
+
