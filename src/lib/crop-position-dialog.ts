@@ -33,17 +33,23 @@ export function openCropDialog(photos, onSave) {
   const wrap = document.createElement("div");
   wrap.className = "bx-cdlg rdc-dlg";
   wrap.innerHTML = `<div class="bx-cdlg-in rdc-in" role="dialog" aria-modal="true" aria-label="Reposition Photo">
-    <h3>Reposition Photo</h3>
-    <p class="rdc-sub"></p>
-    <div class="rdc-stage"><div class="rdc-frame"><img alt="" draggable="false"></div></div>
-    <div class="rdc-ctl">
-      <label><span>Zoom</span><input type="range" min="1" max="${MAX_CROP_SCALE}" step="0.01" value="1" data-rdczoom></label>
-      <button type="button" class="btn btn-ghost btn-sm" data-rdcreset><i data-lucide="rotate-ccw"></i>Reset Position</button>
+    <div class="rdc-head">
+      <h3>Reposition Photo</h3>
+      <p class="rdc-sub"></p>
     </div>
-    <div class="rdc-nav">
-      <button type="button" class="btn btn-ghost btn-sm" data-rdcprev><i data-lucide="chevron-left"></i>Previous</button>
-      <span class="rdc-count"></span>
-      <button type="button" class="btn btn-ghost btn-sm" data-rdcnext>Next<i data-lucide="chevron-right"></i></button>
+    <div class="rdc-work">
+      <div class="rdc-stage"><div class="rdc-frame"><img alt="" draggable="false"><div class="rdc-guides" aria-hidden="true"></div></div></div>
+    </div>
+    <div class="rdc-controls">
+      <div class="rdc-ctl">
+        <label><span>Zoom</span><input type="range" min="1" max="${MAX_CROP_SCALE}" step="0.01" value="1" data-rdczoom></label>
+        <button type="button" class="btn btn-ghost btn-sm" data-rdcreset><i data-lucide="rotate-ccw"></i>Reset Position</button>
+      </div>
+      <div class="rdc-nav">
+        <button type="button" class="btn btn-ghost btn-sm" data-rdcprev><i data-lucide="chevron-left"></i>Previous</button>
+        <span class="rdc-count"></span>
+        <button type="button" class="btn btn-ghost btn-sm" data-rdcnext>Next<i data-lucide="chevron-right"></i></button>
+      </div>
     </div>
     ${modalFooterHtml({ primary: { label: "Done", value: "done" }, secondary: { label: "Cancel", value: "cancel" } })}
   </div>`;
@@ -69,6 +75,7 @@ export function openCropDialog(photos, onSave) {
   function show() {
     const p = list[i];
     frame.style.aspectRatio = String(p.ratio).replace(":", " / ");
+    frame.style.setProperty("--rdc-ar", String(ratioValue(p.ratio) || 1));
     img.src = p.url;
     img.alt = p.name || "Photo";
     sub.textContent = `${p.name || "Photo"} · ${ratioLabel(p.ratio)}`;
