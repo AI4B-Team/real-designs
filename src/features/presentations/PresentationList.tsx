@@ -83,7 +83,12 @@ function Skeleton() {
 
 export const PresentationList = forwardRef<PresentationListHandle, PresentationListDeps>(
   function PresentationList(deps, ref) {
-    const { actions } = deps;
+    /* Props arrive through a spread from the mount adapter, so their identity
+       changes on every render. Callbacks read them through a ref instead, which
+       keeps effects and handlers stable and the initial load to exactly one. */
+    const depsRef = useRef(deps);
+    depsRef.current = deps;
+    const actions = deps.actions;
     const [rows, setRows] = useState<PresentationRow[] | null>(null);
     const [filter, setFilter] = useState<PresentationFilter>("all");
     const [openHistory, setOpenHistory] = useState<string | null>(null);
@@ -115,17 +120,18 @@ export const PresentationList = forwardRef<PresentationListHandle, PresentationL
     }, []);
 
     const refresh = useCallback(async () => {
+      const d = depsRef.current;
       let next: PresentationRow[] = [];
       try {
-        next = (await deps.loadRows()) || [];
+        next = (await d.loadRows()) || [];
       } catch {
         next = [];
       }
       rowsRef.current = next;
       if (!alive.current) return;
       setRows(next);
-      deps.onRowsChanged?.(next);
-    }, [deps]);
+      d.onRowsChanged?.(next);
+    }, []);
 
     useImperativeHandle(
       ref,
@@ -167,7 +173,7 @@ export const PresentationList = forwardRef<PresentationListHandle, PresentationL
         setHistory(null);
         let list: PresentationActivity[] = [];
         try {
-          list = (await deps.loadActivity(row.id)) || [];
+          list = (await depsRef.current.loadActivity(row.id)) || [];
         } catch {
           list = [];
         }
@@ -175,7 +181,7 @@ export const PresentationList = forwardRef<PresentationListHandle, PresentationL
         if (!alive.current) return;
         setHistory(list);
       },
-      [deps, openHistory],
+      [openHistory],
     );
 
     const copyLink = useCallback(
@@ -224,13 +230,13 @@ export const PresentationList = forwardRef<PresentationListHandle, PresentationL
     const remove = useCallback(
       async (row: PresentationRow) => {
         try {
-          await deps.deleteRow(row.id);
+          await depsRef.current.deleteRow(row.id);
         } catch {
           /* the refresh below re-states the truth either way */
         }
         await refresh();
       },
-      [deps, refresh],
+      [refresh],
     );
 
     if (rows === null) return <Skeleton />;
