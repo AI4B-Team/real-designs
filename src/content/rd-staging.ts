@@ -2314,8 +2314,11 @@ function runBatch(batch, direction, opts = {}) {
   syncSelection();
   /* Idempotency: the same batch key always returns the same batch record, so
      a double click, a resubmit or a remount never creates a second job set. */
-  const key = opts.batchKey || S.batchKey || `${S.draftId || "draft"}:${Date.now()}`;
-  S.batchKey = key;
+  /* One key per confirmed Generate press. The press itself is already guarded
+     by S.busy, so a double click reuses this batch instead of creating one. */
+  const key =
+    opts.batchKey ||
+    `${S.draftId || "draft"}:${batch.map((i) => i.key).join(",")}:${S.generatePress || 0}`;
   const rec = createBatch(
     key,
     batch.map((it, i) => ({
@@ -2365,6 +2368,7 @@ function runBatch(batch, direction, opts = {}) {
       },
       onDone: () => {
         S.busy = false;
+        S.generatePress = (S.generatePress || 0) + 1;
         syncSelection();
         saveDraft();
         const done = getBatch(rec.id) || rec;
