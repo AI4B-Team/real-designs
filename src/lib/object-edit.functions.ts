@@ -86,7 +86,8 @@ export const renderObjectEditResult = createServerFn({ method: "POST" })
       "@/lib/object-edit.server"
     );
     const { objectAction } = await import("@/lib/object-edit-brief");
-    const { charge, refund, chargeErrorMessage } = await import("@/lib/credits.server");
+    const { runGeneration } = await import("@/lib/generation-run.server");
+    const { imageIdentity } = await import("@/lib/generation-identity");
 
     /* A selection that never reached the server is not a selection: the guard
        is re-checked here so a client bug can never spend a credit on an edit
@@ -103,33 +104,49 @@ export const renderObjectEditResult = createServerFn({ method: "POST" })
     if ((def.needs === "instruction" || def.needs === "replacement" || def.needs === "style") && !data.payload.instruction)
       throw new Error("Describe the change before running this edit.");
 
-    const charged = await charge(
-      context.userId,
-      "design",
-      `Object Edit, ${data.payload.action_label} (${data.payload.target_label})`,
+    return runGeneration(
+      {
+        userId: context.userId,
+        action: "design",
+        kind: "object.edit",
+        note: `Object Edit, ${data.payload.action_label} (${data.payload.target_label})`,
+        requestId: data.request_id ?? null,
+        parts: [
+          imageIdentity(data.image),
+          imageIdentity(data.mask),
+          data.payload.action,
+          data.payload.action_label,
+          data.payload.target_label,
+          data.payload.material_id,
+          data.payload.color,
+          data.payload.instruction,
+          data.payload.targets.length,
+          data.payload.strokes.length,
+        ],
+      },
+      async (job) => {
+        let image: string;
+        try {
+          image = await renderObjectEdit(
+            buildObjectEditPrompt(data.payload as any),
+            data.image,
+            data.overlay,
+            data.mask,
+            apiKey,
+          );
+        } catch (err) {
+          throw new Error((err as Error)?.message || "That edit did not finish.");
+        }
+        return {
+          image,
+          charged: job.charged,
+          balance: job.balance,
+          remainingToday: job.remainingToday,
+          classification: def.classification,
+          model: IMAGE_MODEL,
+        };
+      },
     );
-    if (!charged.ok) throw new Error(chargeErrorMessage(charged));
-
-    try {
-      const image = await renderObjectEdit(
-        buildObjectEditPrompt(data.payload as any),
-        data.image,
-        data.overlay,
-        data.mask,
-        apiKey,
-      );
-      return {
-        image,
-        charged: charged.charged,
-        balance: charged.balance,
-        remainingToday: charged.remainingToday ?? null,
-        classification: def.classification,
-        model: IMAGE_MODEL,
-      };
-    } catch (err) {
-      await refund(context.userId, charged.charged, "Object Edit failed");
-      throw new Error((err as Error)?.message || "That edit did not finish.");
-    }
   });
 
 const CheckInput = z.object({ before: z.string().min(16), after: z.string().min(16) });

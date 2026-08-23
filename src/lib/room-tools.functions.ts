@@ -21,22 +21,36 @@ export const runRoomTool = createServerFn({ method: "POST" })
     if (!apiKey) throw new Error("AI is not configured.");
 
     const { buildToolPrompt, callImageModel, TOOL_LABEL } = await import("@/lib/room-tools.server");
-    const { charge, refund, chargeErrorMessage } = await import("@/lib/credits.server");
+    const { runGeneration } = await import("@/lib/generation-run.server");
+    const { imageIdentity } = await import("@/lib/generation-identity");
 
     const label = TOOL_LABEL[data.tool];
-    const charged = await charge(context.userId, "design", label);
-    if (!charged.ok) throw new Error(chargeErrorMessage(charged));
 
-    try {
-      const image = await callImageModel(buildToolPrompt(data), data.image, apiKey);
-      return {
-        image,
-        label,
-        balance: charged.balance,
-        remainingToday: charged.remainingToday ?? null,
-      };
-    } catch (err) {
-      await refund(context.userId, charged.charged, `${label} failed`);
-      throw err;
-    }
+    return runGeneration(
+      {
+        userId: context.userId,
+        action: "design",
+        kind: `room.${data.tool}`,
+        note: label,
+        requestId: data.request_id ?? null,
+        parts: [
+          imageIdentity(data.image),
+          data.tool,
+          data.room_type,
+          data.direction,
+          data.style_id,
+          data.grade,
+          data.notes,
+        ],
+      },
+      async (job) => {
+        const image = await callImageModel(buildToolPrompt(data), data.image, apiKey);
+        return {
+          image,
+          label,
+          balance: job.balance,
+          remainingToday: job.remainingToday,
+        };
+      },
+    );
   });

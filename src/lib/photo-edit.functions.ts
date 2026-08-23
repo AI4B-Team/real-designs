@@ -89,31 +89,36 @@ export const runPhotoEdit = createServerFn({ method: "POST" })
     if (!label) throw new Error("That edit is not available.");
 
     const { callImageModel } = await import("@/lib/room-tools.server");
-    const { charge, refund, chargeErrorMessage } = await import("@/lib/credits.server");
+    const { runGeneration } = await import("@/lib/generation-run.server");
+    const { imageIdentity } = await import("@/lib/generation-identity");
 
-    const charged = await charge(context.userId, "design", label);
-    if (!charged.ok) throw new Error(chargeErrorMessage(charged));
-
-    try {
-      const image = await callImageModel(prompt(data, label), data.image, apiKey);
-      const modification_class =
-        data.family === "design"
-          ? (DESIGN_CLASS[data.op] ?? "Proposed Design")
-          : HEAVY_PROPERTY_OPS.has(data.op)
-            ? "Digitally Altered"
-            : "Enhanced";
-      return {
-        image,
-        label,
-        family: data.family,
-        modification_class,
-        balance: charged.balance,
-        remainingToday: charged.remainingToday ?? null,
-      };
-    } catch (err) {
-      await refund(context.userId, charged.charged, `${label} failed`);
-      throw err;
-    }
+    return runGeneration(
+      {
+        userId: context.userId,
+        action: "design",
+        kind: "photo.edit",
+        note: label,
+        requestId: data.request_id ?? null,
+        parts: [imageIdentity(data.image), data.family, data.op, prompt(data, label)],
+      },
+      async (job) => {
+        const image = await callImageModel(prompt(data, label), data.image, apiKey);
+        const modification_class =
+          data.family === "design"
+            ? (DESIGN_CLASS[data.op] ?? "Proposed Design")
+            : HEAVY_PROPERTY_OPS.has(data.op)
+              ? "Digitally Altered"
+              : "Enhanced";
+        return {
+          image,
+          label,
+          family: data.family,
+          modification_class,
+          balance: job.balance,
+          remainingToday: job.remainingToday,
+        };
+      },
+    );
   });
 
 /**
