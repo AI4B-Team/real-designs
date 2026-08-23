@@ -535,6 +535,8 @@ export function initApp(): () => void {
     initCanvasWorkspace();
   } catch (_) {}
   const timers: number[] = [];
+  /* Teardown hooks for extracted feature modules (React roots, listeners). */
+  const cleanups: Array<() => void> = [];
   const setInterval = (fn: any, ms?: number) => {
     const id = window.setInterval(fn, ms);
     timers.push(id);
@@ -14148,6 +14150,13 @@ ${picks
     timers.forEach((t) => {
       window.clearInterval(t);
       window.clearTimeout(t);
+    });
+    cleanups.splice(0).forEach((fn) => {
+      try {
+        fn();
+      } catch (e) {
+        console.error(e);
+      }
     });
   };
 }
