@@ -34,7 +34,7 @@ export const PRIMARY_OUTPUT_RATIOS: RatioOption[] = [
  * because it is the safe default.
  */
 export const IMAGE_FORMAT_CARDS: RatioOption[] = [
-  { id: "original", label: "Original", note: "Keep Each Photo's Current Shape" },
+  { id: "original", label: "Original", note: "Keep Current Shape" },
   { id: "16:9", label: "Landscape", note: "16:9" },
   { id: "1:1", label: "Square", note: "1:1" },
   { id: "9:16", label: "Portrait", note: "9:16" },
