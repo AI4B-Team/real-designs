@@ -28,8 +28,9 @@ describe("escaping boundary", () => {
 
   it("neutralizes an image event-handler injection", () => {
     const out = escapeHtml('<img src=x onerror="alert(1)">');
-    expect(out).not.toMatch(/onerror=/);
-    expect(out).toContain("&lt;img");
+    // The payload survives only as inert text: no tag, no quotes, no attribute.
+    expect(out).toBe("&lt;img src=x onerror=&quot;alert(1)&quot;&gt;");
+    expect(out).not.toMatch(/<|"/);
   });
 
   it("prevents attribute breakout from double and single quoted attributes", () => {
@@ -92,7 +93,7 @@ describe("escaping boundary", () => {
 
   it("stores presentation comments as plain text", () => {
     const parsed = pkgCommentSchema.parse({
-      token: "6f1c6b8e-2b6b-4a24-9a1f-4f0b0f7b1a11",
+      token: "6f1c6b8e2b6b4a249a1f4f0b0f7b1a11",
       body: '<img src=x onerror="alert(1)"> love the kitchen',
       name: "<script>alert(1)</script>Dana",
     });
@@ -352,7 +353,7 @@ describe("upload guard", () => {
   });
 
   it("only accepts storage paths inside the caller's own folder", () => {
-    const uid = "6f1c6b8e-2b6b-4a24-9a1f-4f0b0f7b1a11";
+    const uid = "6f1c6b8e2b6b4a249a1f4f0b0f7b1a11";
     expect(isSafeStoragePath(`${uid}/photo-1.jpg`, uid)).toBe(true);
     expect(isSafeStoragePath(`other-user/photo-1.jpg`, uid)).toBe(false);
     expect(isSafeStoragePath(`${uid}/../other/photo.jpg`, uid)).toBe(false);

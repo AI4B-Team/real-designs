@@ -91,6 +91,15 @@ function isPrivateIPv6(raw: string): boolean {
   if (v4 && (host.startsWith("::") || host.startsWith("64:ff9b:"))) {
     return isPrivateIPv4(v4[1] as string);
   }
+  // The URL parser rewrites ::ffff:127.0.0.1 into its hex form (::ffff:7f00:1),
+  // so the mapped address has to be decoded back to dotted quad.
+  const mapped = /^(?:::ffff:|::|64:ff9b::)([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(host);
+  if (mapped) {
+    const hi = parseInt(mapped[1] as string, 16);
+    const lo = parseInt(mapped[2] as string, 16);
+    const dotted = [(hi >> 8) & 255, hi & 255, (lo >> 8) & 255, lo & 255].join(".");
+    return isPrivateIPv4(dotted);
+  }
   return false;
 }
 
