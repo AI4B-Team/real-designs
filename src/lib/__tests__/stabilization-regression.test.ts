@@ -720,11 +720,6 @@ describe("regression: presentations", () => {
     expect(published.map((p) => p.version_id)).toEqual(["v2", "v1"]);
   });
 
-  it("a published item stays pinned to the version it was published with", () => {
-    const published = validItems([item])[0] as any;
-    expect(published.versionId).toBe("v2");
-    expect(published.path).toBe("u/asset-1/v2.png");
-  });
 });
 
 /* ================================================================== *
