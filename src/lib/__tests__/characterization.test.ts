@@ -228,11 +228,7 @@ describe("characterization: version persistence", () => {
   it("saves a version and keeps its storage path and version number", () => {
     let s = session.createSession({ count: 2, kind: "design" });
     s = session.markImage(s, 0, "blob:preview");
-    s = session.markSaved(s, 0, {
-      resultStoragePath: "u/result.jpg",
-      versionId: "ver-1",
-      versionNo: 1,
-    } as never);
+    s = session.markSaved(s, 0, { path: "u/result.jpg", versionId: "ver-1" });
     const out = session.outputAt(s, 0)!;
     expect(out.status).toBe("saved");
     expect(out.resultStoragePath).toBe("u/result.jpg");
@@ -242,7 +238,7 @@ describe("characterization: version persistence", () => {
   it("never lets a later failure discard an already saved version", () => {
     let s = session.createSession({ count: 1, kind: "design" });
     s = session.markImage(s, 0, "blob:preview");
-    s = session.markSaved(s, 0, { resultStoragePath: "u/result.jpg" } as never);
+    s = session.markSaved(s, 0, { path: "u/result.jpg" });
     s = session.markFailed(s, 0, "late failure");
     expect(session.outputAt(s, 0)?.status).toBe("saved");
   });
