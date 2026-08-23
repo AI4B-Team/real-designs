@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Design step: selection truth, category isolation and footer behaviour.
  *
