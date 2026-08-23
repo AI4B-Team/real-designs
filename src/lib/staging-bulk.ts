@@ -18,6 +18,7 @@ import { clampCrop, ratioValue } from "@/lib/photo-crop";
 import { effectiveRatio } from "@/lib/output-ratio";
 import { uploadRenderDataUrl, roomPhotoUrl } from "@/lib/room-photos";
 import { roomSpace } from "@/lib/staging-rooms";
+import { combineNotes } from "@/lib/staging-design";
 import { STYLES } from "@/lib/style-catalog";
 
 

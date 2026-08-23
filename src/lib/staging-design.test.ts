@@ -121,3 +121,21 @@ describe("multi-photo design model", () => {
     expect(dir.outputRatio).toBe("1:1");
   });
 });
+
+/**
+ * A per-photo note once overwrote the shared instructions for that photo, so
+ * "keep the flooring" quietly stopped applying wherever a note was added.
+ */
+describe("instruction merging", () => {
+  it("adds the photo note to the shared instructions", () => {
+    expect(combineNotes("Keep the flooring.", "Leave the fireplace.")).toBe(
+      "Keep the flooring. Leave the fireplace.",
+    );
+  });
+
+  it("falls back cleanly when either side is empty", () => {
+    expect(combineNotes("Keep the flooring.", "  ")).toBe("Keep the flooring.");
+    expect(combineNotes("", "Leave the fireplace.")).toBe("Leave the fireplace.");
+    expect(combineNotes("", undefined)).toBe(null);
+  });
+});
