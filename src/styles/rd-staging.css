@@ -2733,3 +2733,109 @@
   font-size: 13px;
   color: var(--brand);
 }
+
+/* ------------------------------------------------- design option cards
+   Design Direction and Finish Grade share one card: equal size, real border,
+   full-card target, and an unmistakable selected state. */
+.design-option-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 1080px) {
+  .design-option-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .design-option-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.design-option-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 112px;
+  padding: 16px;
+  border: 1px solid var(--line, #dcdcdc);
+  border-radius: 14px;
+  background: #fff;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.12s ease,
+    background 0.12s ease,
+    box-shadow 0.12s ease;
+}
+.design-option-card:hover {
+  border-color: var(--brand);
+  box-shadow: 0 2px 10px rgba(17, 17, 17, 0.06);
+}
+.design-option-card:focus-visible {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.2);
+}
+.design-option-card .doc-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-right: 26px;
+}
+.design-option-card .doc-h b {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+}
+.design-option-card .doc-badge {
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--line, #dcdcdc);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.design-option-card .doc-n {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.design-option-card .doc-ck {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: none;
+  place-items: center;
+  background: var(--brand);
+  color: #fff;
+}
+.design-option-card .doc-ck svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 3;
+}
+.design-option-card.on {
+  border: 2px solid var(--brand);
+  padding: 15px;
+  background: rgba(204, 0, 0, 0.05);
+}
+.design-option-card.on .doc-h b,
+.design-option-card.on .doc-n {
+  color: #111;
+}
+.design-option-card.on .doc-badge {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+.design-option-card.on .doc-ck {
+  display: grid;
+}

@@ -27,10 +27,30 @@ const SPACE_ORDER = { interior: 0, exterior: 1, landscape: 2, unassigned: 3 };
 
 /** How much of the space may change. Plain language, never jargon. */
 export const DESIGN_DIRECTIONS = [
-  { id: "refresh", label: "Refresh", note: "Same layout and finishes — new furniture, styling and paint." },
-  { id: "makeover", label: "Makeover", note: "New furniture and new surface finishes; walls and layout stay." },
-  { id: "renovation", label: "Renovation", note: "Cabinetry, fixtures and materials can be replaced." },
-  { id: "reimagine", label: "Reimagine", note: "A fully new concept for the space, within the same shell." },
+  {
+    id: "refresh",
+    label: "Refresh",
+    badge: "Light Changes",
+    note: "Keep the existing layout and major finishes while updating furniture, styling, décor and paint.",
+  },
+  {
+    id: "makeover",
+    label: "Makeover",
+    badge: "Recommended",
+    note: "Keep walls and layout while allowing furniture, colors, fixtures and surface finishes to change.",
+  },
+  {
+    id: "renovation",
+    label: "Renovation",
+    badge: "Major Changes",
+    note: "Allow cabinetry, counters, fixtures, flooring and materials to be replaced while preserving the basic room structure.",
+  },
+  {
+    id: "reimagine",
+    label: "Reimagine",
+    badge: "Full Concept",
+    note: "Create a substantially new concept within the property's existing structural shell.",
+  },
 ];
 
 /**
@@ -39,10 +59,15 @@ export const DESIGN_DIRECTIONS = [
  * planning feature.
  */
 export const FINISH_GRADES = [
-  { id: "essential", label: "Essential", note: "Clean, cost-conscious materials." },
-  { id: "standard", label: "Standard", note: "Mainstream retail finishes." },
-  { id: "premium", label: "Premium", note: "Designer finishes and better materials." },
-  { id: "luxury", label: "Luxury", note: "High-end, custom-grade specification." },
+  { id: "essential", label: "Essential", note: "Clean, practical, cost-conscious materials." },
+  {
+    id: "standard",
+    label: "Standard",
+    badge: "Most Popular",
+    note: "Mainstream retail finishes with broad availability.",
+  },
+  { id: "premium", label: "Premium", note: "Designer finishes and higher-quality materials." },
+  { id: "luxury", label: "Luxury", note: "High-end, custom-grade finishes and details." },
 ];
 
 /** Render-payload wording for each choice. */
@@ -345,4 +370,48 @@ export function gradeLabel(id) {
 export function styleName(id) {
   const rec = styleById(id);
   return rec ? rec.displayName : "";
+}
+
+/* ------------------------------------------------------- state assertions
+   Design Direction and Finish Grade are single canonical fields on the draft
+   model (`direction`, `grade`). Everything — the selected card, the saved
+   draft, the Review summary and the generation request — reads from them.
+   In development a disagreement is reported loudly instead of shipping a
+   screen that says "Makeover" while it renders "Refresh". */
+
+const DEV = typeof import.meta !== "undefined" && import.meta.env && import.meta.env.DEV;
+
+export function assertDesignState(where, model, observed = {}) {
+  if (!DEV) return true;
+  const m = normalizeDesignModel(model);
+  const bad = [];
+  if (observed.direction != null && observed.direction !== m.direction)
+    bad.push(`direction: ${where} shows "${observed.direction}", draft holds "${m.direction}"`);
+  if (observed.grade != null && observed.grade !== m.grade)
+    bad.push(`grade: ${where} shows "${observed.grade}", draft holds "${m.grade}"`);
+  if (observed.preserve != null && observed.preserve !== (m.preserve !== false))
+    bad.push(`structure protection: ${where} disagrees with the draft`);
+  if (bad.length) console.warn("[design-state]", bad.join(" · "));
+  return bad.length === 0;
+}
+
+/** What the rendered radio groups currently claim, for the assertion above. */
+export function readDesignSelection(root) {
+  const on = (sel) => {
+    const el = root && root.querySelector(sel);
+    return el ? el.getAttribute(sel.includes("dir") ? "data-dir" : "data-grade") : null;
+  };
+  const pres = root && root.querySelector("#rddPreserve");
+  return {
+    direction: on('[data-dir][aria-checked="true"]'),
+    grade: on('[data-grade][aria-checked="true"]'),
+    preserve: pres ? !!pres.checked : null,
+  };
+}
+
+/** The direction/grade a payload from `toDirection` encodes, mapped back. */
+export function directionFromPayload(payload) {
+  const inv = (map) =>
+    Object.keys(map).find((k) => map[k] === (payload || {})[map === INTENSITY_TEXT ? "intensity" : "grade"]) || null;
+  return { direction: inv(INTENSITY_TEXT), grade: inv(GRADE_TEXT) };
 }

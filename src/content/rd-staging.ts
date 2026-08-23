@@ -57,6 +57,8 @@ import {
   pruneIncompatible,
   reviewBlockers,
   toDirection,
+  assertDesignState,
+  directionFromPayload,
 } from "@/lib/staging-design";
 import {
   bindDesignStep,
@@ -1584,8 +1586,15 @@ function renderDesignFlow(el) {
       },
       onGenerate: () => {
         persistDesign();
+        /* Review, the saved draft and the request must agree before spending. */
+        assertDesignState("the Review summary", S.design, {
+          direction: S.design.direction,
+          grade: S.design.grade,
+        });
         goStep("review");
-        runBatch(items, toDirection(S.design, items, normalizeOutputRatio(S.outputRatio)));
+        const payload = toDirection(S.design, items, normalizeOutputRatio(S.outputRatio));
+        assertDesignState("the generation request", S.design, directionFromPayload(payload));
+        runBatch(items, payload);
       },
     });
     return;
