@@ -1964,10 +1964,12 @@ export function initApp(): () => void {
       const rl = document.getElementById("recentList"),
         al = document.getElementById("attnList"),
         bt = document.getElementById("budgetTable");
-      if (!rl || !al || !bt) return;
+      /* The budget table is stripped at render time while budgets are hidden,
+         so its absence must never stop the dashboard from painting. */
+      if (!rl || !al) return;
       rl.innerHTML = skList(3);
       al.innerHTML = skList(2);
-      bt.innerHTML = skRows(6, 3);
+      if (bt) bt.innerHTML = skRows(6, 3);
       let s;
       try {
         s = await Promise.race([
@@ -1985,15 +1987,19 @@ export function initApp(): () => void {
           ) +
           '<div class="rowi"><button class="btn" id="dashRetry" type="button">Retry</button></div>';
         al.innerHTML = "";
-        bt.innerHTML = "";
+        if (bt) bt.innerHTML = "";
         const rb = document.getElementById("dashRetry");
         if (rb) rb.onclick = () => loadDashboard();
         return;
       }
 
       const kpis = document.querySelectorAll("#v-dash .grid.g4 .kpi");
+      /* The Budget KPI is stripped at render time while budgets are hidden, so
+         positional indexes shift. Slot 2 is Budget and slot 3 is Awaiting
+         Approval regardless of whether the Budget card exists. */
+      const hasBudgetKpi = [...kpis].some((k) => k.id === "kpiBudget");
       const setKpi = (i, val, note) => {
-        const k = kpis[i];
+        const k = kpis[!hasBudgetKpi && i === 3 ? kpis.length - 1 : i];
         if (!k) return;
         const b = k.querySelector("b");
         if (b) b.textContent = val;
@@ -2136,7 +2142,8 @@ export function initApp(): () => void {
         : empty("Nothing Needs Your Attention", "Priced rooms inside target will stay quiet here");
 
       /* budget vs scope */
-      bt.innerHTML = s.projects.length
+      if (bt)
+        bt.innerHTML = s.projects.length
         ? s.projects
             .map((p) => {
               const t = p.budget_target;
