@@ -138,7 +138,7 @@ import {
 import { PHOTOS } from "@/content/rd-photos";
 import { cleanAddressText } from "@/lib/property-address";
 import { openStagingReview } from "@/content/rd-staging";
-import { draftStyle, removeDraftStyle, setDraftStyle, ensureDraft } from "@/lib/design-draft";
+import { draftStyle, removeDraftStyle } from "@/lib/design-draft";
 
 const SAMPLE_KEYS: Array<{
   key: string;
@@ -311,7 +311,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   };
 
   /** Style chosen on Explore, if any. Selecting never generates or charges. */
-  let styleChoice: StudioStyleChoice | null = getStudioStyle();
+  /** The draft owns the style; the loose cache is only a fallback. */
+  function readStyleChoice(): StudioStyleChoice | null {
+    const d = draftStyle();
+    if (d) return setStudioStyle(d.id) || getStudioStyle();
+    return getStudioStyle();
+  }
+
+  let styleChoice: StudioStyleChoice | null = readStyleChoice();
   if (styleChoice) state.style = styleChoice.name;
 
   /**
@@ -328,10 +335,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   }
 
   function refreshStyleChoice() {
-    styleChoice = getStudioStyle();
+    styleChoice = readStyleChoice();
     if (styleChoice) state.style = styleChoice.name;
   }
   window.addEventListener("rd:style-selected", () => {
+    refreshStyleChoice();
+    if (host) render();
+  });
+  window.addEventListener("rd:draft-changed", () => {
     refreshStyleChoice();
     if (host) render();
   });
