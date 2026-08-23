@@ -1650,6 +1650,11 @@ export function initApp(): () => void {
         su = document.getElementById("acctPaneSub");
       if (t) t.textContent = PANE_META[k][0];
       if (su) su.textContent = PANE_META[k][1];
+      if (k === "profile") {
+        try {
+          if (window.rdPaintProfileFields) window.rdPaintProfileFields();
+        } catch (_) {}
+      }
       if (k === "watch") {
         try {
           mountWatch(go);
@@ -12235,7 +12240,8 @@ ${picks
       set("pfPhone", m.phone || "");
       set("pfEmail", u.email || "");
       set("pfCompany", m.company || "");
-      if (m.role) set("pfRole", m.role);
+      const ro = $id("pfRole");
+      if (ro && m.role) ro.value = m.role;
       const se = $id("secEmail");
       if (se) se.textContent = u.email;
     }
