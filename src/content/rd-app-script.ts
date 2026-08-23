@@ -337,6 +337,13 @@ import { summaryHTML, metric } from "@/lib/result-summary";
 import { mountExplore } from "@/content/rd-explore";
 import { mountWatch } from "@/content/rd-watch";
 import { STYLES, STYLE_CATEGORIES, resolveStyle } from "@/lib/style-catalog";
+import { roomSpace as rdRoomSpace } from "@/lib/staging-rooms";
+
+const RD_PROJECT_TYPE: Record<string, string> = {
+  interior: "interior",
+  exterior: "exterior",
+  landscape: "garden",
+};
 import { getStudioStyle, applyStudioStyleToControls } from "@/lib/studio-style";
 import { mountCanvasStyle } from "@/lib/canvas-style-ui";
 import { styleNeedForTool, sectionTitle } from "@/lib/canvas-style";
@@ -8119,10 +8126,12 @@ ${picks
           const r = await renderDesign({
             data: {
               image,
-              room_type: room.room_type || "living room",
+              room_type:
+                room.room_type ||
+                (rdRoomSpace(room.room_type) === "interior" ? "living room" : "front exterior"),
               direction,
               style_id: resolveStyle(direction).id,
-              project_type: "interior",
+              project_type: RD_PROJECT_TYPE[rdRoomSpace(room.room_type)] || "interior",
               intensity: "Makeover",
               grade: "Retail Grade",
               notes: null,
