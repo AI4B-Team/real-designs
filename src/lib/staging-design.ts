@@ -193,7 +193,10 @@ export function designBlockers(items, model) {
       return;
     }
     const missing = g.items.filter((it) => !effectiveStyleId(model, it));
-    if (missing.length) out.push(`Choose a style for the ${g.label} photos.`);
+    if (missing.length)
+      out.push(
+        `Choose a style for ${missing.length} ${g.label} photo${missing.length === 1 ? "" : "s"}.`,
+      );
     const unfit = g.items.filter((it) => {
       const id = effectiveStyleId(model, it);
       return id && !styleFitsSpace(id, g.space);
@@ -202,6 +205,67 @@ export function designBlockers(items, model) {
   });
   return out;
 }
+
+/**
+ * Per-category completion, the applies-to breakdown and the canonical style
+ * id. The Design page renders straight from this, so what the user sees, the
+ * draft and the id sent to generation can never drift apart.
+ */
+export function categoryStatus(items, model) {
+  const m = normalizeDesignModel(model);
+  return designGroups(items || []).map((g) => {
+    const styleId = g.space === "unassigned" ? "" : m.styleBySpace[g.space] || "";
+    const rooms = [];
+    g.items.forEach((it) => {
+      const room = String(it.room || "").trim() || "Room Type Needed";
+      const hit = rooms.find((r) => r.room === room);
+      if (hit) hit.count += 1;
+      else rooms.push({ room, count: 1 });
+    });
+    const missing = g.items.filter((it) => !effectiveStyleId(m, it)).length;
+    return {
+      space: g.space,
+      label: g.label,
+      items: g.items,
+      count: g.items.length,
+      styleId,
+      styleName: styleName(styleId),
+      rooms,
+      missing,
+      complete: g.space !== "unassigned" && missing === 0,
+    };
+  });
+}
+
+/**
+ * One readable sentence for the footer. Several missing categories collapse
+ * into a single "Choose styles for Interior and Exterior photos." line.
+ */
+export function designBlockerSummary(items, model) {
+  const cats = categoryStatus(items, model);
+  if (!cats.length) return "Select at least one photo.";
+  const unassigned = cats.find((c) => c.space === "unassigned");
+  if (unassigned)
+    return `Set a room or area for ${unassigned.count} photo${unassigned.count === 1 ? "" : "s"}.`;
+  const need = cats.filter((c) => !c.complete);
+  if (!need.length) return null;
+  if (need.length === 1) {
+    const c = need[0];
+    return `Choose a style for ${c.missing} ${c.label} photo${c.missing === 1 ? "" : "s"}.`;
+  }
+  const names = need.map((c) => c.label);
+  const list = names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+  return `Choose styles for ${list} photos.`;
+}
+
+/** Removes the style for exactly one category; other categories are untouched. */
+export function clearCategoryStyle(model, space) {
+  const next = normalizeDesignModel(model);
+  delete next.styleBySpace[space];
+  return next;
+}
+
+
 
 /**
  * Everything that keeps the final Generate action disabled. Every entry is
