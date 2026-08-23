@@ -53,7 +53,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="pp-wrap">
       <div className="pp-card pp-empty">
-        <RealDesignsLogoResponsive className="pp-logo" />
+        <RealDesignsLogoResponsive />
         {children}
       </div>
     </main>
@@ -212,7 +212,7 @@ function SharedPresentation() {
               <span className="pp-via">Shared Through REAL DESIGNS</span>
             </>
           ) : (
-            <RealDesignsLogoResponsive className="pp-logo" />
+            <RealDesignsLogoResponsive />
           )}
         </span>
         <span className="pp-head-right">
