@@ -567,3 +567,33 @@ inspector scrollers, uniform card heights, and no console errors. Full suite:
 1221 passing.
 
 No componentization was performed in this phase.
+
+## Phase 3 — Incremental runtime decomposition (started)
+
+**Status: first extraction complete.**
+
+The nineteen responsibilities still living in `src/content/rd-app-script.ts` are
+mapped in `docs/INCREMENTAL_COMPONENTIZATION_GUIDE.md`, together with the
+selection rules and the extraction contract every future module must follow
+(pure model, React surface, mount adapter with `destroy()`, injected data and
+actions, single state owner, legacy copy deleted in the same change).
+
+### Extracted: the client-link list
+
+`src/features/presentations/` now owns the whole `#linkList` region — tabs and
+filter state, rows, the inline activity timeline, empty and loading states,
+copy-link feedback and export progress. The legacy runtime keeps only what the
+list triggers: the new-link and send/reminder modals, the PDF, product-board
+and social-reel exporters, and navigation to Studio, all passed in as typed
+actions. Rows have a single owner: `PRES_ROWS` is gone and the runtime reads
+`presRows()` from the mounted handle, so the search index cannot drift from
+what is on screen.
+
+`initApp` now returns a teardown that also runs a `cleanups` registry, and the
+list registers its React root there. This is the hook every later extraction
+will use to shrink the listener leak recorded in the audit.
+
+Roughly 240 lines of imperative rendering and event delegation left the
+monolith. 29 new tests (1250 passing).
+
+Stopping here. Further regions will not be extracted without separate approval.
