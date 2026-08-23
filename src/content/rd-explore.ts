@@ -779,6 +779,11 @@ export function mountExplore(go, ctx) {
     write(LS.saved, saved);
     note(on ? "Removed From Saved Styles" : "Saved To Your Styles");
     paint();
+    /* The recommendation row is painted separately from the main grid, so it
+       needs its own repaint or its bookmarks never reflect the new state. */
+    try {
+      paintRec();
+    } catch (_) {}
     if (q.done) paintQuiz();
     if (!$("xpDrawer").hidden) {
       const btn = host.querySelector('#xpDPanel [data-save="' + id + '"]');
