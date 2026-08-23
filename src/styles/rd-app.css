@@ -2148,6 +2148,7 @@
   }
 }
 .rd-app .fb-card {
+  max-width: 640px;
   padding: 22px;
 }
 .rd-app .fb-card #fbBody {
