@@ -265,7 +265,7 @@ export async function buildReferenceIndex(
         incomplete.push(src.table);
         return;
       }
-      for (const row of (data ?? []) as Array<Record<string, unknown>>) {
+      for (const row of (data ?? []) as unknown as Array<Record<string, unknown>>) {
         for (const col of src.columns) {
           add(row[col], { kind: src.kind, id: String(row["id"] ?? ""), detail: src.table });
         }
@@ -282,7 +282,7 @@ export async function buildReferenceIndex(
     .eq("status", "failed")
     .limit(2000);
   if (fe) incomplete.push("motion_clip_jobs:failed");
-  for (const row of (failed ?? []) as Array<Record<string, unknown>>) {
+  for (const row of (failed ?? []) as unknown as Array<Record<string, unknown>>) {
     const p = row["output_path"];
     if (isStoragePath(p) && !byPath.has(p)) failedPaths.add(p);
   }
