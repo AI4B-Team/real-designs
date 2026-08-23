@@ -399,3 +399,10 @@
   gap: 1px;
   min-width: 0;
 }
+
+/* Secondary lines in the batch panel must never inherit the global (shadcn)
+   --muted surface token, which renders as near-white text on white. */
+.rd-batch .rd-batch-h span,
+.rd-batch .rd-batch-row em {
+  color: #6b6b6b;
+}
