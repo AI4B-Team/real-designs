@@ -237,10 +237,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+// Runs before hydration: if the *entry* module itself fails to load (stale
+// chunk after a rebuild), React never mounts, so no error boundary can catch
+// it. One guarded reload per session-stamp picks up the fresh build.
+const BOOT_RECOVERY = `(function(){try{
+var K='rd:boot-recovery';
+function h(m){m=String(m||'');return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(m);}
+function go(m){var s=m.replace(/[?&]t=\\d+/g,'');try{if(sessionStorage.getItem(K)===s)return;sessionStorage.setItem(K,s);}catch(e){return;}location.reload();}
+addEventListener('error',function(e){if(h(e&&e.message))go(e.message);});
+addEventListener('unhandledrejection',function(e){var r=e&&e.reason;var m=r&&r.message||r;if(h(m))go(String(m));});
+addEventListener('load',function(){setTimeout(function(){try{sessionStorage.removeItem(K);}catch(e){}},4000);});
+}catch(e){}})();`;
+
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: BOOT_RECOVERY }} />
         <HeadContent />
       </head>
       <body>
@@ -250,6 +263,7 @@ function RootShell({ children }: { children: ReactNode }) {
     </html>
   );
 }
+
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
