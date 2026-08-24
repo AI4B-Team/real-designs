@@ -110,6 +110,99 @@ export const getPackage = createServerFn({ method: "POST" })
     };
   });
 
+/**
+ * Owner: the exact report a recipient sees, rendered from the same payload
+ * shape as the share link. Read-only — no view is recorded and no activity is
+ * written, so previewing never pollutes client analytics.
+ */
+export const getOwnerPreviewPackage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => pkgIdSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: pkg, error } = await supabase
+      .from("presentation_packages")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!pkg) return { error: "not_found" } as { error: string };
+
+    const [s, a, c, d] = await Promise.all([
+      supabase
+        .from("presentation_sections")
+        .select("*")
+        .eq("package_id", data.id)
+        .eq("hidden", false)
+        .order("sort_order"),
+      supabase
+        .from("presentation_assets")
+        .select("*")
+        .eq("package_id", data.id)
+        .order("sort_order"),
+      supabase
+        .from("presentation_comments")
+        .select("*")
+        .eq("package_id", data.id)
+        .order("created_at"),
+      supabase
+        .from("presentation_decisions")
+        .select("*")
+        .eq("package_id", data.id)
+        .order("created_at", { ascending: false })
+        .limit(1),
+    ]);
+
+    const { isBudgetSectionKey, checkBudgetsAvailable } = await import("@/lib/budget.server");
+    const budgetsAvailable = await checkBudgetsAvailable();
+    const keep = (key: unknown) => budgetsAvailable || !isBudgetSectionKey(key as string);
+
+    const { signRoomPhoto } = await import("@/lib/presentations.server");
+    const assets = await Promise.all(
+      (a.data ?? [])
+        .filter((row: any) => keep(row?.section_key))
+        .map(async (row: any) => ({
+          ...row,
+          url: await signRoomPhoto(row.url ?? null),
+          compare_url: await signRoomPhoto(row.compare_url ?? null),
+        })),
+    );
+    const dec = (d.data ?? [])[0] as any;
+
+    return {
+      package_id: pkg.id,
+      title: pkg.title,
+      property_label: pkg.property_label,
+      project_name: pkg.project_name,
+      client_name: pkg.client_name,
+      intro: pkg.intro,
+      logo_url: pkg.logo_url,
+      accent: pkg.accent,
+      cover_url: pkg.cover_url,
+      status: pkg.status,
+      settings: pkg.settings,
+      created_at: pkg.created_at,
+      sections: (s.data ?? [])
+        .filter((row: any) => keep(row?.section_key))
+        .map((row: any) => ({
+          key: row.section_key,
+          title: row.title,
+          sort_order: row.sort_order,
+        })),
+      assets,
+      comments: c.data ?? [],
+      decision: dec
+        ? {
+            decision: dec.decision,
+            client_name: dec.client_name,
+            note: dec.note,
+            created_at: dec.created_at,
+          }
+        : null,
+    };
+  });
+
+
 /** Owner: create or update a package, replacing its sections and assets. */
 export const savePackage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
