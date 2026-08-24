@@ -76,6 +76,8 @@ const STATUS = {
 const S = {
   rows: [],
   loading: false,
+  loadError: false,
+
   sources: null,
   draft: null,
   step: 1,
