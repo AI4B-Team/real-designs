@@ -470,8 +470,13 @@ async function load() {
     STATE.assets = data.assets;
     STATE.versions = data.versions;
     STATE.exports = exps;
+    STATE.loadError = false;
   } catch (e) {
     STATE.assets = [];
+    STATE.versions = [];
+    STATE.exports = [];
+    STATE.selected = new Set();
+    STATE.loadError = true;
   }
   STATE.loading = false;
   renderProps();
