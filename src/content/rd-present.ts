@@ -990,6 +990,8 @@ async function onClick(e) {
   }
   if (t.disabled || t.getAttribute("aria-disabled") === "true") return;
   if (a === "new") return openBuilder(null);
+  if (a === "retry") return void refresh();
+
   if (a === "close") {
     S.draft = null;
     const host = document.getElementById("pkModal");
