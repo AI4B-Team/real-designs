@@ -104,6 +104,16 @@ function activeLink(row) {
 
 function libraryHtml() {
   if (S.loading) return `<p class="pk-note">Loading Your Presentations…</p>`;
+  /* A failed load must never look like an empty library: showing the empty
+     state there invites the owner to rebuild packages they already have. */
+  if (S.loadError) {
+    return `<div class="pk-empty">
+      <i data-lucide="triangle-alert"></i>
+      <b>Could Not Load Presentations</b>
+      <span>We could not reach your presentation library. Your existing presentations are safe.</span>
+      <button class="btn btn-primary btn-sm" data-pk="retry"><i data-lucide="refresh-cw"></i>Try Again</button>
+    </div>`;
+  }
   if (!S.rows.length) {
     return `<div class="pk-empty">
       <i data-lucide="presentation"></i>
@@ -112,6 +122,7 @@ function libraryHtml() {
       <button class="btn btn-primary btn-sm" data-pk="new"><i data-lucide="plus"></i>New Presentation</button>
     </div>`;
   }
+
   return S.rows
     .map((r) => {
       const ready = presentationReadiness(
