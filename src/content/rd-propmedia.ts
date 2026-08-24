@@ -630,7 +630,7 @@ async function renderGrid() {
     </div>`;
     paint();
     const r = el.querySelector("#pmRetry");
-    r && (r.onclick = () => refresh());
+    r && (r.onclick = () => load());
     renderBulk();
     return;
   }
