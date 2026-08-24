@@ -7735,6 +7735,7 @@ ${d.sample ? '<span class="pill dg-sample">Sample</span>' : ""}</div>
 
     /* ---------- version history for one room ---------- */
     let HIST_ROOM = null,
+      HIST_ERR = false,
       HIST_LIST = [];
     function histModal() {
       let m = document.getElementById("histModal");
