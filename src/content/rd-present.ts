@@ -617,7 +617,9 @@ async function openDetail(id) {
     return;
   }
   const link = (p.links || []).find((l) => !l.revoked);
-  const [cls, lab] = STATUS[p.package.status] || STATUS.draft;
+  const dready = presentationReadiness(p.assets || []);
+  const [cls, lab] = dready.isDraft ? ["p-gray", "Draft"] : STATUS[p.package.status] || STATUS.draft;
+
   host.innerHTML = `<div class="pk-modal" role="dialog" aria-modal="true"><div class="pk-box">
     <div class="pk-head"><b>${esc(p.package.title)}</b><span class="pill ${cls}">${lab}</span>
       <button class="icon-btn" data-pk="close" aria-label="Close"><i data-lucide="x"></i></button></div>
