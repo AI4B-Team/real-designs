@@ -639,7 +639,7 @@ function PreviewBanner() {
       <span>
         <b>Owner Preview</b> — this is exactly what your client sees. Nothing here is recorded.
       </span>
-      <a className="sp-btn sp-btn-sm" href="/app#presentations">
+      <a className="sp-btn sp-btn-sm" href="/app#v-present">
         Return To Presentations
       </a>
     </div>
