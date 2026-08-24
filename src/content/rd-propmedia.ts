@@ -42,6 +42,7 @@ let STATE = {
   propertyId: null,
   propertyLabel: "All Properties",
   assets: [],
+  loadError: false,
   versions: [],
   exports: [],
   properties: [],
