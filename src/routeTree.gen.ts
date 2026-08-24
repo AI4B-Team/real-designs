@@ -47,6 +47,7 @@ import { Route as PricingCreditsRouteImport } from './routes/pricing_.credits'
 import { Route as VSlugRouteImport } from './routes/v.$slug'
 import { Route as ApiPublicFoundingRouteImport } from './routes/api/public/founding'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
+import { Route as AuthenticatedPresentationIdPreviewRouteImport } from './routes/_authenticated/presentation.$id.preview'
 import { Route as AuthenticatedAppMediaVideoNewRouteImport } from './routes/_authenticated/app_.media.video.new'
 
 const IndexRoute = IndexRouteImport.update({
@@ -238,6 +239,12 @@ const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
   path: '/api/public/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedPresentationIdPreviewRoute =
+  AuthenticatedPresentationIdPreviewRouteImport.update({
+    id: '/presentation/$id/preview',
+    path: '/presentation/$id/preview',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppMediaVideoNewRoute =
   AuthenticatedAppMediaVideoNewRouteImport.update({
     id: '/app_/media/video/new',
@@ -283,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/free/': typeof FreeIndexRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/presentation/$id/preview': typeof AuthenticatedPresentationIdPreviewRoute
   '/app/media/video/new': typeof AuthenticatedAppMediaVideoNewRoute
 }
 export interface FileRoutesByTo {
@@ -323,6 +331,7 @@ export interface FileRoutesByTo {
   '/free': typeof FreeIndexRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/presentation/$id/preview': typeof AuthenticatedPresentationIdPreviewRoute
   '/app/media/video/new': typeof AuthenticatedAppMediaVideoNewRoute
 }
 export interface FileRoutesById {
@@ -365,6 +374,7 @@ export interface FileRoutesById {
   '/free/': typeof FreeIndexRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/_authenticated/presentation/$id/preview': typeof AuthenticatedPresentationIdPreviewRoute
   '/_authenticated/app_/media/video/new': typeof AuthenticatedAppMediaVideoNewRoute
 }
 export interface FileRouteTypes {
@@ -407,6 +417,7 @@ export interface FileRouteTypes {
     | '/free/'
     | '/api/public/founding'
     | '/api/public/health'
+    | '/presentation/$id/preview'
     | '/app/media/video/new'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -447,6 +458,7 @@ export interface FileRouteTypes {
     | '/free'
     | '/api/public/founding'
     | '/api/public/health'
+    | '/presentation/$id/preview'
     | '/app/media/video/new'
   id:
     | '__root__'
@@ -488,6 +500,7 @@ export interface FileRouteTypes {
     | '/free/'
     | '/api/public/founding'
     | '/api/public/health'
+    | '/_authenticated/presentation/$id/preview'
     | '/_authenticated/app_/media/video/new'
   fileRoutesById: FileRoutesById
 }
@@ -798,6 +811,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/presentation/$id/preview': {
+      id: '/_authenticated/presentation/$id/preview'
+      path: '/presentation/$id/preview'
+      fullPath: '/presentation/$id/preview'
+      preLoaderRoute: typeof AuthenticatedPresentationIdPreviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/app_/media/video/new': {
       id: '/_authenticated/app_/media/video/new'
       path: '/app/media/video/new'
@@ -811,12 +831,15 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
   AuthenticatedWelcomeRoute: typeof AuthenticatedWelcomeRoute
+  AuthenticatedPresentationIdPreviewRoute: typeof AuthenticatedPresentationIdPreviewRoute
   AuthenticatedAppMediaVideoNewRoute: typeof AuthenticatedAppMediaVideoNewRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppRoute: AuthenticatedAppRoute,
   AuthenticatedWelcomeRoute: AuthenticatedWelcomeRoute,
+  AuthenticatedPresentationIdPreviewRoute:
+    AuthenticatedPresentationIdPreviewRoute,
   AuthenticatedAppMediaVideoNewRoute: AuthenticatedAppMediaVideoNewRoute,
 }
 

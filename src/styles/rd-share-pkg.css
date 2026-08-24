@@ -400,3 +400,27 @@
 .sp-brand-name { font-weight: 700; font-size: 1rem; letter-spacing: 0.01em; }
 .sp-brand-logo { max-height: 34px; max-width: 190px; object-fit: contain; display: block; }
 .sp-via { font-size: 0.68rem; letter-spacing: 0.09em; text-transform: uppercase; opacity: 0.62; }
+
+/* Owner preview banner — only rendered for the presentation owner. */
+.sp-preview-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 10px clamp(14px, 4vw, 32px);
+  background: #141414;
+  color: #fff;
+  font-size: 14px;
+}
+.sp-preview-bar b {
+  letter-spacing: 0.02em;
+}
+.sp-preview-bar .sp-btn {
+  background: #fff;
+  color: #141414;
+  text-decoration: none;
+}
