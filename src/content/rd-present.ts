@@ -184,14 +184,17 @@ async function refresh() {
   const el = document.getElementById("pkList");
   if (!el) return;
   S.loading = !S.rows.length;
+  S.loadError = false;
   el.innerHTML = libraryHtml();
   paint();
   try {
     S.rows = await listPackages();
   } catch (_) {
     S.rows = [];
+    S.loadError = true;
   }
   S.loading = false;
+
   el.innerHTML = libraryHtml();
   paint();
 }
