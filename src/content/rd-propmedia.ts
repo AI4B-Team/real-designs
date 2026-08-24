@@ -42,6 +42,7 @@ let STATE = {
   propertyId: null,
   propertyLabel: "All Properties",
   assets: [],
+  loadError: false,
   versions: [],
   exports: [],
   properties: [],
@@ -469,8 +470,13 @@ async function load() {
     STATE.assets = data.assets;
     STATE.versions = data.versions;
     STATE.exports = exps;
+    STATE.loadError = false;
   } catch (e) {
     STATE.assets = [];
+    STATE.versions = [];
+    STATE.exports = [];
+    STATE.selected = new Set();
+    STATE.loadError = true;
   }
   STATE.loading = false;
   renderProps();
@@ -614,6 +620,18 @@ async function renderGrid() {
   const list = visible();
   if (STATE.loading) {
     el.innerHTML = `<div class="pm-empty"><b>Loading Property Media</b></div>`;
+    return;
+  }
+  if (STATE.loadError) {
+    el.innerHTML = `<div class="pm-empty">
+      <b>Couldn't Load Property Media</b>
+      <span>Your photos are safe — this view just failed to load.</span>
+      <button class="btn btn-primary btn-xs" id="pmRetry"><i data-lucide="refresh-cw"></i>Try Again</button>
+    </div>`;
+    paint();
+    const r = el.querySelector("#pmRetry");
+    r && (r.onclick = () => load());
+    renderBulk();
     return;
   }
   if (!list.length) {
