@@ -3129,7 +3129,10 @@ async function loadProps() {
   try {
     PROPS = await listMediaProperties();
   } catch (_) {
-    PROPS = [];
+    /* Never cache a failure: [] is truthy, so caching it would stop the
+       address field from ever suggesting properties again this session. */
+    PROPS = null;
+    return [];
   }
   if (S && S.step === "review") render();
   return PROPS;
