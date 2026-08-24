@@ -7735,6 +7735,7 @@ ${d.sample ? '<span class="pill dg-sample">Sample</span>' : ""}</div>
 
     /* ---------- version history for one room ---------- */
     let HIST_ROOM = null,
+      HIST_ERR = false,
       HIST_LIST = [];
     function histModal() {
       let m = document.getElementById("histModal");
@@ -7765,14 +7766,23 @@ ${d.sample ? '<span class="pill dg-sample">Sample</span>' : ""}</div>
       m.classList.add("on");
       try {
         HIST_LIST = await listRoomVersions({ data: { room_id: r.id } });
+        HIST_ERR = false;
       } catch (e) {
         HIST_LIST = [];
+        HIST_ERR = true;
       }
       paintHistory();
     }
     function paintHistory() {
       const m = histModal(),
         body = m.querySelector("#hmBody");
+      if (HIST_ERR) {
+        body.innerHTML =
+          '<p style="font-size:.79rem;color:var(--mute-2)">Couldn\'t Load Version History. Your Saved Versions Are Safe.</p><button class="btn btn-primary btn-xs" id="hmRetry">Try Again</button>';
+        const rb = body.querySelector("#hmRetry");
+        if (rb) rb.onclick = () => openHistory(HIST_ROOM);
+        return;
+      }
       if (!HIST_LIST.length) {
         body.innerHTML =
           '<p style="font-size:.79rem;color:var(--mute-2)">No Saved Versions On This Room Yet.</p>';
