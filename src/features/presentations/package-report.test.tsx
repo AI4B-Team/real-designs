@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 /** Owner preview must render the recipient view read-only. */
 import { act } from "react";
 import { createRoot } from "react-dom/client";
