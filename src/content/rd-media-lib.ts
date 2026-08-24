@@ -87,6 +87,7 @@ async function toggleFav(id) {
 
 const S = {
   items: [],
+  loadError: false,
   tab: "all",
   status: "all",
   prop: "all",
