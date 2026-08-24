@@ -992,7 +992,9 @@ async function onClick(e) {
   if (a === "save") return saveDraft();
   if (a === "open" && id) return openDetail(id);
   if (a === "edit" && id) return openBuilder(id);
+  if (a === "report" && id) return openReport(id);
   if (a === "pdf" && id) {
+
     const row = S.rows.find((x) => x.id === id);
     if (row && !presentationReadiness(Array.from({ length: row.asset_count || 0 }, (_, i) => ({ id: "i" + i }))).canExportPdf)
       return toast("Add at least one design before exporting a PDF.");
