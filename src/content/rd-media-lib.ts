@@ -342,8 +342,10 @@ async function load(quiet) {
   try {
 
     S.items = await loadMediaLibrary();
+    S.loadError = false;
   } catch (_) {
     S.items = [];
+    S.loadError = true;
   }
   try {
     S.propList = await listMediaProperties();
