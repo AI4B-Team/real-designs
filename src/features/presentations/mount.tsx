@@ -27,6 +27,7 @@ export function mountPresentationList(
   const root: Root = createRoot(container);
   root.render(<PresentationList ref={ref} {...deps} />);
 
+  let destroyed = false;
   return {
     refresh: async () => {
       await ref.current?.refresh();
@@ -35,9 +36,16 @@ export function mountPresentationList(
       await ref.current?.focus(id);
     },
     rows: () => ref.current?.rows() || [],
+    // The legacy runtime tears the shell down from inside a React commit, and a
+    // synchronous unmount there races the in-flight render. Deferring by one
+    // microtask lets the current render finish first.
     destroy: () => {
-      root.unmount();
-      container.innerHTML = "";
+      if (destroyed) return;
+      destroyed = true;
+      queueMicrotask(() => {
+        root.unmount();
+        container.innerHTML = "";
+      });
     },
   };
 }
