@@ -76,6 +76,8 @@ const STATUS = {
 const S = {
   rows: [],
   loading: false,
+  loadError: false,
+
   sources: null,
   draft: null,
   step: 1,
@@ -104,6 +106,16 @@ function activeLink(row) {
 
 function libraryHtml() {
   if (S.loading) return `<p class="pk-note">Loading Your Presentations…</p>`;
+  /* A failed load must never look like an empty library: showing the empty
+     state there invites the owner to rebuild packages they already have. */
+  if (S.loadError) {
+    return `<div class="pk-empty">
+      <i data-lucide="triangle-alert"></i>
+      <b>Could Not Load Presentations</b>
+      <span>We could not reach your presentation library. Your existing presentations are safe.</span>
+      <button class="btn btn-primary btn-sm" data-pk="retry"><i data-lucide="refresh-cw"></i>Try Again</button>
+    </div>`;
+  }
   if (!S.rows.length) {
     return `<div class="pk-empty">
       <i data-lucide="presentation"></i>
@@ -112,6 +124,7 @@ function libraryHtml() {
       <button class="btn btn-primary btn-sm" data-pk="new"><i data-lucide="plus"></i>New Presentation</button>
     </div>`;
   }
+
   return S.rows
     .map((r) => {
       const ready = presentationReadiness(
@@ -171,14 +184,17 @@ async function refresh() {
   const el = document.getElementById("pkList");
   if (!el) return;
   S.loading = !S.rows.length;
+  S.loadError = false;
   el.innerHTML = libraryHtml();
   paint();
   try {
     S.rows = await listPackages();
   } catch (_) {
     S.rows = [];
+    S.loadError = true;
   }
   S.loading = false;
+
   el.innerHTML = libraryHtml();
   paint();
 }
@@ -974,6 +990,8 @@ async function onClick(e) {
   }
   if (t.disabled || t.getAttribute("aria-disabled") === "true") return;
   if (a === "new") return openBuilder(null);
+  if (a === "retry") return void refresh();
+
   if (a === "close") {
     S.draft = null;
     const host = document.getElementById("pkModal");
