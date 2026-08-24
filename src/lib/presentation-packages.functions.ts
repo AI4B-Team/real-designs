@@ -361,7 +361,6 @@ export const getSharedPackage = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const p = (payload ?? {}) as any;
     if (p.error) return p as { error: string };
-    await supabaseAdmin.rpc("record_presentation_share_view", { _token: data.token } as never);
     const { signRoomPhoto } = await import("@/lib/presentations.server");
     const { isBudgetSectionKey, checkBudgetsAvailable } = await import("@/lib/budget.server");
     const budgetsAvailable = await checkBudgetsAvailable();
@@ -370,6 +369,11 @@ export const getSharedPackage = createServerFn({ method: "POST" })
     const visibleAssets = budgetsAvailable
       ? rawAssets
       : rawAssets.filter((a: any) => !isBudgetSectionKey(a?.section_key));
+    // An empty presentation is never "viewed": it shows the unavailable state,
+    // so counting it would inflate the owner's analytics.
+    if (visibleAssets.length) {
+      await supabaseAdmin.rpc("record_presentation_share_view", { _token: data.token } as never);
+    }
     p.assets = await Promise.all(
       visibleAssets.map(async (a: any) => ({
         ...a,
@@ -377,6 +381,7 @@ export const getSharedPackage = createServerFn({ method: "POST" })
         compare_url: await signRoomPhoto(a.compare_url ?? null),
       })),
     );
+
     if (Array.isArray(p.sections) && !budgetsAvailable) {
       p.sections = p.sections.filter((sec: any) => !isBudgetSectionKey(sec?.section_key));
     }
