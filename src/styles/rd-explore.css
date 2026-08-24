@@ -1063,6 +1063,10 @@
 }
 .rd-app .xp-recimg {
   position: relative;
+  padding: 0;
+  display: block;
+  flex: 0 0 auto;
+  overflow: hidden;
 }
 .rd-app .xp-reccard img {
   width: 100%;
@@ -1070,7 +1074,11 @@
   object-fit: cover;
   display: block;
 }
-.rd-app .xp-reccard > div {
+.rd-app .xp-recimg .xp-save {
+  z-index: 2;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
+}
+.rd-app .xp-reccard > div:not(.xp-recimg) {
   padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
