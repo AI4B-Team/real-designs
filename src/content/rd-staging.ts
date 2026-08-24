@@ -3195,7 +3195,7 @@ async function openAddressEditor() {
     try {
       PROPS = await listMediaProperties();
     } catch (_) {
-      PROPS = [];
+      PROPS = null;
     }
   }
   openAddressModal({
