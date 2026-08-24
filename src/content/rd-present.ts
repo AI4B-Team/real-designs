@@ -146,7 +146,9 @@ function libraryHtml() {
             <button class="icon-btn xs" data-pk="more" title="More Actions" aria-label="More Actions" aria-haspopup="menu"><i data-lucide="more-horizontal"></i></button>
             <div class="pk-menu" role="menu" hidden>
               <button role="menuitem" data-pk="open"><i data-lucide="activity"></i>View Activity</button>
+              <button role="menuitem" data-pk="report"${dis(ready.canPublish)}><i data-lucide="monitor-play"></i>View Report</button>
               <button role="menuitem" data-pk="pdf"${dis(ready.canExportPdf)}><i data-lucide="file-text"></i>Download PDF</button>
+
               <button role="menuitem" data-pk="edit"><i data-lucide="pencil"></i>Edit Details</button>
               <button role="menuitem" data-pk="dup"><i data-lucide="copy-plus"></i>Duplicate</button>
               <button role="menuitem" data-pk="revokerow"${dis(!!link)}><i data-lucide="ban"></i>Revoke</button>
