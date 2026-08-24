@@ -87,6 +87,7 @@ async function toggleFav(id) {
 
 const S = {
   items: [],
+  loadError: false,
   tab: "all",
   status: "all",
   prop: "all",
@@ -342,8 +343,10 @@ async function load(quiet) {
   try {
 
     S.items = await loadMediaLibrary();
+    S.loadError = false;
   } catch (_) {
     S.items = [];
+    S.loadError = true;
   }
   try {
     S.propList = await listMediaProperties();
@@ -438,6 +441,14 @@ function render() {
 
   if (S.loading) {
     grid.innerHTML = `<p class="ml-note">Loading Your Media…</p>`;
+    return;
+  }
+  if (S.loadError) {
+    grid.innerHTML = `<div class="ml-empty"><i data-lucide="triangle-alert"></i><b>Couldn't Load Your Media</b><span>Your files are safe — the library just failed to load.</span>
+      <button class="btn btn-primary btn-sm" data-e="retry">Try Again</button></div>`;
+    paint();
+    const rb = grid.querySelector('[data-e="retry"]');
+    if (rb) rb.onclick = () => load(false);
     return;
   }
   const list = filtered();
