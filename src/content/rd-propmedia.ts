@@ -622,6 +622,18 @@ async function renderGrid() {
     el.innerHTML = `<div class="pm-empty"><b>Loading Property Media</b></div>`;
     return;
   }
+  if (STATE.loadError) {
+    el.innerHTML = `<div class="pm-empty">
+      <b>Couldn't Load Property Media</b>
+      <span>Your photos are safe — this view just failed to load.</span>
+      <button class="btn btn-primary btn-xs" id="pmRetry"><i data-lucide="refresh-cw"></i>Try Again</button>
+    </div>`;
+    paint();
+    const r = el.querySelector("#pmRetry");
+    r && (r.onclick = () => refresh());
+    renderBulk();
+    return;
+  }
   if (!list.length) {
     el.innerHTML = `<div class="pm-empty">
       <b>${STATE.assets.length ? "Nothing In This Tab" : "No Property Media Yet"}</b>
