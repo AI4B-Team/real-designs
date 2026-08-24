@@ -1,6 +1,8 @@
+// @vitest-environment jsdom
 /** Owner preview must render the recipient view read-only. */
-import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act } from "react";
+import { createRoot } from "react-dom/client";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/presentation-packages.functions", () => ({
   commentOnPackage: vi.fn(),
@@ -31,26 +33,45 @@ const pack = {
   decision: null,
 };
 
+let host: HTMLDivElement | null = null;
+
+async function draw(node: React.ReactElement) {
+  host = document.createElement("div");
+  document.body.appendChild(host);
+  const root = createRoot(host);
+  await act(async () => {
+    root.render(node);
+  });
+  return host.textContent ?? "";
+}
+
+afterEach(() => {
+  host?.remove();
+  host = null;
+});
+
 describe("PackageReport", () => {
-  it("shows the owner banner and no comment box in preview mode", () => {
-    render(<PackageReport pack={pack} preview />);
-    expect(screen.getByText(/Owner Preview/i)).toBeTruthy();
-    expect(screen.queryByPlaceholderText(/Comment on/i)).toBeNull();
-    expect(screen.getByText("Maple Street Renovation")).toBeTruthy();
+  it("shows the owner banner and no comment box in preview mode", async () => {
+    const text = await draw(<PackageReport pack={pack} preview />);
+    expect(text).toContain("Owner Preview");
+    expect(text).toContain("Maple Street Renovation");
+    expect(host!.querySelector("textarea")).toBeNull();
   });
 
-  it("renders the same designs for a recipient, with commenting enabled", () => {
-    render(<PackageReport token="abcdef0123456789" pack={pack} />);
-    expect(screen.queryByText(/Owner Preview/i)).toBeNull();
-    expect(screen.getByText("Kitchen")).toBeTruthy();
+  it("renders the same designs for a recipient, without the owner banner", async () => {
+    const text = await draw(<PackageReport token="abcdef0123456789" pack={pack} />);
+    expect(text).not.toContain("Owner Preview");
+    expect(text).toContain("Kitchen");
   });
 
-  it("treats an empty presentation as unavailable in both modes", () => {
+  it("treats an empty presentation as unavailable in both modes", async () => {
     const empty = { ...pack, assets: [] };
-    const { unmount } = render(<PackageReport pack={empty} preview />);
-    expect(screen.getByText(/temporarily unavailable/i)).toBeTruthy();
-    unmount();
-    render(<PackageReport token="abcdef0123456789" pack={empty} />);
-    expect(screen.getByText(/temporarily unavailable/i)).toBeTruthy();
+    expect(await draw(<PackageReport pack={empty} preview />)).toContain(
+      "temporarily unavailable",
+    );
+    host?.remove();
+    expect(await draw(<PackageReport token="abcdef0123456789" pack={empty} />)).toContain(
+      "temporarily unavailable",
+    );
   });
 });
