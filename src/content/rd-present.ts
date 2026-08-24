@@ -687,6 +687,24 @@ async function openDetail(id) {
   </div></div>`;
   paint();
 }
+/**
+ * View Report — the owner opens the exact recipient view in a new tab. It is
+ * the same renderer as the client link, in read-only preview mode, so nothing
+ * is downloaded, exported or recorded.
+ */
+function openReport(id) {
+  const row = S.rows.find((x) => x.id === id);
+  if (
+    row &&
+    !presentationReadiness(Array.from({ length: row.asset_count || 0 }, (_, i) => ({ id: "i" + i })))
+      .canPublish
+  ) {
+    return toast("Add at least one design before viewing the report.");
+  }
+  const w = window.open("/presentation/" + encodeURIComponent(id) + "/preview", "_blank", "noopener");
+  if (!w) toast("Allow pop-ups to view the report.");
+}
+
 
 async function exportPdf(id) {
   let p;
