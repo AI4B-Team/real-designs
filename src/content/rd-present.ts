@@ -131,7 +131,11 @@ function libraryHtml() {
         <div class="pk-row-t">
           <b>${esc(r.title)}</b>
           <span>${ctx ? ctx + " · " : ""}${r.asset_count} Item${r.asset_count === 1 ? "" : "s"} · ${
-            ready.isDraft ? "Not Shared" : (r.view_count || 0) + " View" + ((r.view_count || 0) === 1 ? "" : "s")
+            // A package with a live client link has been shared, whatever its
+            // draft readiness says, so report its views instead of "Not Shared".
+            !link && !(r.view_count || 0)
+              ? "Not Shared"
+              : (r.view_count || 0) + " View" + ((r.view_count || 0) === 1 ? "" : "s")
           } · ${esc(r.last_activity || "Created")} ${ago(r.last_activity_at || r.created_at)}</span>
           ${ready.isDraft ? `<span class="pk-note">${esc(ready.message)}</span>` : ""}
         </div>
