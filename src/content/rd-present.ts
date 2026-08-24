@@ -677,8 +677,11 @@ async function openDetail(id) {
     </div>
     <div class="pk-foot">
       <button class="btn btn-ghost btn-sm" data-pk="edit" data-id="${p.package.id}">Edit</button>
-      <button class="btn btn-primary btn-sm" data-pk="pdf" data-id="${p.package.id}">Export PDF</button>
+      <button class="btn btn-ghost btn-sm" data-pk="report" data-id="${p.package.id}"${dready.canPublish ? "" : ' disabled aria-disabled="true"'}><i data-lucide="monitor-play"></i>View Report</button>
+      <button class="btn btn-primary btn-sm" data-pk="pdf" data-id="${p.package.id}"${dready.canExportPdf ? "" : ' disabled aria-disabled="true"'}>Export PDF</button>
     </div>
+    ${dready.message ? `<p class="pk-note pk-foot-note">${esc(dready.message)}</p>` : ""}
+
   </div></div>`;
   paint();
 }
