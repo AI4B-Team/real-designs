@@ -26,6 +26,7 @@ const P = {
   items: [],
   packages: [],
   loading: true,
+  loadError: "",
   off: null,
 };
 
@@ -69,16 +70,22 @@ export function mountPropertyDetail(property) {
 
 async function reload() {
   if (!document.getElementById("propDetail")) return;
-  try {
-    const [items, packages] = await Promise.all([
-      loadMediaLibrary().catch(() => []),
-      listPackages().catch(() => []),
-    ]);
-    P.items = items || [];
-    P.packages = packages || [];
-  } catch (_) {
-    P.items = [];
-  }
+  /* A failed fetch must not look like an empty property — track it and show
+     an error with a retry instead of "Nothing Saved Here Yet". */
+  let failed = false;
+  const [items, packages] = await Promise.all([
+    loadMediaLibrary().catch(() => {
+      failed = true;
+      return [];
+    }),
+    listPackages().catch(() => {
+      failed = true;
+      return [];
+    }),
+  ]);
+  P.items = items || [];
+  P.packages = packages || [];
+  P.loadError = failed ? "We could not load this property's work just now." : "";
   P.loading = false;
   render();
 }
@@ -111,7 +118,7 @@ function render() {
 
   el.innerHTML = `<div class="card-h">
       <div><h3>${esc(P.label || "This Property")}</h3>
-        <div class="sub">${P.loading ? "Loading This Property&rsquo;s Work&hellip;" : total + (total === 1 ? " Item" : " Items") + " Saved To This Address"}</div></div>
+        <div class="sub">${P.loading ? "Loading This Property&rsquo;s Work&hellip;" : P.loadError && !total ? "Couldn't Load This Property's Work" : total + (total === 1 ? " Item" : " Items") + " Saved To This Address"}</div></div>
 
     </div>
     <div class="pd-tabs" role="tablist">${TABS.map(
@@ -137,6 +144,14 @@ function render() {
       try {
         window.__rdGo && window.__rdGo(btn.dataset.go);
       } catch (_) {}
+    };
+  });
+  el.querySelectorAll("[data-retry]").forEach((btn) => {
+    btn.onclick = () => {
+      P.loading = true;
+      P.loadError = "";
+      render();
+      reload();
     };
   });
 }
@@ -194,6 +209,9 @@ function startBuild(target, b) {
 
 function body(b, pk) {
   if (P.loading) return `<p class="pd-note">Loading&hellip;</p>`;
+  if (P.loadError && !b.all.length && !pk.length)
+    return `<div class="pd-empty"><i data-lucide="alert-triangle"></i><b>Couldn't Load This Property</b><span>${esc(P.loadError)}</span>
+      <button class="btn btn-primary btn-sm" data-retry>Try Again</button></div>`;
   if (P.tab === "overview") return overview(b, pk);
   if (P.tab === "presentations")
     return pk.length
