@@ -26,6 +26,7 @@ const P = {
   items: [],
   packages: [],
   loading: true,
+  loadError: "",
   off: null,
 };
 
@@ -69,16 +70,22 @@ export function mountPropertyDetail(property) {
 
 async function reload() {
   if (!document.getElementById("propDetail")) return;
-  try {
-    const [items, packages] = await Promise.all([
-      loadMediaLibrary().catch(() => []),
-      listPackages().catch(() => []),
-    ]);
-    P.items = items || [];
-    P.packages = packages || [];
-  } catch (_) {
-    P.items = [];
-  }
+  /* A failed fetch must not look like an empty property — track it and show
+     an error with a retry instead of "Nothing Saved Here Yet". */
+  let failed = false;
+  const [items, packages] = await Promise.all([
+    loadMediaLibrary().catch(() => {
+      failed = true;
+      return [];
+    }),
+    listPackages().catch(() => {
+      failed = true;
+      return [];
+    }),
+  ]);
+  P.items = items || [];
+  P.packages = packages || [];
+  P.loadError = failed ? "We could not load this property's work just now." : "";
   P.loading = false;
   render();
 }
