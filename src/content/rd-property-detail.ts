@@ -146,6 +146,14 @@ function render() {
       } catch (_) {}
     };
   });
+  el.querySelectorAll("[data-retry]").forEach((btn) => {
+    btn.onclick = () => {
+      P.loading = true;
+      P.loadError = "";
+      render();
+      reload();
+    };
+  });
 }
 
 function startBuild(target, b) {
@@ -201,6 +209,9 @@ function startBuild(target, b) {
 
 function body(b, pk) {
   if (P.loading) return `<p class="pd-note">Loading&hellip;</p>`;
+  if (P.loadError && !b.all.length && !pk.length)
+    return `<div class="pd-empty"><i data-lucide="alert-triangle"></i><b>Couldn't Load This Property</b><span>${esc(P.loadError)}</span>
+      <button class="btn btn-primary btn-sm" data-retry>Try Again</button></div>`;
   if (P.tab === "overview") return overview(b, pk);
   if (P.tab === "presentations")
     return pk.length
