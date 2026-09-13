@@ -118,7 +118,7 @@ function render() {
 
   el.innerHTML = `<div class="card-h">
       <div><h3>${esc(P.label || "This Property")}</h3>
-        <div class="sub">${P.loading ? "Loading This Property&rsquo;s Work&hellip;" : total + (total === 1 ? " Item" : " Items") + " Saved To This Address"}</div></div>
+        <div class="sub">${P.loading ? "Loading This Property&rsquo;s Work&hellip;" : P.loadError && !total ? "Couldn't Load This Property's Work" : total + (total === 1 ? " Item" : " Items") + " Saved To This Address"}</div></div>
 
     </div>
     <div class="pd-tabs" role="tablist">${TABS.map(
